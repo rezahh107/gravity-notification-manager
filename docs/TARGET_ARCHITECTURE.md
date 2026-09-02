@@ -1,10 +1,12 @@
 # Gravity Notification Manager — Target Architecture
 
-> **Document ID:** `GNM-TARGET-ARCHITECTURE-1.1.0`  
+> **Document ID:** `GNM-TARGET-ARCHITECTURE-1.2.0`  
 > **Status:** `CLOSED`  
-> **Decision date:** `2026-09-02`  
+> **Decision date:** `2026-09-03`  
 > **Repository:** `rezahh107/gravity-notification-manager`  
 > **Product identity:** `docs/PRODUCT_IDENTITY.md`  
+> **Owner preference overlay:** `docs/OWNER_PREFERENCE_PROFILE.md`  
+> **UI/UX implementation reference:** `docs/UI_UX_REFERENCE.md`  
 > **Legacy reference:** `legacy-source-pre-greenfield-2026-09-02@7556f86ecc65f37d34d9563ce2087f16235bbca5`
 
 ## 1. Authority
@@ -23,8 +25,14 @@ TARGET_ARCHITECTURE.md
 MIGRATION_PLAN.md
 = how the repository gets there
 
+OWNER_PREFERENCE_PROFILE.md
+= applicable Owner implementation/validation preferences
+
+UI_UX_REFERENCE.md
+= approved admin UX/design direction
+
 SALVAGE_REFERENCE.md
-= what may be learned/transplanted from legacy
+= how legacy is reviewed after greenfield implementation
 ```
 
 `plan != implementation != validation != completion`.
@@ -54,13 +62,15 @@ The plugin provides operational notifications for Gravity Forms / Gravity Flow o
 - lightweight delivery state;
 - Attention Required visibility;
 - explicit manual Retry;
+- modern, clear WordPress-native admin UX;
 - minimal custom infrastructure.
 
 Priority order:
 
 ```text
-functional fit
-→ current native capability
+functional fit / correctness
+→ current stable native capability
+→ real operational usability
 → low operational complexity
 → shared-hosting reliability
 → administrative clarity
@@ -75,9 +85,9 @@ functional fit
 Prefer mechanisms in this order:
 
 ```text
-Current Native Capability
-→ Current Official Framework/API
-→ Current Official Extension Point
+Current Stable Native Capability
+→ Current Stable Official Framework/API
+→ Current Stable Official Extension Point
 → Current Documented Hook
 → Small Compatibility Adapter
 → Legacy mechanism only if unavoidable
@@ -85,13 +95,43 @@ Current Native Capability
 
 Native-first does not prohibit custom code. It prohibits rebuilding functionality already owned by supported Gravity Forms, Gravity Flow, WordPress, GravityView, or Elementor mechanisms.
 
-### 4.2 Greenfield core
+### 4.2 Docs-first greenfield core
 
-The new core is designed from this architecture, not from legacy class boundaries.
+The new core is designed from this architecture and current official contracts, not from legacy class boundaries.
 
-Legacy may be consulted only under `docs/SALVAGE_REFERENCE.md`.
+For normal greenfield components, equivalent legacy implementation is intentionally reviewed only **after** the first independent implementation and target-focused test pass.
 
-### 4.3 Gravity Flow owns workflow topology
+```text
+Current official contract
+→ greenfield design/code
+→ target tests
+→ legacy differential review
+→ validate any useful finding
+→ incorporate only current-valid bounded value
+→ re-test
+```
+
+Legacy review is governed by `docs/SALVAGE_REFERENCE.md`.
+
+This order exists to avoid architectural anchoring while preserving useful historical edge-case knowledge.
+
+### 4.3 Current stable, official, compatible
+
+Version-sensitive implementation choices must be re-verified against current official/primary documentation during the affected Work Unit.
+
+Prefer stable, officially supported, non-deprecated mechanisms compatible with the actual project baseline.
+
+`Current` does not mean beta, preview, experimental, or newest-at-any-cost.
+
+### 4.4 Minimum sufficient complexity
+
+After correctness and mandatory usability are satisfied, prefer the smallest coherent implementation.
+
+Any machinery beyond the closed target must name a concrete failure prevented or material benefit and explain why a simpler/native alternative is insufficient.
+
+Complexity cannot self-justify architecture reopening.
+
+### 4.5 Gravity Flow owns workflow topology
 
 Gravity Flow remains authority for:
 
@@ -104,7 +144,7 @@ Gravity Flow remains authority for:
 
 Point Manager does not become a second workflow editor.
 
-### 4.4 One logical notification = one Feed/Step
+### 4.6 One logical notification = one Feed/Step
 
 A logical notification is a business message/purpose, for example:
 
@@ -114,7 +154,7 @@ A logical notification is a business message/purpose, for example:
 
 Multiple recipients receiving the same logical message stay in the same Rule. Provider fallback also stays inside the same Rule.
 
-### 4.5 Synchronous-first
+### 4.7 Synchronous-first
 
 Baseline delivery executes synchronously at the native Feed/Step boundary.
 
@@ -127,11 +167,42 @@ No baseline notification delivery/retry depends on:
 - worker;
 - delayed retry scheduler.
 
-### 4.6 Availability over strict exactly-once
+### 4.8 Availability over strict exactly-once
 
 The Owner explicitly accepts the rare possibility of duplicate notification delivery caused by concurrency or ambiguous provider responses.
 
 Best-effort duplicate suppression is sufficient. Do not build heavy exactly-once infrastructure.
+
+### 4.9 Admin UX direction
+
+GNM admin UI uses a small purpose-built information architecture:
+
+```text
+Overview
+Notification Points
+Settings
+Help & Diagnostics
+```
+
+The approved direction is:
+
+```text
+EDIS UX grammar
++
+current stable WordPress Design System
++
+GNM-specific simplified information architecture
+```
+
+Use stable WordPress design-system primitives/tokens where supported by the actual baseline. At the decision date, WordPress 7.1 provides the stable theming foundation used as the current reference.
+
+The experimental customizable WordPress Widget Dashboard is **not** a production dependency while its admin extension API remains experimental.
+
+GNM may visually align with that modern dashboard direction without depending on its experimental widget contract.
+
+React is selective, not default: use it only where interaction complexity creates material usability value. GNM is not a SPA by default.
+
+See `docs/UI_UX_REFERENCE.md`.
 
 ## 5. Target Runtime Shape
 
@@ -169,6 +240,8 @@ Entry Meta Delivery State
 GF Entry Detail        GravityView + Elementor
 Status + Retry         Attention Required view
 ```
+
+GNM admin Overview/Notification Points/Settings/Help & Diagnostics sit beside this runtime to configure, guide, verify and diagnose. They do not become alternate workflow or delivery-state authorities.
 
 ## 6. Gravity Forms Feed Contract
 
@@ -222,7 +295,7 @@ It SHOULD:
 - show configured Rules/Feeds;
 - detect missing/misconfigured Notification Feed Steps;
 - show configuration health;
-- show unresolved delivery problems;
+- show unresolved delivery/setup problems at an appropriate aggregate/configuration level;
 - provide precise setup instructions;
 - link to the correct Gravity Flow configuration screen;
 - link to relevant official help where useful;
@@ -315,7 +388,7 @@ pattern → plain
 
 or invent another semantic conversion merely to force fallback.
 
-IPPanel is the initial primary provider. Its Edge request/response behavior may be transplanted only after current official validation and target-focused tests.
+IPPanel is the initial primary provider. Implement it independently from the current official Edge contract, then perform the bounded post-implementation legacy differential review defined in `SALVAGE_REFERENCE.md`.
 
 ## 11. Bale Contract
 
@@ -414,7 +487,7 @@ Manual Retry:
 
 Operational state belongs to Gravity Notification Manager.
 
-Central presentation belongs to GravityView + Elementor:
+Central case-level presentation belongs to GravityView + Elementor:
 
 ```text
 Entry Meta
@@ -424,11 +497,43 @@ GravityView filtered View
 Elementor presentation
 ```
 
+GNM Overview may show aggregate counts/shortcuts, but it does not become a parallel case-management state store or duplicate GravityView/Elementor presentation system.
+
 Gravity Forms Entry Detail retains a small independent status/Retry surface so operations do not depend on GravityView/Elementor being available.
 
-Do not rebuild custom pagination/searchable tables/page-design systems without a proven presentation gap.
+Do not rebuild custom pagination/searchable case tables/page-design systems without a proven presentation gap.
 
-## 16. SRWF Boundary
+## 16. GNM Admin UI Contract
+
+The admin surfaces are:
+
+### Overview
+
+Fast operational orientation: summary stats, environment/product availability, provider/channel readiness and configuration warnings.
+
+### Notification Points
+
+Form/workflow-oriented guidance and verification for logical notification Feeds/Steps, including exact setup guidance and `Check Again`.
+
+### Settings
+
+Provider/channel/global options using WordPress-native controls/APIs where sufficient.
+
+### Help & Diagnostics
+
+Side-effect-free environment/configuration health, safe troubleshooting guidance and explicitly triggered test actions only.
+
+UI semantics:
+
+- important states use readable text and semantic visual cues, never color alone;
+- preserve visible focus, keyboard behavior, contrast/readability and RTL/LTR correctness;
+- use responsive layouts and reduced-motion-safe behavior where relevant;
+- load admin assets only on relevant GNM screens whenever practical;
+- React is used only when interaction complexity materially benefits UX.
+
+Visual implementation reference: `docs/UI_UX_REFERENCE.md`.
+
+## 17. SRWF Boundary
 
 For SRWF usage:
 
@@ -440,7 +545,7 @@ GravityView   = presentation-only surface
 
 Routine GravityView edits or Needs Review presentation behavior are not automatically Notification Points.
 
-## 17. Security / Privacy Boundary
+## 18. Security / Privacy Boundary
 
 This is a personal/internal plugin; security remains proportional rather than enterprise-heavy.
 
@@ -456,7 +561,9 @@ Still mandatory where applicable:
 - no provider credentials in logs;
 - no implicit provider send merely from rendering diagnostics/admin pages.
 
-## 18. Explicit Non-Goals
+A real test-send, if implemented, is an explicit user action and clearly communicates that it will send externally.
+
+## 19. Explicit Non-Goals
 
 Do NOT build unless this architecture is formally reopened:
 
@@ -475,10 +582,12 @@ Do NOT build unless this architecture is formally reopened:
 - provider reconciliation subsystem;
 - automatic Pattern-to-Plain translation;
 - undocumented/scraped provider integrations;
-- custom central dashboard when GravityView + Elementor can present the data;
-- automatic Point Manager mutation of Gravity Flow topology.
+- duplicate custom central case-management dashboard when GravityView + Elementor can present the data;
+- automatic Point Manager mutation of Gravity Flow topology;
+- production dependency on the experimental customizable WordPress Widget Dashboard while its extension API remains experimental;
+- SPA/framework architecture solely for visual modernity.
 
-## 19. Implementation Invariants
+## 20. Implementation Invariants
 
 Every Work Unit preserves:
 
@@ -495,16 +604,21 @@ Every Work Unit preserves:
 11. Exactly-once remains non-mandatory.
 12. Manual Retry remains explicit and synchronous.
 13. `wudm_notification_mobile` / `wudm_bale_chat_id` remain external user-meta contracts.
-14. GravityView/Elementor remain presentation surfaces only.
+14. GravityView/Elementor remain presentation surfaces only for central case-level Attention UI.
 15. Old and new real senders are never intentionally active for the same notification scope.
+16. New component design starts from current official contracts before equivalent legacy implementation is reviewed.
+17. Version-sensitive choices use a Current Contract Snapshot.
+18. Exact-target qualification claims remain evidence-bound.
+19. GNM admin UI follows `UI_UX_REFERENCE.md` and avoids experimental Dashboard dependency.
+20. Additional complexity requires named material benefit/failure prevention.
 
-## 20. Architecture Acceptance Boundary
+## 21. Architecture Acceptance Boundary
 
 Implementation conformance is proven only when evidence shows:
 
 - normal Gravity Forms Feed execution works;
 - compatible Feed can be configured as a Gravity Flow Step;
-- Flow-assigned Feed does not independently send at normal submit;
+- Flow-assigned Feed does not independently send at normal submit where the supported integration contract requires interception;
 - Feed Step executes when workflow reaches it;
 - notification failure does not strand workflow;
 - selected recipient sources resolve correctly;
@@ -515,21 +629,27 @@ Implementation conformance is proven only when evidence shows:
 - Entry Meta records operational result;
 - unresolved failures appear as Attention Required;
 - manual Retry works without Cron/queue;
+- Point Manager accurately verifies configuration without mutating topology;
+- GNM admin status/failure/next action is operationally understandable;
+- diagnostics have no implicit external-send side effect;
+- no production dependency on the experimental Widget Dashboard contract exists;
 - no Action Scheduler/WP-Cron/background notification path remains active;
-- no duplicate legacy/new sender path remains active.
+- no duplicate legacy/new sender path remains active;
+- applicable Work Units record post-implementation legacy differential-review outcome;
+- final qualification claims refer to the exact artifact/Head actually tested to that level.
 
 These are validation criteria, not claims that the current repository already passes them.
 
-## 21. Reopen Conditions
+## 22. Reopen Conditions
 
 Do not reopen architecture because a different implementation appears cleaner or more enterprise-grade.
 
 Reopen only the smallest affected decision if at least one is true:
 
 1. **Owner requirement change** — the Owner explicitly changes a mandatory requirement.
-2. **Official-contract invalidation** — current authoritative documentation makes a selected mechanism impossible, unsupported, or deprecated.
+2. **Official-contract invalidation** — current authoritative documentation makes a selected mechanism impossible, unsupported, deprecated, or materially incompatible.
 3. **Implementation contradiction** — direct implementation evidence proves a locked choice cannot satisfy a mandatory requirement.
-4. **Authority conflict** — a newer authoritative SRWF contract directly conflicts with this architecture.
+4. **Authority conflict** — a newer authoritative SRWF/project contract directly conflicts with this architecture.
 
 Any reopen must name:
 
@@ -537,7 +657,7 @@ Any reopen must name:
 - contradicting evidence;
 - what remains locked.
 
-## 22. Decision Register
+## 23. Decision Register
 
 | ID | Decision | State |
 |---|---|---|
@@ -564,10 +684,12 @@ Any reopen must name:
 | `D-21` | GravityView is presentation-only for SRWF | `CLOSED` |
 | `D-22` | Provider failures do not indefinitely block workflow | `CLOSED` |
 | `D-23` | Product identity = Gravity Notification Manager / `GravityNotify` | `CLOSED` |
+| `D-24` | Implementation is docs-first greenfield; equivalent legacy review happens after initial implementation/tests | `CLOSED` |
+| `D-25` | Admin UX = EDIS-inspired grammar + stable WordPress Design System + simplified GNM IA | `CLOSED` |
+| `D-26` | Experimental customizable WordPress Widget Dashboard is not a production dependency while its extension API is experimental | `CLOSED` |
+| `D-27` | Owner preference overlay is scoped implementation/validation guidance, not runtime dependency or architecture authority above this document | `CLOSED` |
 
-## 23. Legacy Boundary
-
-Architecture decisions were derived from direct inspection of the pre-greenfield implementation and subsequent owner decisions.
+## 24. Legacy Boundary
 
 The immutable legacy reference is:
 
@@ -576,11 +698,41 @@ tag: legacy-source-pre-greenfield-2026-09-02
 commit: 7556f86ecc65f37d34d9563ce2087f16235bbca5
 ```
 
-The legacy tree remains evidence only. See `docs/SALVAGE_REFERENCE.md`.
+The legacy tree remains evidence only.
 
-## 24. Official Reference Set
+Normal target component implementation must happen independently first; then use `docs/SALVAGE_REFERENCE.md` for bounded differential review.
 
-Re-check current official contracts during implementation when behavior is decision-critical:
+Migration/cutover/retirement Work Units may inspect legacy first because legacy state is their direct target.
+
+## 25. Owner Preference Boundary
+
+Applicable Owner preferences are snapshotted in `docs/OWNER_PREFERENCE_PROFILE.md` from:
+
+```text
+rezahh107/Personal-Preference-Decision-Model
+main@f439b438ba4a40c1fff4df9666c87288155a49d0
+```
+
+There is no runtime dependency on that repository.
+
+A later preference-repository change does not silently alter GNM architecture or implementation rules.
+
+## 26. UI Reference Boundary
+
+The preferred design/UX reference is snapshotted in `docs/UI_UX_REFERENCE.md` from:
+
+```text
+rezahh107/EDIS-WordPress-Evidence-Exporter
+main@0785e6113c1b5390071311947aa849a537f066b7
+```
+
+EDIS is a design/interaction reference, not a source-code dependency and not an information-architecture authority for GNM.
+
+GNM adopts useful visual grammar, not EDIS export/job/diagnostic topology.
+
+## 27. Official Reference Set
+
+Re-check current official contracts during implementation when behavior is decision-critical. These are starting references, not frozen version proof:
 
 - Gravity Forms — `GFFeedAddOn`: https://docs.gravityforms.com/gffeedaddon/
 - Gravity Flow — feed-based integrations: https://docs.gravityflow.io/category/integrations/
@@ -588,11 +740,13 @@ Re-check current official contracts during implementation when behavior is decis
 - Gravity Flow — Step class: https://docs.gravityflow.io/step-class/
 - WordPress — HTTP API: https://developer.wordpress.org/reference/functions/wp_remote_post/
 - WordPress — User Metadata: https://developer.wordpress.org/plugins/users/working-with-user-metadata/
+- WordPress — Design System theming / 7.1 dev note: https://make.wordpress.org/core/2026/07/31/design-system-theming-in-wordpress-7-1/
+- WordPress — Dashboard experiment status: https://developer.wordpress.org/news/2026/06/whats-new-for-developers-june-2026/
 - GravityView — Elementor integration: https://www.gravitykit.com/docs/gravityview-pro/advanced-elementor-widget/
 - IPPanel Edge API: https://ippanelcom.github.io/Edge-Document/
 - Bale Bot API: https://docs.bale.ai/
 
-## 25. Final Architectural Statement
+## 28. Final Architectural Statement
 
 Gravity Notification Manager is intentionally small:
 
@@ -605,7 +759,19 @@ Native Gravity Forms Feed
 + Bale fallback
 + Entry Meta status
 + Manual Retry
-+ GravityView/Elementor presentation
++ modern WordPress-native GNM admin UI
++ GravityView/Elementor case presentation
+```
+
+Implementation method is equally constrained:
+
+```text
+CURRENT OFFICIAL CONTRACTS
+→ GREENFIELD IMPLEMENTATION
+→ TEST
+→ LEGACY DIFFERENTIAL REVIEW
+→ CURRENT-VALID MATERIAL FINDINGS ONLY
+→ RE-TEST / EXACT-TARGET QUALIFICATION
 ```
 
 Any future implementation that adds infrastructure beyond this shape must first prove that a locked mandatory requirement cannot be met without it.

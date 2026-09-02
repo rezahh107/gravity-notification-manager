@@ -1,12 +1,14 @@
 # Gravity Notification Manager — Migration Plan
 
-> **Document ID:** `GNM-MIGRATION-PLAN-1.2.0`  
+> **Document ID:** `GNM-MIGRATION-PLAN-1.3.0`  
 > **Status:** `GREENFIELD_CORE_APPROVED`  
-> **Plan date:** `2026-09-02`  
+> **Plan date:** `2026-09-03`  
 > **Repository:** `rezahh107/gravity-notification-manager`  
 > **Product identity:** `docs/PRODUCT_IDENTITY.md`  
 > **Target contract:** `docs/TARGET_ARCHITECTURE.md`  
-> **Legacy manifest:** `docs/SALVAGE_REFERENCE.md`  
+> **Owner preference overlay:** `docs/OWNER_PREFERENCE_PROFILE.md`  
+> **UI/UX reference:** `docs/UI_UX_REFERENCE.md`  
+> **Legacy differential-review manifest:** `docs/SALVAGE_REFERENCE.md`  
 > **Immutable legacy tag:** `legacy-source-pre-greenfield-2026-09-02`
 
 ## 1. Purpose and Authority
@@ -19,12 +21,15 @@ Authority order for implementation:
 PRODUCT_IDENTITY.md
 → TARGET_ARCHITECTURE.md
 → MIGRATION_PLAN.md
+→ applicable project contracts/constraints
+→ OWNER_PREFERENCE_PROFILE.md
+→ UI_UX_REFERENCE.md for UI scope
 → SALVAGE_REFERENCE.md
 → AGENTS.md
-→ current work-unit instruction
+→ current Work Unit instruction
 ```
 
-This plan may refine sequencing, file/class boundaries, migration mechanics, tests, rollback, and compatibility handling. It may not independently reopen Feed-as-Rule, Feed-as-Flow-Step, synchronous delivery, Entry Meta state, manual Retry, Point Manager authority, GravityView/Elementor presentation, staff metadata, provider eligibility, or other closed architectural decisions.
+This plan may refine sequencing, file/class boundaries, migration mechanics, tests, rollback, compatibility handling and implementation methodology. It may not independently reopen Feed-as-Rule, Feed-as-Flow-Step, synchronous delivery, Entry Meta state, manual Retry, Point Manager authority, GravityView/Elementor presentation, staff metadata, provider eligibility, or other closed architectural decisions.
 
 ## 2. Canonical Product Identity
 
@@ -42,11 +47,7 @@ Legacy identifiers are not renamed in place merely for cosmetics. They remain mi
 
 ## 3. Baseline and Legacy Identity
 
-Initial greenfield implementation baseline:
-
-```text
-main@7556f86ecc65f37d34d9563ce2087f16235bbca5
-```
+The original greenfield documentation baseline was created from the repository state after the legacy tag was frozen. Every implementation Work Unit must specify its own exact current base/head rather than relying on a stale remembered baseline.
 
 Immutable legacy authority:
 
@@ -56,50 +57,153 @@ commit: 7556f86ecc65f37d34d9563ce2087f16235bbca5
 mode: READ_ONLY_REFERENCE
 ```
 
-Later Work Units may specify a newer exact base/head. The legacy tag never moves.
+The legacy tag never moves.
 
 The current `main` tree still contains legacy runtime until controlled cutover. Presence in `main` does not make legacy classes the implementation foundation for the new core.
 
-## 4. Migration Strategy
+## 4. Selected Migration Strategy
 
 Selected strategy:
 
 ```text
-GREENFIELD CORE
+DOCS-FIRST GREENFIELD IMPLEMENTATION
 +
-READ-ONLY LEGACY REFERENCE
+CURRENT OFFICIAL CONTRACT VERIFICATION
 +
-ON-DEMAND VALIDATED TRANSPLANT
+TARGET-FOCUSED TESTS
++
+POST-IMPLEMENTATION LEGACY DIFFERENTIAL REVIEW
++
+CURRENT-VALID FINDING INCORPORATION
++
+EXACT-TARGET REVALIDATION
 +
 CONTROLLED CUTOVER
 +
 LEGACY RETIREMENT
 ```
 
-For each target responsibility:
+The key change from the earlier salvage-first idea is intentional:
 
 ```text
-1. Start from TARGET_ARCHITECTURE.md.
-2. Verify current official product/API contracts.
-3. Design the new responsibility/class from scratch.
-4. Consult SALVAGE_REFERENCE.md only if old implementation knowledge is useful.
-5. Inspect the exact file from the immutable legacy tag.
-6. Transplant only the smallest still-valid behavior/data.
-7. Add target-focused tests.
+DO NOT inspect equivalent legacy implementation first
+        ↓
+Build the target component independently from current official contracts
+        ↓
+Test it
+        ↓
+Only then inspect the equivalent old implementation
 ```
 
-Legacy code must not dictate new:
+This minimizes architectural anchoring while preserving useful historical edge-case knowledge.
 
-- class boundaries;
-- execution topology;
-- Rule storage;
-- queue/retry semantics;
-- locking model;
-- event taxonomy;
-- provider capability model;
-- admin information architecture.
+## 5. Per-Work-Unit Development Lifecycle
 
-## 5. Non-Negotiable Cutover Rule
+For each material greenfield Work Unit:
+
+### 5.1 Current Contract Snapshot
+
+Before implementation, record the current relevant baseline and official sources.
+
+Template:
+
+```text
+Repository base SHA:
+WordPress:
+PHP:
+Gravity Forms:
+Gravity Flow:
+GravityView:
+Elementor:
+IPPanel/Bale/current external contract:
+Official docs inspected:
+Inspection date:
+```
+
+Include only relevant products.
+
+Rules:
+
+- verify version-sensitive behavior against current official/primary documentation;
+- prefer stable, officially supported, non-deprecated mechanisms compatible with the actual baseline;
+- do not select beta/preview/experimental APIs simply because they are newer;
+- do not rely on memory for mutable API contracts.
+
+### 5.2 Greenfield implementation
+
+Design from:
+
+```text
+TARGET_ARCHITECTURE.md
++
+current official contracts
++
+Owner preference / UI reference overlays where applicable
+```
+
+Do not derive target class boundaries from legacy classes.
+
+### 5.3 Initial validation
+
+Run target-focused tests with no real SMS/Bale send.
+
+The new implementation should be understandable and testable without loading legacy architecture.
+
+### 5.4 Post-Implementation Legacy Differential Review
+
+After the initial implementation/test pass, inspect only equivalent, manifest-approved legacy assets from the immutable tag.
+
+Question:
+
+```text
+Did legacy contain a material edge case, low-level behavior, request/response detail,
+normalization rule, migration fact or user-facing wording the new implementation missed?
+```
+
+If no: record `NO_MATERIAL_FINDING`.
+
+If yes:
+
+1. validate the finding against current official behavior and target architecture;
+2. reject stale/retired behavior;
+3. incorporate only the smallest current-valid material value;
+4. update tests;
+5. re-run affected validation.
+
+### 5.5 Exact-target qualification
+
+Qualification claims must identify the exact final Head/artifact tested.
+
+Do not report an earlier Head, substitute environment, static check or synthetic result as exact final-target PASS.
+
+Use truthful states such as:
+
+```text
+PASS
+FAIL
+PARTIAL
+NOT_RUN
+NOT_EXECUTED_ENVIRONMENT_UNAVAILABLE
+NOT_PROVEN
+```
+
+## 6. Complexity / Dependency Gate
+
+Before adding infrastructure, abstraction, dependency or persistent state beyond the closed target, answer:
+
+```text
+What exact failure does this prevent?
+What material benefit does it provide?
+Can a current native/platform primitive satisfy the requirement?
+Why is the simpler alternative insufficient?
+What runtime/maintenance cost is added?
+```
+
+A weak or speculative answer is evidence against adding the machinery.
+
+This gate cannot authorize an architecture reopen by itself.
+
+## 7. Non-Negotiable Cutover Rule
 
 At no point may production intentionally have:
 
@@ -115,9 +219,9 @@ Before enabling greenfield real delivery for a migrated scope, disable the equiv
 
 Owner acceptance of rare provider/concurrency duplicates does not authorize migration-wide duplicates from two architectures.
 
-## 6. Legacy Disposition Summary
+## 8. Legacy Disposition Summary
 
-All legacy consultation is governed by `docs/SALVAGE_REFERENCE.md`.
+All post-implementation legacy review is governed by `docs/SALVAGE_REFERENCE.md`.
 
 ### Retire; do not transplant architecture
 
@@ -134,7 +238,7 @@ All legacy consultation is governed by `docs/SALVAGE_REFERENCE.md`.
 - delivery-log table as target state authority
 - automatic retry/backoff/scheduler behavior
 
-### Bounded salvage candidates
+### Bounded differential-review candidates
 
 - IPPanel Edge request/response knowledge
 - WordPress HTTP adapter behavior
@@ -147,7 +251,7 @@ All legacy consultation is governed by `docs/SALVAGE_REFERENCE.md`.
 
 No legacy asset is reused merely because it already exists.
 
-## 7. Target Runtime Components
+## 9. Target Runtime Components
 
 Exact class names may evolve inside Work Units, but responsibility boundaries remain approximately:
 
@@ -171,75 +275,118 @@ EntryMetaDeliveryStore
 
 Gravity Flow adds a narrow supported Feed-Step integration around the Feed Add-On.
 
-Point Manager and Attention Required are read/control surfaces over the same authoritative configuration/state; they are not alternative authorities.
+Point Manager and operational admin surfaces are read/control surfaces over the same authoritative configuration/state; they are not alternative workflow/state authorities.
 
-## 8. Work Unit Sequence
+## 10. Admin UI Direction
 
-### WU-00 — Greenfield Safety Baseline and Minimal Legacy Asset Capture
+The approved GNM admin information architecture is:
 
-Objective: establish a no-real-send test harness and capture only facts necessary for safe replacement.
+```text
+Overview
+Notification Points
+Settings
+Help & Diagnostics
+```
+
+Direction:
+
+```text
+EDIS UX grammar
++
+current stable WordPress Design System
++
+GNM-specific simplified IA
+```
+
+At the decision date, WordPress 7.1 provides the stable theming foundation (`wp-theme` design tokens and stable theming support) suitable for modern plugin-owned admin UI. Each UI Work Unit must re-check the current official WordPress contract.
+
+The customizable Widget Dashboard remains experimental at the decision date and is **not** a production dependency.
+
+Rules:
+
+- use WordPress-native controls/APIs when sufficient;
+- use stable design tokens where supported by the baseline;
+- do not build a parallel custom design system merely for appearance;
+- use React only when interaction complexity creates a material usability benefit;
+- do not make GNM a SPA by default;
+- scope admin assets to GNM screens whenever practical;
+- important states use text + semantic cue, never color alone;
+- preserve RTL/LTR correctness, accessibility and reduced-motion behavior;
+- central case-level Attention Required remains GravityView + Elementor.
+
+See `docs/UI_UX_REFERENCE.md`.
+
+## 11. Work Unit Sequence
+
+### WU-00 — Greenfield Development Baseline + No-Send Harness
+
+Objective: establish a current implementation baseline and a safe test environment **without reading equivalent legacy implementation code**.
 
 Required:
 
-- verify exact repository Head;
-- enumerate current real-send entry points so cutover can disable them;
-- identify settings/options/data requiring migration;
-- configure provider fakes/stubs;
-- inspect only salvage-listed legacy assets;
-- capture target-relevant behavior as tests where practical.
+- verify exact current repository Head;
+- create the initial Current Contract Snapshot;
+- identify supported runtime/product versions relevant to the first implementation stage;
+- reconcile/prepare Composer and test tooling only as needed for greenfield work;
+- create deterministic fakes/stubs for SMS/Bale/HTTP boundaries;
+- prove automated tests cannot contact real providers;
+- establish canonical `GravityNotify` greenfield namespace/bootstrap/test skeleton as appropriate;
+- document how future Work Units record exact-target qualification.
 
 Forbidden:
 
+- inspecting legacy IPPanel/recipient/rule implementation for design guidance;
 - repairing legacy architecture;
 - real provider calls;
-- deleting active legacy paths before replacement proof.
+- starting cutover.
 
-Exit: all real send paths are known and tests can detect a send attempt without contacting providers.
+Exit: greenfield code can be developed/tested without real external sends and without architectural dependence on legacy.
 
 ### WU-01 — Greenfield Gravity Forms Feed Foundation
 
-Objective: create the target `GFFeedAddOn` notification Rule layer from scratch.
+Objective: create the target `GFFeedAddOn` notification Rule layer from scratch using current official Gravity Forms contracts.
 
 Required:
 
-- canonical product identity/namespace;
 - one Feed = one logical notification;
-- Feed settings for message, recipients, channel/fallback requirements;
+- Feed settings for message, recipient sources, channel/fallback requirements;
 - native Feed conditional logic;
-- synchronous processing baseline;
-- schema/versioning for Feed metadata;
+- synchronous processing boundary;
+- schema/versioning for Feed metadata where needed;
 - tests.
 
-Do not derive class structure from legacy `GravityForms_Handler` or custom Rule schema.
+After initial tests: run the bounded legacy differential review for old GF/message/rule-related behavior. Incorporate only current-valid missing behavior.
 
 Exit: Feed CRUD/configuration and condition behavior work without real provider calls.
 
 ### WU-02 — SMS Provider Contract, Registry, IPPanel, Bale
 
-Objective: build the synchronous delivery transport layer.
+Objective: build the synchronous delivery transport layer from current official external/platform contracts.
 
 Required:
 
 - normalized SMS provider contract;
 - capability declarations;
 - contract-gated `SmsProviderRegistry`;
-- greenfield IPPanel provider using only validated Edge salvage;
+- greenfield IPPanel provider;
 - WordPress HTTP transport seam;
 - Bale as separate channel;
 - attempt statuses `SUCCESS`, `FAILED`, `AMBIGUOUS`, `SKIPPED`;
-- ordered fallback behavior.
+- ordered fallback behavior;
+- deterministic HTTP/provider tests.
+
+After initial tests: inspect approved legacy IPPanel/HTTP assets for missed current-valid Edge request/response/error details.
 
 Forbidden:
 
+- copying `IPPanel_Provider.php` wholesale;
 - Pattern→Plain auto-conversion;
 - background retry;
 - arbitrary undocumented providers.
 
-Exit tests prove primary success/secondary fallback/incompatible skip/Bale fallback/all-fail behavior.
-
 ### WU-03 — Recipient Resolver
 
-Objective: build generic recipient resolution from the target contract.
+Objective: build generic recipient resolution from current target/API contracts.
 
 At minimum support:
 
@@ -260,26 +407,26 @@ wudm_bale_chat_id
 
 Do not depend on WP-Bulk-Import classes or `plato_user_mobile`.
 
-Exit: tests prove user/role/assignee resolution and graceful missing-contact behavior.
+After initial tests: inspect legacy resolver/normalizer only for missed current-valid behavior.
 
 ### WU-04 — Gravity Flow Feed-Step Integration and Synchronous Execution
 
-Objective: make the greenfield Feed the authoritative runtime mechanism.
+Objective: make the greenfield Feed the authoritative workflow-position runtime mechanism using current official Gravity Flow integration contracts.
 
 Required proof:
 
 - submission Feed uses normal Feed lifecycle;
-- Flow-assigned Feed is intercepted from ordinary submit execution;
+- Flow-assigned Feed is intercepted from ordinary submit execution where required by the supported contract;
 - compatible Feed Step executes when workflow reaches it;
 - native condition is respected;
-- provider failure is recorded without stranding the workflow;
+- provider failure is recorded without stranding workflow;
 - one Step/Feed = one logical notification.
 
-Forbidden: recreating legacy Flow lifecycle-hook → queue → dispatcher architecture.
+After initial tests: differential-review legacy Flow triggering only for edge cases; never transplant listener→queue→dispatcher architecture.
 
 ### WU-05 — Entry Meta Delivery State and Manual Retry
 
-Objective: create approved lightweight operational state.
+Objective: create approved lightweight operational state and explicit recovery.
 
 Required:
 
@@ -289,51 +436,57 @@ Required:
 - best-effort duplicate suppression;
 - `attention_required` state;
 - synchronous manual Retry;
-- successful Retry resolves Attention Required.
+- successful Retry resolves Attention Required;
+- capability/nonce protections.
 
-Forbidden:
+After initial tests: review legacy state/locking/log behavior only to identify edge cases; do not transplant heavy exactly-once or log-table authority.
 
-- target delivery DB as SSOT;
-- atomic claim subsystem;
-- scheduled Retry.
+### WU-06 — Modern GNM Admin Foundation + Point Manager
 
-### WU-06 — Point Manager Guidance and Verification
-
-Objective: make setup difficult to misconfigure without mutating Flow topology.
+Objective: implement the purpose-built admin UI using `UI_UX_REFERENCE.md` and current stable WordPress UI contracts.
 
 Required:
 
-- inspect actual forms/workflows;
-- show configuration health;
-- detect missing/misconfigured Notification Feed Steps;
-- exact setup instructions;
+- GNM navigation: Overview / Notification Points / Settings / Help & Diagnostics;
+- EDIS-inspired panel/card/status/action grammar;
+- stable WordPress design tokens/components where supported;
+- no production dependency on experimental Widget Dashboard;
+- responsive/RTL/LTR/accessibility baseline;
+- Point Manager inspection and configuration health;
+- exact setup guidance;
 - direct link to relevant Gravity Flow screen;
-- official help link where useful;
-- `Check Again` read-back verification.
+- `Check Again` verification;
+- assets scoped to GNM screens where practical.
 
 Forbidden:
 
-- inserting/reordering Steps;
+- inserting/reordering Flow Steps;
 - changing Approval routing;
-- silent topology repair.
+- silent topology repair;
+- SPA/framework expansion without material UX benefit;
+- copying EDIS job/export IA.
 
-### WU-07 — Attention Required Surfaces
+After initial implementation/tests: legacy admin UI may be reviewed only for surviving setting labels/migration obligations; EDIS remains the approved visual/UX reference.
+
+### WU-07 — Attention Required and Entry Detail Surfaces
 
 Plugin owns:
 
 - Entry Meta state;
 - Retry action;
 - GF Entry Detail status/Retry surface;
-- bounded reusable Retry control if needed.
+- bounded aggregate/shortcut information in GNM Overview if useful.
 
 Presentation owns:
 
 - GravityView filtered Attention View;
-- Elementor layout/styling.
+- Elementor case layout/styling.
 
-No duplicate status store or custom generic dashboard subsystem.
+GNM admin must not become a duplicate case-management state store/dashboard.
 
 ### WU-08 — Settings/Data Migration and Controlled Cutover
+
+This Work Unit may inspect legacy first because the migration target is the old state itself.
 
 Required:
 
@@ -377,17 +530,18 @@ Required:
 - safe uninstall policy;
 - never delete external `wudm_*` staff metadata;
 - update README/docs to actual runtime;
-- final regression matrix.
+- run final regression matrix on exact final Head;
+- record final current-contract snapshot and any environment limitations.
 
-## 9. Data Migration Rules
+## 12. Data Migration Rules
 
-### 9.1 Provider settings
+### 12.1 Provider settings
 
 Migrate valid provider credential/settings **values** only. This does not authorize preserving legacy settings architecture.
 
 Never expose credentials in reports or diffs.
 
-### 9.2 Legacy Rules
+### 12.2 Legacy Rules
 
 Convert a legacy Rule to a Feed only when mapping is deterministic.
 
@@ -399,11 +553,11 @@ DO NOT GUESS
 → provide manual setup guidance
 ```
 
-### 9.3 Historical logging
+### 12.3 Historical logging
 
-Historical legacy log data may remain temporarily read-only if useful for rollback/history, but the greenfield runtime must not depend on it.
+Historical legacy log data may remain temporarily read-only if useful for rollback/history, but greenfield runtime must not depend on it.
 
-### 9.4 Staff metadata
+### 12.4 Staff metadata
 
 Do not own/delete:
 
@@ -414,14 +568,14 @@ wudm_bale_chat_id
 
 Gravity Notification Manager is a consumer of these user-meta contracts.
 
-## 10. Regression Matrix
+## 13. Regression Matrix
 
 Final validation must cover at minimum:
 
 ### Feed / Flow
 
 - submission Feed executes correctly;
-- Flow-assigned Feed does not independently send at submit;
+- Flow-assigned Feed does not independently send at submit where the supported integration requires interception;
 - Flow Feed Step executes when reached;
 - disabled/conditional Feed behavior;
 - notification failure does not strand workflow.
@@ -464,15 +618,23 @@ Normal notification execution/retry must not invoke:
 - custom queue;
 - worker.
 
-### Diagnostics / migration
+### Admin UI / UX
 
-- opening/rendering diagnostics sends nothing;
-- explicit test-send is separately authorized;
+- Overview/Notification Points/Settings/Help & Diagnostics routes render as intended;
+- important states remain understandable without color alone;
+- Point Manager `Check Again` verifies actual configuration;
+- diagnostics render without external send;
+- admin assets are not globally enqueued without need;
+- no production dependency on experimental Widget Dashboard contract;
+- central case-level Attention Required remains GravityView/Elementor-driven.
+
+### Migration
+
 - secrets are not logged;
 - legacy/new real senders never overlap for migrated scope;
 - legacy notification scheduling hooks are absent after retirement.
 
-## 11. Validation Environments
+## 14. Validation Environments
 
 Use layered validation:
 
@@ -481,6 +643,7 @@ static checks
 → unit/provider fakes
 → WordPress + Gravity Forms integration
 → Gravity Flow workflow integration
+→ admin UI interaction/accessibility checks
 → staging with non-production test destinations
 → controlled production cutover
 ```
@@ -489,7 +652,7 @@ Automated tests MUST NOT contact real SMS/Bale providers.
 
 Production credentials MUST NOT be used in CI.
 
-## 12. Rollback
+## 15. Rollback
 
 Before legacy retirement, rollback may be operational:
 
@@ -504,19 +667,20 @@ After legacy removal, rollback is release/Git based: deploy the last known-good 
 
 Do not retain dual runtime indefinitely just to make rollback easier.
 
-## 13. Stop Conditions
+## 16. Stop Conditions
 
 Stop the affected Work Unit instead of improvising when:
 
 - required starting SHA does not match;
-- current official Gravity Forms/Gravity Flow contract contradicts the selected mechanism;
+- current official Gravity Forms/Gravity Flow/WordPress contract contradicts the selected mechanism;
 - implementation would require legacy/new real sender overlap;
 - legacy Rule cannot be mapped without guessing;
 - provider fails the Provider Contract;
 - proposed change requires Cron/queue/background notification execution;
+- a production-critical UI path requires an experimental WordPress API without explicit Owner reopen/approval;
 - implementation evidence requires architecture reopening.
 
-## 14. Release Completion Criteria
+## 17. Release Completion Criteria
 
 The greenfield migration is complete only when:
 
@@ -534,17 +698,19 @@ The greenfield migration is complete only when:
 - Attention Required is queryable/presentable;
 - manual Retry works;
 - staff contacts use selected user meta;
-- GravityView/Elementor can present central Attention view;
+- modern GNM admin surfaces conform to `UI_UX_REFERENCE.md`;
+- GravityView/Elementor present central case-level Attention view;
 - Entry Detail provides operational fallback;
 - legacy duplicate send paths are removed;
 - diagnostics have no implicit send side effects;
 - runtime/dependency metadata is coherent;
 - documentation matches actual runtime;
-- final regression checks pass against the final PR Head.
+- post-implementation legacy differential reviews are recorded for applicable Work Units;
+- final regression checks are run against the exact final PR Head/artifact to the claimed level.
 
-## 15. Official Implementation References
+## 18. Official Implementation References
 
-Re-check current official contracts during affected Work Units:
+Re-check current official contracts during affected Work Units. The URLs below are starting points, not frozen version proof:
 
 - Gravity Forms `GFFeedAddOn`: https://docs.gravityforms.com/gffeedaddon/
 - Gravity Flow feed integrations: https://docs.gravityflow.io/category/integrations/
@@ -552,31 +718,32 @@ Re-check current official contracts during affected Work Units:
 - Gravity Flow Step class: https://docs.gravityflow.io/step-class/
 - WordPress HTTP API: https://developer.wordpress.org/reference/functions/wp_remote_post/
 - WordPress User Metadata: https://developer.wordpress.org/plugins/users/working-with-user-metadata/
+- WordPress Design System theming / 7.1 dev note: https://make.wordpress.org/core/2026/07/31/design-system-theming-in-wordpress-7-1/
+- WordPress Developer Blog Dashboard experiment status: https://developer.wordpress.org/news/2026/06/whats-new-for-developers-june-2026/
 - GravityView Elementor integration: https://www.gravitykit.com/docs/gravityview-pro/advanced-elementor-widget/
 - IPPanel Edge API: https://ippanelcom.github.io/Edge-Document/
 - Bale Bot API: https://docs.bale.ai/
 
-## 16. Final Migration Statement
+## 19. Final Migration Statement
 
-This is a **greenfield rewrite of the target core**, not a class-by-class refactor of the legacy runtime.
+This is a **docs-first greenfield rewrite of the target core**, not a class-by-class refactor of the legacy runtime.
 
 ```text
-LEGACY REFERENCE
-hooks + queue + cron + direct handlers + custom rules + log table
-        │
-        │ read-only, on-demand
-        ▼
-inspect → validate → transplant bounded value only
-        │
-        ▼
-GRAVITY NOTIFICATION MANAGER
-native Feed + native Flow Feed Step
-+ recipient resolver
-+ synchronous dispatcher
-+ provider registry + Bale
-+ Entry Meta + manual Retry
-+ Point guidance/verification
-+ GravityView/Elementor presentation
+CLOSED TARGET + CURRENT OFFICIAL CONTRACTS
+        ↓
+GREENFIELD IMPLEMENTATION
+        ↓
+TARGET TESTS
+        ↓
+POST-IMPLEMENTATION LEGACY DIFFERENTIAL REVIEW
+        ↓
+CURRENT-VALID MATERIAL FINDINGS ONLY
+        ↓
+REVALIDATE EXACT TARGET
+        ↓
+CONTROLLED CUTOVER
+        ↓
+RETIRE LEGACY
 ```
 
 Default answer to “should we evolve this legacy class into the target?” is **no**.
