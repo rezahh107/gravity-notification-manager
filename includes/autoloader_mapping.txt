@@ -1,0 +1,5 @@
+Add these mappings to your PSR-4 autoloader:
+
+"GFSMS\\Domain\\": "includes/Domain/",
+"GFSMS\\Services\\": "includes/Services/",
+"GFSMS\\Infrastructure\\": "includes/Infrastructure/"

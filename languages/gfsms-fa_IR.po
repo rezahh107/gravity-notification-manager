@@ -1,0 +1,260 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: fa_IR\n"
+
+msgid "API Key is missing."
+msgstr "کلید API وارد نشده است."
+
+msgid "Advanced"
+msgstr "پیشرفته"
+
+msgid "Approved step template"
+msgstr "قالب مرحله تأیید شده"
+
+msgid "Conditional logic JSON"
+msgstr "JSON منطق شرطی"
+
+msgid "Configure workflow SMS, IPPanel, queueing, fallback and logging."
+msgstr "تنظیم پیامک گردش‌کار، آی‌پی‌پنل، صف، جایگزین و لاگ."
+
+msgid "Connection failed."
+msgstr "اتصال ناموفق بود."
+
+msgid "Connection successful."
+msgstr "اتصال موفق بود."
+
+msgid "Connection test from Gravity Flow SMS."
+msgstr "تست اتصال از افزونه پیامک گراویتی فلو."
+
+msgid "Default sender number"
+msgstr "شماره فرستنده پیش‌فرض"
+
+msgid "Enable SMS notifications"
+msgstr "فعال‌سازی ارسال پیامک"
+
+msgid "Enable SMS on form submission"
+msgstr "فعال‌سازی پیامک پس از ارسال فرم"
+
+msgid "Enable debug logging"
+msgstr "فعال‌سازی لاگ دیباگ"
+
+msgid "Enable fallback provider"
+msgstr "فعال‌سازی ارائه‌دهنده جایگزین"
+
+msgid "Enable retry"
+msgstr "فعال‌سازی تلاش مجدد"
+
+msgid "Event → IPPanel pattern mapping"
+msgstr "نگاشت رویداد به الگوی آی‌پی‌پنل"
+
+msgid "Fallback API Key"
+msgstr "کلید API جایگزین"
+
+msgid "Fallback sender number"
+msgstr "شماره فرستنده جایگزین"
+
+msgid "Fixed numbers"
+msgstr "شماره‌های ثابت"
+
+msgid "Fixed recipient number"
+msgstr "شماره ثابت گیرنده"
+
+msgid "GF SMS: No valid recipient."
+msgstr "پیامک GF: گیرنده معتبری یافت نشد."
+
+msgid "General"
+msgstr "عمومی"
+
+msgid "Gravity Flow SMS"
+msgstr "پیامک گراویتی فلو"
+
+msgid "Gravity Flow SMS Notifier"
+msgstr "افزونه پیامک گراویتی فلو"
+
+msgid "Gravity Flow SMS Notifier requires Gravity Forms and Gravity Flow."
+msgstr "افزونه پیامک گراویتی فلو به Gravity Forms و Gravity Flow نیاز دارد."
+
+msgid "Gravity Flow SMS Notifier requires PHP 8.1 or higher."
+msgstr "افزونه پیامک گراویتی فلو به PHP 8.1 یا بالاتر نیاز دارد."
+
+msgid "Gravity Forms"
+msgstr "فرم‌های گراویتی"
+
+msgid "IPPanel"
+msgstr "آی‌پی‌پنل"
+
+msgid "IPPanel API Key"
+msgstr "کلید API آی‌پی‌پنل"
+
+msgid "IPPanel request failed."
+msgstr "درخواست به آی‌پی‌پنل ناموفق بود."
+
+msgid "Invalid JSON."
+msgstr "JSON نامعتبر است."
+
+msgid "Invalid credentials or account error."
+msgstr "مشخصات نادرست یا خطای حساب کاربری."
+
+msgid "Keep logs for (days)"
+msgstr "نگهداری لاگ (روز)"
+
+msgid "Limit sending frequency"
+msgstr "محدودسازی سرعت ارسال"
+
+msgid "Live template preview"
+msgstr "پیش‌نمایش زنده قالب"
+
+msgid "Logging"
+msgstr "لاگ‌ها"
+
+msgid "Mobile field ID"
+msgstr "شناسه فیلد موبایل"
+
+msgid "New submission from {form_title}."
+msgstr "ارسال جدید از {form_title}."
+
+msgid "Patterns"
+msgstr "الگوها"
+
+msgid "Phone and message are required."
+msgstr "شماره و پیام الزامی است."
+
+msgid "Queue & Retry"
+msgstr "صف و تلاش مجدد"
+
+msgid "Queue delay (seconds)"
+msgstr "تاخیر صف (ثانیه)"
+
+msgid "Rate limit reached."
+msgstr "محدودیت نرخ رسیده است."
+
+msgid "Rate limit reached; retry scheduled."
+msgstr "محدودیت نرخ رسیده؛ تلاش مجدد برنامه‌ریزی شد."
+
+msgid "Recipient field ID"
+msgstr "شناسه فیلد گیرنده"
+
+msgid "Recipient phone"
+msgstr "شماره گیرنده"
+
+msgid "Recipient type"
+msgstr "نوع گیرنده"
+
+msgid "Recipients"
+msgstr "گیرندگان"
+
+msgid "Rejected step template"
+msgstr "قالب مرحله رد شده"
+
+msgid "Retry scheduled."
+msgstr "تلاش مجدد برنامه‌ریزی شد."
+
+msgid "SMS Logs"
+msgstr "لاگ‌های پیامک"
+
+msgid "SMS failed"
+msgstr "شکست ارسال پیامک"
+
+msgid "SMS failed: %s"
+msgstr "پیامک ناموفق: %s"
+
+msgid "SMS retry scheduled"
+msgstr "برنامه‌ریزی برای تلاش مجدد"
+
+msgid "SMS retry scheduled."
+msgstr "تلاش مجدد پیامک برنامه‌ریزی شد."
+
+msgid "SMS sent successfully to %s."
+msgstr "پیامک با موفقیت به %s ارسال شد."
+
+msgid "SMS skipped by conditional logic."
+msgstr "پیامک به دلیل منطق شرطی ارسال نشد."
+
+msgid "SMS skipped: no recipient resolved."
+msgstr "پیامک ارسال نشد: گیرنده‌ای یافت نشد."
+
+msgid "SMS template"
+msgstr "قالب پیامک"
+
+msgid "Send SMS on step completion"
+msgstr "ارسال پیامک پس از پایان مرحله"
+
+msgid "Send SMS on workflow completion"
+msgstr "ارسال پیامک پس از تکمیل گردش‌کار"
+
+msgid "Send test SMS"
+msgstr "ارسال پیام تست"
+
+msgid "Sender number"
+msgstr "شماره فرستنده"
+
+msgid "Step object not available."
+msgstr "شیء مرحله در دسترس نیست."
+
+msgid "Step recipient source"
+msgstr "منبع گیرنده مرحله"
+
+msgid "System error"
+msgstr "خطای سیستمی"
+
+msgid "Templates"
+msgstr "قالب‌ها"
+
+msgid "Test IPPanel connection"
+msgstr "تست اتصال آی‌پی‌پنل"
+
+msgid "Test connection"
+msgstr "تست اتصال"
+
+msgid "Test message"
+msgstr "پیام تست"
+
+msgid "Test message from Gravity Flow SMS."
+msgstr "پیام تست از افزونه پیامک گراویتی فلو."
+
+msgid "Trigger webhook on"
+msgstr "اجرای وب‌هوک روی"
+
+msgid "Unauthorized"
+msgstr "دسترسی غیرمجاز"
+
+msgid "Unknown error"
+msgstr "خطای ناشناخته"
+
+msgid "Use a real recipient number to verify credentials and sender configuration."
+msgstr "برای بررسی اعتبارنامه و تنظیمات فرستنده، از یک شماره واقعی استفاده کنید."
+
+msgid "Use queue"
+msgstr "استفاده از صف"
+
+msgid "Webhook"
+msgstr "وب‌هوک"
+
+msgid "Webhook URL"
+msgstr "آدرس وب‌هوک"
+
+msgid "Which step status triggers SMS?"
+msgstr "کدام وضعیت مرحله پیامک را فعال کند؟"
+
+msgid "Workflow completed for entry #{entry_id}."
+msgstr "گردش‌کار برای ورودی #{entry_id} تکمیل شد."
+
+msgid "Workflow completion template"
+msgstr "قالب تکمیل گردش‌کار"
+
+msgid "Workflow recipient roles"
+msgstr "نقش‌های گیرنده گردش‌کار"
+
+msgid "Workflow recipient source"
+msgstr "منبع گیرنده گردش‌کار"
+
+msgid "Working…"
+msgstr "در حال انجام…"
+
+msgid "Your request has been approved."
+msgstr "درخواست شما تایید شد."
+
+msgid "Your request has been rejected."
+msgstr "درخواست شما رد شد."
+

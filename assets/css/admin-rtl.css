@@ -1,0 +1,68 @@
+/**
+ * GFSMS Admin RTL Styles
+ *
+ * Direction-specific overrides for right-to-left languages
+ * (e.g., Arabic, Hebrew). Loaded via wp_style_add_data()
+ * as a replacement for the main admin stylesheet.
+ *
+ * Most RTL compatibility is already handled by CSS logical
+ * properties in admin.css. This file only contains overrides
+ * for properties that logical properties cannot cover, such
+ * as text-align and explicit border flips.
+ *
+ * Version: 4.1.0
+ */
+
+/**
+ * # 1. Form Table Alignment
+ */
+
+[dir="rtl"] .gfsms-form-table th {
+	text-align: right;
+}
+
+/**
+ * # 2. Control Alignment
+ */
+
+[dir="rtl"] .gfsms-control {
+	text-align: right;
+}
+
+/**
+ * # 3. Rule Table — Actions Column
+ */
+
+[dir="rtl"] .gfsms-rules-table th:last-child,
+[dir="rtl"] .gfsms-rules-table td:last-child {
+	text-align: center;
+}
+
+/**
+ * # 4. Pattern Row Border Flip
+ *
+ * Moves the visual indent from the inline-start (left in LTR)
+ * to the inline-end (right in RTL). The logical property in
+ * admin.css is overridden with `none`, and a new border is
+ * applied on the opposite side.
+ */
+
+[dir="rtl"] .gfsms-pattern-row td {
+	border-inline-start: none;
+	border-inline-end: 3px solid var(--gfsms-color-border);
+}
+
+/**
+ * # 5. Responsive — Tablet
+ *
+ * Flips the pseudo-element margin for RTL within the
+ * responsive card layout at the standard WordPress
+ * admin breakpoint.
+ */
+
+@media (max-width: 48.875em) {
+	[dir="rtl"] .gfsms-rules-table td::before {
+		margin-inline-end: 0;
+		margin-inline-start: var(--gfsms-space-sm);
+	}
+}

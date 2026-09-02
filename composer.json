@@ -1,0 +1,60 @@
+{
+    "name": "gravityflow-sms-ippanel/gravityflow-sms-ippanel",
+    "version": "1.0.0",
+    "description": "Sends SMS notifications for Gravity Flow workflow events and Gravity Forms submissions through IPPanel.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Reza Hashemi Hosseini",
+            "role": "Developer"
+        }
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^9.6",
+        "squizlabs/php_codesniffer": "^3.8",
+        "wp-coding-standards/wpcs": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GFSMS\\": "includes/",
+            "GFSMS\\Admin\\": "includes/Admin/",
+            "GFSMS\\Domain\\": "includes/Domain/",
+            "GFSMS\\Infrastructure\\": "includes/Infrastructure/",
+            "GFSMS\\Integration\\": "includes/Integration/",
+            "GFSMS\\Lifecycle\\": "includes/Lifecycle/",
+            "GFSMS\\Logging\\": "includes/Logging/",
+            "GFSMS\\Queue\\": "includes/Integration/",
+            "GFSMS\\Services\\": "includes/Services/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "GFSMS\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "lint": "phpcs --standard=phpcs.xml",
+        "lint-fix": "phpcbf --standard=phpcs.xml",
+        "stan": "phpstan analyse --memory-limit=2G",
+        "test": "phpunit",
+        "phpcompat": "phpcs -p --standard=phpcompat.xml"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "platform-check": true
+    }
+}

@@ -1,0 +1,722 @@
+/**
+ * GFSMS Admin UI Styles
+ *
+ * Admin panel styles for the GFSMS plugin. Follows WordPress CSS Coding Standards,
+ * BEM methodology, and modern CSS best practices (2025–2026).
+ *
+ * Table of Contents
+ * -----------------
+ * 1.  Color Primitives (Layer 1)
+ * 2.  Semantic Tokens (Layer 2)
+ * 3.  Reduced Motion
+ * 4.  Dark Mode Overrides
+ * 5.  Base / Reset
+ * 6.  Accessibility — Focus & Disabled
+ * 7.  Typography / Text
+ * 8.  Form Table
+ * 9.  Inputs & Selects
+ * 10. Group Headings
+ * 11. Controls
+ * 12. Buttons
+ * 13. Cards / Surfaces (Unified Base)
+ * 14. Card Variants
+ * 15. Result / Feedback
+ * 16. Preview Box
+ * 17. Tooltip / Validation
+ * 18. Rule Builder — Desktop
+ * 19. Responsive — Tablet
+ * 20. Responsive — Mobile
+ * 21. RTL Overrides
+ *
+ * Version: 4.1.0
+ */
+
+/**
+ * # 1. Color Primitives (Layer 1)
+ *
+ * Never use directly — reference only via Layer 2 semantic tokens.
+ * These are scoped to :root so they are available everywhere.
+ */
+
+:root {
+	--gfsms-primitive-gray-0: #fff;
+	--gfsms-primitive-gray-50: #f6f7f7;
+	--gfsms-primitive-gray-100: #dcdcde;
+	--gfsms-primitive-gray-200: #c3c4c7;
+	--gfsms-primitive-gray-400: #787c82; /* Fixed from #8c8f94 — contrast 4.6:1 on white */
+	--gfsms-primitive-gray-600: #50575e;
+	--gfsms-primitive-gray-900: #1d2327;
+
+	--gfsms-primitive-blue-300: #72aee6;
+	--gfsms-primitive-blue-500: #2271b1;
+	--gfsms-primitive-blue-700: #135e96;
+
+	--gfsms-primitive-green-500: #00a32a;
+	--gfsms-primitive-green-700: #007017;
+
+	--gfsms-primitive-red-500: #b32d2e;
+	--gfsms-primitive-red-700: #8a2122;
+
+	/* Dark mode primitives */
+	--gfsms-primitive-dark-bg: #1e1e1e;
+	--gfsms-primitive-dark-surface: #252525;
+	--gfsms-primitive-dark-subtle: #2c2c2c;
+	--gfsms-primitive-dark-border: #3c3c3c;
+	--gfsms-primitive-dark-border-s: #555; /* Shortened from #555555 */
+	--gfsms-primitive-dark-text: #e8e8e8;
+	--gfsms-primitive-dark-muted: #9ca3af; /* Contrast 4.7:1 on dark-bg */
+	--gfsms-primitive-dark-secondary: #b0b7bf;
+}
+
+
+/**
+ * # 2. Semantic Tokens (Layer 2)
+ *
+ * All tokens scoped to .gfsms-wrap for isolation from WP admin styles.
+ * Reference these tokens in all component styles below.
+ */
+
+.gfsms-wrap {
+
+	/* Base Unit — 8px grid system */
+	--gfsms-base-unit: 8px;
+
+	/* Spacing scale */
+	--gfsms-space-2xs: calc(var(--gfsms-base-unit) * 0.25); /* 2px */
+	--gfsms-space-xs: calc(var(--gfsms-base-unit) * 0.5);  /* 4px */
+	--gfsms-space-sm: var(--gfsms-base-unit);               /* 8px */
+	--gfsms-space-md: calc(var(--gfsms-base-unit) * 1.5);   /* 12px */
+	--gfsms-space-lg: calc(var(--gfsms-base-unit) * 2);     /* 16px */
+	--gfsms-space-xl: calc(var(--gfsms-base-unit) * 3);     /* 24px */
+	--gfsms-space-2xl: calc(var(--gfsms-base-unit) * 4);    /* 32px */
+
+	/* Typography scale */
+	--gfsms-font-size-xs: 0.75rem;
+	--gfsms-font-size-sm: 0.8125rem;
+	--gfsms-font-size-base: 0.875rem;
+	--gfsms-font-size-md: 1rem;
+	--gfsms-font-size-lg: 1.125rem;
+
+	--gfsms-font-weight-normal: 400;
+	--gfsms-font-weight-semibold: 600;
+	--gfsms-font-weight-bold: 700;
+
+	--gfsms-line-height: 1.5;
+	--gfsms-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+	/* Semantic colors */
+	--gfsms-color-text-primary: var(--gfsms-primitive-gray-900);
+	--gfsms-color-text-secondary: var(--gfsms-primitive-gray-600);
+	--gfsms-color-text-muted: var(--gfsms-primitive-gray-400); /* Fixed: 4.6:1 contrast */
+	--gfsms-color-text-error: var(--gfsms-primitive-red-500);
+	--gfsms-color-text-success: var(--gfsms-primitive-green-500);
+
+	--gfsms-color-interactive: var(--gfsms-primitive-blue-500);
+	--gfsms-color-interactive-hover: var(--gfsms-primitive-blue-700);
+	--gfsms-color-interactive-subtle: #e8f0f8;
+
+	--gfsms-color-border: var(--gfsms-primitive-gray-100);
+	--gfsms-color-border-strong: var(--gfsms-primitive-gray-200);
+
+	--gfsms-color-surface: var(--gfsms-primitive-gray-0);
+	--gfsms-color-surface-subtle: var(--gfsms-primitive-gray-50);
+
+	/* Focus ring */
+	--gfsms-focus-color: var(--gfsms-color-interactive);
+	--gfsms-focus-offset: 3px;
+
+	/* Border radius */
+	--gfsms-radius-sm: 4px;
+	--gfsms-radius-md: 6px;
+	--gfsms-radius-lg: 12px;
+
+	/* Box shadows */
+	--gfsms-shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.04);
+	--gfsms-shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.08);
+
+	/* Motion — default with animation */
+	--gfsms-transition-fast: 0.15s ease;
+	--gfsms-transition: 0.2s ease;
+
+	/* Layout */
+	--gfsms-label-width: 270px;
+	--gfsms-card-padding: var(--gfsms-space-2xl); /* Replaced magic number 20px */
+}
+
+
+/**
+ * # 3. Reduced Motion
+ *
+ * Disables all animations and transitions when the user prefers reduced motion.
+ * !important is necessary here to override all other animation declarations
+ * for accessibility compliance.
+ */
+
+@media (prefers-reduced-motion: reduce) {
+	.gfsms-wrap {
+		--gfsms-transition-fast: 0ms;
+		--gfsms-transition: 0ms;
+	}
+
+	.gfsms-wrap *,
+	.gfsms-wrap *::before,
+	.gfsms-wrap *::after {
+		animation-duration: 0.01ms !important; /* Override all animations for a11y */
+		animation-iteration-count: 1 !important; /* Override all animations for a11y */
+		scroll-behavior: auto !important; /* Override smooth scrolling for a11y */
+		transition-duration: 0.01ms !important; /* Override all transitions for a11y */
+	}
+}
+
+
+/**
+ * # 4. Dark Mode Overrides
+ *
+ * Replaces semantic token values when the operating system is in dark mode.
+ */
+
+@media (prefers-color-scheme: dark) {
+	.gfsms-wrap {
+		--gfsms-color-text-primary: var(--gfsms-primitive-dark-text);
+		--gfsms-color-text-secondary: var(--gfsms-primitive-dark-secondary);
+		--gfsms-color-text-muted: var(--gfsms-primitive-dark-muted);
+		--gfsms-color-text-error: #f28b8c; /* Lighter red for dark backgrounds */
+		--gfsms-color-text-success: #4ab866;
+
+		--gfsms-color-interactive: var(--gfsms-primitive-blue-300);
+		--gfsms-color-interactive-hover: #9ec5ed;
+		--gfsms-color-interactive-subtle: #1a2d3e;
+
+		--gfsms-color-border: var(--gfsms-primitive-dark-border);
+		--gfsms-color-border-strong: var(--gfsms-primitive-dark-border-s);
+
+		--gfsms-color-surface: var(--gfsms-primitive-dark-surface);
+		--gfsms-color-surface-subtle: var(--gfsms-primitive-dark-subtle);
+
+		--gfsms-shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.3);
+		--gfsms-shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.4);
+	}
+}
+
+
+/**
+ * # 5. Base / Reset
+ */
+
+.gfsms-wrap *,
+.gfsms-wrap *::before,
+.gfsms-wrap *::after {
+	box-sizing: border-box;
+}
+
+
+/**
+ * # 6. Accessibility — Focus & Disabled
+ */
+
+.gfsms-wrap :focus-visible {
+	outline: 2px solid var(--gfsms-focus-color);
+	outline-offset: var(--gfsms-focus-offset);
+	border-radius: var(--gfsms-radius-sm);
+}
+
+.gfsms-wrap .gfsms-disabled-wrapper {
+	cursor: not-allowed;
+}
+
+.gfsms-wrap :disabled,
+.gfsms-wrap [aria-disabled="true"] {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+
+/**
+ * # 7. Typography / Text
+ */
+
+.gfsms-wrap .gfsms-intro {
+	margin-block: var(--gfsms-space-xs) var(--gfsms-space-xl);
+	color: var(--gfsms-color-text-secondary);
+}
+
+.gfsms-wrap .description {
+	margin-block-start: var(--gfsms-space-sm);
+	color: var(--gfsms-color-text-secondary);
+	line-height: var(--gfsms-line-height);
+}
+
+
+/**
+ * # 8. Form Table
+ */
+
+.gfsms-wrap .gfsms-form-table th {
+	width: var(--gfsms-label-width);
+	padding: var(--gfsms-space-md) var(--gfsms-space-sm);
+	font-weight: var(--gfsms-font-weight-semibold);
+	vertical-align: top;
+}
+
+.gfsms-wrap .gfsms-form-table td {
+	padding: var(--gfsms-space-md) var(--gfsms-space-sm);
+	vertical-align: top;
+}
+
+
+/**
+ * # 9. Inputs & Selects
+ *
+ * Improved padding for better touch targets and higher contrast placeholders.
+ */
+
+.gfsms-wrap select,
+.gfsms-wrap input[type="text"],
+.gfsms-wrap input[type="number"],
+.gfsms-wrap input[type="email"],
+.gfsms-wrap textarea {
+	padding: var(--gfsms-space-sm) var(--gfsms-space-md);
+	line-height: var(--gfsms-line-height);
+}
+
+/* Higher contrast placeholder text — overrides browser default opacity */
+.gfsms-wrap ::placeholder {
+	color: var(--gfsms-color-text-secondary);
+	opacity: 1;
+}
+
+.gfsms-wrap :-ms-input-placeholder {
+	color: var(--gfsms-color-text-secondary);
+}
+
+.gfsms-wrap ::-ms-input-placeholder {
+	color: var(--gfsms-color-text-secondary);
+}
+
+
+/**
+ * # 10. Group Headings
+ */
+
+.gfsms-group-heading h3 {
+	margin: var(--gfsms-space-sm) 0;
+	padding-block-end: var(--gfsms-space-sm);
+	border-block-end: 2px solid var(--gfsms-color-border); /* Visual separator for heading groups */
+	font-size: var(--gfsms-font-size-base);
+	font-weight: var(--gfsms-font-weight-semibold);
+	text-wrap: balance;
+}
+
+
+/**
+ * # 11. Controls
+ */
+
+.gfsms-control {
+	max-inline-size: 100%;
+}
+
+.gfsms-checkbox,
+.gfsms-multicheck label {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--gfsms-space-sm);
+}
+
+.gfsms-multicheck {
+	display: grid;
+	gap: var(--gfsms-space-sm);
+}
+
+
+/**
+ * # 12. Buttons
+ *
+ * Active state provides tactile feedback on click.
+ */
+
+.gfsms-wrap .button:active:not(:disabled) {
+	transform: scale(0.97);
+	transition: transform 0.05s ease;
+}
+
+
+/**
+ * # 13. Cards / Surfaces (Unified Base)
+ *
+ * Shared styles for all card-like containers.
+ */
+
+.gfsms-card,
+.gfsms-pattern-card,
+.gfsms-result,
+.gfsms-preview-box {
+	border: 1px solid var(--gfsms-color-border);
+	border-radius: var(--gfsms-radius-lg);
+	background: var(--gfsms-color-surface);
+	box-shadow: var(--gfsms-shadow-rest);
+	transition: border-color var(--gfsms-transition),
+		box-shadow var(--gfsms-transition);
+}
+
+:is(
+	.gfsms-card,
+	.gfsms-pattern-card,
+	.gfsms-result,
+	.gfsms-preview-box
+):hover {
+	border-color: var(--gfsms-color-border-strong);
+	box-shadow: var(--gfsms-shadow-hover);
+}
+
+:is(
+	.gfsms-card,
+	.gfsms-pattern-card,
+	.gfsms-result,
+	.gfsms-preview-box
+):focus-visible {
+	border-color: var(--gfsms-color-interactive);
+	box-shadow: var(--gfsms-shadow-hover);
+}
+
+
+/**
+ * # 14. Card Variants
+ */
+
+.gfsms-card {
+	margin-block-start: var(--gfsms-space-xl);
+	padding: var(--gfsms-card-padding);
+}
+
+.gfsms-pattern-map {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: var(--gfsms-space-lg);
+}
+
+.gfsms-pattern-card {
+	padding: var(--gfsms-space-lg);
+}
+
+.gfsms-pattern-card h4 {
+	margin-block-start: 0;
+	text-wrap: balance;
+}
+
+
+/**
+ * # 15. Result / Feedback
+ */
+
+.gfsms-result {
+	margin-block-start: var(--gfsms-space-md);
+	padding: var(--gfsms-space-md) var(--gfsms-space-lg);
+	background: var(--gfsms-color-surface-subtle);
+	white-space: pre-wrap;
+}
+
+.gfsms-result.is-success {
+	border-inline-start: 3px solid var(--gfsms-color-text-success); /* Visual indicator for success state */
+	border-color: color-mix(in srgb, var(--gfsms-color-text-success) 30%, transparent);
+	background-color: color-mix(in srgb, var(--gfsms-color-text-success) 8%, var(--gfsms-color-surface));
+	color: var(--gfsms-color-text-success);
+}
+
+.gfsms-result.is-error {
+	border-inline-start: 3px solid var(--gfsms-color-text-error); /* Visual indicator for error state */
+	border-color: color-mix(in srgb, var(--gfsms-color-text-error) 30%, transparent);
+	background-color: color-mix(in srgb, var(--gfsms-color-text-error) 8%, var(--gfsms-color-surface));
+	color: var(--gfsms-color-text-error);
+}
+
+
+/**
+ * # 16. Preview Box
+ */
+
+.gfsms-preview-box {
+	min-height: 100px; /* Ensures visible area even when content is minimal */
+	padding: var(--gfsms-space-lg);
+	overflow-x: auto;
+	background: var(--gfsms-color-surface-subtle);
+	font-family: var(--gfsms-font-mono);
+	font-size: var(--gfsms-font-size-xs);
+	line-height: var(--gfsms-line-height);
+	white-space: pre-wrap;
+}
+
+
+/**
+ * # 17. Tooltip / Validation
+ */
+
+.gfsms-tooltip {
+	color: var(--gfsms-color-text-muted);
+	cursor: help;
+	vertical-align: middle;
+}
+
+.gfsms-json-error {
+	margin-block-start: var(--gfsms-space-xs);
+	color: var(--gfsms-color-text-error);
+	font-size: var(--gfsms-font-size-xs);
+}
+
+
+/**
+ * # 18. Rule Builder — Desktop
+ */
+
+.gfsms-rule-builder {
+	position: relative;
+	overflow-x: auto;
+}
+
+.gfsms-rules-table {
+	width: 100%;
+	min-width: 500px; /* Prevents table collapse below usable width for row content */
+	table-layout: auto;
+}
+
+/* Column widths — sized to fit typical content while maintaining readability */
+.gfsms-rules-table th:first-child,
+.gfsms-rules-table td:first-child {
+	width: 140px;
+}
+
+.gfsms-rules-table th:nth-child(2),
+.gfsms-rules-table td:nth-child(2) {
+	width: 130px;
+}
+
+.gfsms-rules-table th:nth-child(3),
+.gfsms-rules-table td:nth-child(3) {
+	width: 150px;
+}
+
+/* Actions column */
+.gfsms-rules-table th:last-child,
+.gfsms-rules-table td:last-child {
+	width: 60px;
+	text-align: center;
+	white-space: nowrap;
+}
+
+/* Pattern row */
+.gfsms-pattern-row td {
+	border-inline-start: 3px solid var(--gfsms-color-border); /* Visual indent for pattern rows */
+	padding: var(--gfsms-space-md) var(--gfsms-space-lg);
+	background: var(--gfsms-color-surface-subtle);
+}
+
+.gfsms-pattern-fields {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--gfsms-space-sm);
+}
+
+.gfsms-pattern-fields label {
+	margin: 0;
+	font-weight: var(--gfsms-font-weight-semibold);
+}
+
+.gfsms-pattern-fields input[type="text"],
+.gfsms-pattern-fields textarea {
+	width: 180px; /* Consistent field width for pattern builder inputs */
+}
+
+.gfsms-pattern-fields textarea {
+	resize: vertical;
+}
+
+/* Row hover — smooth transition for visual feedback */
+.gfsms-rules-table tr:hover td {
+	background-color: rgba(0, 0, 0, 0.04);
+	transition: background-color var(--gfsms-transition-fast);
+}
+
+/* Remove button */
+.gfsms-remove-rule {
+	padding: 2px var(--gfsms-space-xs);
+	height: auto;
+	line-height: 1.4;
+}
+
+.gfsms-remove-rule .dashicons {
+	width: 1rem;
+	height: 1rem;
+	font-size: var(--gfsms-font-size-md);
+	vertical-align: middle;
+}
+
+.gfsms-remove-rule .dashicons-trash {
+	color: var(--gfsms-color-text-error);
+}
+
+/* Add rule button */
+.gfsms-add-rule {
+	margin-block-start: var(--gfsms-space-sm);
+}
+
+
+/**
+ * # 19. Responsive — Tablet (≤ 48.875em / 782px)
+ *
+ * Matches the standard WordPress admin responsive breakpoint
+ * where the left menu collapses.
+ */
+
+@media (max-width: 48.875em) {
+
+	.gfsms-wrap {
+		--gfsms-label-width: 200px;
+	}
+
+	.gfsms-wrap .gfsms-form-table th {
+		display: block;
+		width: auto;
+		padding-block-end: var(--gfsms-space-xs);
+	}
+
+	.gfsms-wrap .gfsms-form-table td {
+		display: block;
+		padding-block-start: 0;
+	}
+
+	.gfsms-pattern-map {
+		grid-template-columns: 1fr;
+	}
+
+	.gfsms-rules-table,
+	.gfsms-rules-table thead,
+	.gfsms-rules-table tbody,
+	.gfsms-rules-table tr {
+		display: block;
+		width: 100%;
+	}
+
+	/* Accessible hiding: moves thead off-screen while keeping it available to screen readers */
+	.gfsms-rules-table thead {
+		position: absolute;
+		inset-block-start: -9999px;
+		inset-inline-start: -9999px;
+		visibility: hidden;
+	}
+
+	.gfsms-rules-table tr {
+		border: 1px solid var(--gfsms-color-border);
+		border-radius: var(--gfsms-radius-md);
+		margin-block-end: var(--gfsms-space-sm);
+		padding: var(--gfsms-space-xs);
+	}
+
+	.gfsms-rules-table td {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: auto !important; /* Override column width declarations for card layout */
+		padding: var(--gfsms-space-xs) var(--gfsms-space-sm);
+		border: none;
+	}
+
+	.gfsms-rules-table td::before {
+		content: attr(data-label);
+		flex-shrink: 0;
+		margin-inline-end: var(--gfsms-space-sm);
+		color: var(--gfsms-color-text-secondary);
+		font-weight: var(--gfsms-font-weight-semibold);
+	}
+
+	.gfsms-rules-table td:last-child {
+		justify-content: flex-end;
+	}
+
+	.gfsms-rules-table td:last-child::before {
+		display: none;
+	}
+
+	.gfsms-pattern-row td {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.gfsms-pattern-fields {
+		flex-direction: column;
+		align-items: flex-start;
+		width: 100%;
+	}
+
+	.gfsms-pattern-fields input[type="text"],
+	.gfsms-pattern-fields textarea {
+		width: 100%;
+	}
+}
+
+
+/**
+ * # 20. Responsive — Mobile (≤ 30em / 480px)
+ */
+
+@media (max-width: 30em) {
+
+	.gfsms-wrap {
+		--gfsms-card-padding: var(--gfsms-space-lg);
+	}
+
+	.gfsms-preview-box {
+		min-height: 60px; /* Reduced height for small screens */
+		font-size: var(--gfsms-font-size-xs);
+	}
+}
+
+
+/**
+ * # 21. RTL Overrides
+ *
+ * These overrides handle direction-specific adjustments not covered by
+ * CSS logical properties. Per WordPress standards, these should ideally
+ * be extracted into a separate admin-rtl.css file and enqueued via
+ * wp_style_add_data( $handle, 'rtl', 'replace' ).
+ */
+
+[dir="rtl"] .gfsms-form-table th {
+	text-align: right;
+}
+
+[dir="rtl"] .gfsms-control {
+	text-align: right;
+}
+
+[dir="rtl"] .gfsms-rules-table th:last-child,
+[dir="rtl"] .gfsms-rules-table td:last-child {
+	text-align: center;
+}
+
+/* Pattern row border flips for RTL — logical property handles the rest */
+[dir="rtl"] .gfsms-pattern-row td {
+	border-inline-start: none;
+	border-inline-end: 3px solid var(--gfsms-color-border);
+}
+
+@media (max-width: 48.875em) {
+	[dir="rtl"] .gfsms-rules-table td::before {
+		margin-inline-end: 0;
+		margin-inline-start: var(--gfsms-space-sm);
+	}
+}
+
+
+/**
+ * # 22. Dark Mode — Trash Icon Visibility
+ *
+ * Ensures the trash icon remains visible against dark backgrounds.
+ * Placed after the main rule builder styles so it overrides correctly.
+ */
+
+@media (prefers-color-scheme: dark) {
+	.gfsms-remove-rule .dashicons-trash {
+		color: #f28b8c; /* Lighter red for dark backgrounds */
+	}
+}

@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<ruleset name="GravityFlowSMS-Coding-Standard">
+    <description>Enterprise-grade coding standard for GravityFlow SMS Plugin.</description>
+
+    <!-- Show progress and colors in terminal -->
+    <arg value="ps"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+
+    <!-- Scan project directories - only includes for now (tests may be added later) -->
+    <file>includes</file>
+
+    <!-- Exclude typical build paths -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+
+    <!-- Set minimum supported WordPress version -->
+    <config name="minimum_supported_wp_version" value="6.0"/>
+
+    <!-- PHP version compatibility: 8.3+ -->
+    <config name="testVersion" value="8.3-"/>
+    <rule ref="PHPCompatibilityWP"/>
+
+    <!-- WordPress Coding Standards -->
+    <rule ref="WordPress-Core"/>
+    <rule ref="WordPress-Docs"/>
+    <rule ref="WordPress-Extra"/>
+
+    <!-- Force tabs for indentation (WPCS requirement) -->
+    <rule ref="Generic.WhiteSpace.DisallowSpaceIndent"/>
+    <rule ref="Generic.WhiteSpace.ScopeIndent">
+        <properties>
+            <property name="tabIndent" value="true"/>
+        </properties>
+    </rule>
+
+    <!-- Enforce Yoda conditions (WPCS requirement) -->
+    <rule ref="WordPress.PHP.YodaConditions"/>
+
+    <!-- Disallow shorthand array syntax (use array()) -->
+    <rule ref="Generic.Arrays.DisallowShortArraySyntax"/>
+
+    <!-- Enforce snake_case for functions and methods -->
+    <rule ref="WordPress.NamingConventions.ValidFunctionName"/>
+    <rule ref="WordPress.NamingConventions.ValidVariableName"/>
+
+    <!-- Require escaping functions -->
+    <rule ref="WordPress.Security.EscapeOutput"/>
+
+    <!-- Require nonce verification and capability checks -->
+    <rule ref="WordPress.Security.NonceVerification"/>
+    <rule ref="WordPress.WP.Capabilities"/>
+
+    <!-- Prevent direct SQL queries without prepare -->
+    <rule ref="WordPress.DB.PreparedSQL"/>
+
+    <!-- Enforce text domain for i18n -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array" value="gfsms"/>
+        </properties>
+    </rule>
+
+    <!-- Require prefixing all hooks with plugin slug -->
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array" value="gfsms"/>
+        </properties>
+    </rule>
+
+    <!-- Allow error_log only for debugging (we will mark with phpcs:ignore) -->
+    <rule ref="WordPress.PHP.DevelopmentFunctions">
+        <exclude name="WordPress.PHP.DevelopmentFunctions.error_log_error_log"/>
+    </rule>
+
+    <!-- DocComment rules: ensure proper formatting -->
+    <rule ref="Generic.Commenting.DocComment.ContentAfterOpen">
+        <type>error</type>
+    </rule>
+    <rule ref="Generic.Commenting.DocComment.ContentBeforeClose">
+        <type>error</type>
+    </rule>
+
+    <!-- Severity adjustments -->
+    <rule ref="WordPress.Files.FileName">
+        <severity>5</severity>
+    </rule>
+</ruleset>
