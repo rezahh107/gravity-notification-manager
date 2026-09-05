@@ -23,15 +23,17 @@ The WU-01 implementation relies on these current contracts:
 
 1. `GFFeedAddOn` is the supported feed-based Add-On Framework base class.
 2. `feed_settings_fields()` defines Feed Settings with the standard Settings API structure.
-3. `process_feed( $feed, $entry, $form )` is the feed-processing boundary.
-4. Native Feed conditional logic uses a settings field whose type is `feed_condition`.
-5. `GFFeedAddOn::$_async_feed_processing` is boolean and defaults to `false`; WU-01 sets it explicitly to `false` so the closed synchronous architecture remains visible in code.
-6. Gravity Forms can support asynchronous feed processing, but GNM intentionally does not enable it for this target.
+3. The current `GFFeedAddOn` Feed Settings example exposes native Gravity Forms merge-tag UI for a message textarea with the `merge-tag-support` class; GNM uses that native facility instead of a custom merge-tag engine.
+4. `process_feed( $feed, $entry, $form )` is the feed-processing boundary.
+5. Native Feed conditional logic uses a settings field whose type is `feed_condition`.
+6. `GFFeedAddOn::$_async_feed_processing` is boolean and defaults to `false`; WU-01 sets it explicitly to `false` so the closed synchronous architecture remains visible in code.
+7. Gravity Forms can support asynchronous feed processing, but GNM intentionally does not enable it for this target.
 
 ## Closed WU-01 decisions
 
 - One Feed represents one logical notification.
 - Feed condition behavior is native Gravity Forms behavior, not a custom Rule engine.
+- Message composition exposes the native Gravity Forms merge-tag UI; legacy custom message replacement is not transplanted.
 - SMS and Bale are distinct channel choices.
 - Fallback is configuration intent only in WU-01; transport/provider selection remains WU-02.
 - No Pattern-to-Plain semantic conversion is performed.
