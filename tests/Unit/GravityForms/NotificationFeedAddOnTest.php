@@ -52,11 +52,11 @@ final class NotificationFeedAddOnTest extends TestCase {
 	}
 
 	/**
-	 * Required WU-01 fields are present and use native feed conditional logic.
+	 * Required WU-01 fields use native condition and merge-tag facilities.
 	 *
 	 * @return void
 	 */
-	public function test_feed_settings_contain_required_rule_fields_and_native_condition(): void {
+	public function test_feed_settings_contain_required_rule_fields_and_native_facilities(): void {
 		$sections = NotificationFeedAddOn::get_instance()->feed_settings_fields();
 		$fields   = $sections[0]['fields'];
 		$by_name  = array();
@@ -70,6 +70,7 @@ final class NotificationFeedAddOnTest extends TestCase {
 		}
 
 		self::assertSame( 'feed_condition', $by_name['feed_condition']['type'] );
+		self::assertStringContainsString( 'merge-tag-support', $by_name['message']['class'] );
 	}
 
 	/**
