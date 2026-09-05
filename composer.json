@@ -1,6 +1,5 @@
 {
     "name": "gravityflow-sms-ippanel/gravityflow-sms-ippanel",
-    "version": "1.0.0",
     "description": "Sends SMS notifications for Gravity Flow workflow events and Gravity Forms submissions through IPPanel.",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
