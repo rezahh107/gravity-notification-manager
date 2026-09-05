@@ -87,6 +87,7 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 						'name'     => 'message',
 						'label'    => 'Message',
 						'type'     => 'textarea',
+						'class'    => 'medium merge-tag-support mt-position-right',
 						'required' => true,
 					),
 					array(
