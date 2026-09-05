@@ -10,6 +10,7 @@ if ( ! defined( 'GRAVITY_NOTIFY_TEST_NO_SEND' ) ) {
 }
 
 if ( ! defined( 'WP_HTTP_BLOCK_EXTERNAL' ) ) {
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Intentional WordPress core test-safeguard constant.
 	define( 'WP_HTTP_BLOCK_EXTERNAL', true );
 }
 

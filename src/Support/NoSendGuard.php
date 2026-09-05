@@ -38,6 +38,7 @@ final class NoSendGuard {
 		throw new RuntimeException(
 			sprintf(
 				'Outbound %s activity is blocked by the Gravity Notification Manager test harness.',
+				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception text is not rendered output.
 				$boundary
 			)
 		);
