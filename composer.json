@@ -25,6 +25,7 @@
     },
     "autoload": {
         "psr-4": {
+            "GravityNotify\\": "src/",
             "GFSMS\\": "includes/",
             "GFSMS\\Admin\\": "includes/Admin/",
             "GFSMS\\Domain\\": "includes/Domain/",
@@ -38,14 +39,17 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "GravityNotify\\Tests\\": "tests/",
             "GFSMS\\Tests\\": "tests/"
         }
     },
     "scripts": {
         "lint": "phpcs --standard=phpcs.xml",
         "lint-fix": "phpcbf --standard=phpcs.xml",
+        "lint:wu00": "phpcs -n --standard=phpcs.xml src tests",
         "stan": "phpstan analyse --memory-limit=2G",
         "test": "phpunit",
+        "test:wu00": "phpunit --configuration phpunit.xml.dist",
         "phpcompat": "phpcs -p --standard=phpcompat.xml"
     },
     "config": {
