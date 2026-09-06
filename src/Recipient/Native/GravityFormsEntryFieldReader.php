@@ -15,7 +15,12 @@ use GravityNotify\Recipient\EntryFieldReader;
 final class GravityFormsEntryFieldReader implements EntryFieldReader {
 
 	/**
-	 * {@inheritDoc}
+	 * Read one configured Gravity Forms field/input value.
+	 *
+	 * @param string $selector Gravity Forms field or input ID selector.
+	 * @param array  $entry    Current Gravity Forms Entry object.
+	 * @param array  $form     Current Gravity Forms Form object.
+	 * @return mixed
 	 */
 	public function read( string $selector, array $entry, array $form ) {
 		if ( ! class_exists( '\\GFAPI' ) ) {
