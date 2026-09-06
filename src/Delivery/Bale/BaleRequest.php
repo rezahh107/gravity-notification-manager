@@ -36,9 +36,9 @@ final class BaleRequest {
 	 * @throws InvalidArgumentException When the target or message length is invalid.
 	 */
 	public function __construct( int|string $chat_id, string $text ) {
-		$length = function_exists( 'mb_strlen' ) ? mb_strlen( $text ) : strlen( $text );
+		$length = preg_match_all( '/./us', $text );
 
-		if ( '' === (string) $chat_id || 1 > $length || 4096 < $length ) {
+		if ( false === $length || '' === (string) $chat_id || 1 > $length || 4096 < $length ) {
 			throw new InvalidArgumentException( 'Bale request requires a resolved target and 1-4096 characters of text.' );
 		}
 
