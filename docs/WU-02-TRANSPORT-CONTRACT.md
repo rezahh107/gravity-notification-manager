@@ -20,6 +20,7 @@ Relied-upon facts:
 - The official webservice example and request schema support multiple recipients, so WU-02 exposes `plain` and `multi_recipient_plain`.
 - Pattern mode uses `sending_type=pattern`, `from_number`, `code`, `recipients`, and `params`.
 - Pattern sending explicitly permits only one recipient, so WU-02 exposes `pattern` but not `multi_recipient_pattern`.
+- Both `from_number` and recipient addresses are documented in E.164 form; WU-02 validates that envelope before HTTP I/O and does not perform local-number normalization.
 - Documented successful responses include `meta.status=true` and `data.message_outbox_ids`; WU-02 preserves those IDs as safe provider references.
 - Documented provider errors use `meta.status=false` and HTTP error responses. A 2xx response whose documented acceptance shape cannot be established is classified `AMBIGUOUS`.
 - WU-02 does not use scheduled send fields.
@@ -62,3 +63,15 @@ Relied-upon facts:
 - Credentials and resolved destination identifiers are input-only transport data and are not included in attempt diagnostics.
 - Pattern and Plain are distinct semantics; dispatch never converts between them to gain provider eligibility.
 - Delivery is synchronous only. WU-02 introduces no queue, cron, worker, delayed retry, reconciliation, persistence, or Entry Meta writes.
+
+## Bounded legacy differential review
+
+- Greenfield implementation/test head reviewed first: `ac58ce27fcab078bbca066f28d97b636a04dcbfb`.
+- Manifest authority: `docs/SALVAGE_REFERENCE.md` (`GNM-LEGACY-DIFFERENTIAL-REFERENCE-1.2.0`).
+- Immutable legacy reference: tag `legacy-source-pre-greenfield-2026-09-02`, commit `7556f86ecc65f37d34d9563ce2087f16235bbca5`.
+- Inspected manifest-approved assets: `includes/Integration/IPPanel_Provider.php`, `includes/Integration/Wp_HTTP_Client.php`, and `includes/Integration/HTTP_Client_Interface.php`.
+- Outcome: `MATERIAL_GAP`.
+- Current-valid finding: the legacy provider performed provider-address validation/normalization, and the current official IPPanel Edge contract requires both `from_number` and recipients to be E.164. WU-02 accepts already-resolved/normalized transport inputs, so it now validates the E.164 envelope and fails before HTTP I/O when that invariant is violated.
+- Intentionally not incorporated: legacy local/Iranian phone normalization, legacy API mode, Bearer-auth alternative, scheduled-send handling, retry classification, diagnostics/logging, raw response retention, and legacy orchestration. Those are stale, out of scope, undocumented by the current relied-upon contract, or owned by later Work Units.
+- WordPress seam review found no additional current-valid material gap: the greenfield seam already preserves the relevant `WP_Error`/status/body normalization while intentionally discarding raw potentially sensitive error text.
+- Bale had no manifest-approved equivalent legacy asset, so no unapproved legacy Bale implementation was inspected.

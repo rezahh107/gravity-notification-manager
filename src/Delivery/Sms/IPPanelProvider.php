@@ -82,6 +82,10 @@ final class IPPanelProvider implements SmsProviderInterface {
 			return $this->result( AttemptStatus::SKIPPED, $request, array(), 'unsupported_capability' );
 		}
 
+		if ( ! $this->has_valid_e164_addresses( $request ) ) {
+			return $this->result( AttemptStatus::FAILED, $request, array(), 'invalid_address_format' );
+		}
+
 		$payload = $this->build_payload( $request );
 
 		if ( null === $payload ) {
@@ -108,6 +112,36 @@ final class IPPanelProvider implements SmsProviderInterface {
 		);
 
 		return $this->classify_response( $request, $response );
+	}
+
+	/**
+	 * Validate the documented E.164 address shape before any network I/O.
+	 *
+	 * @param SmsRequest $request Normalized request.
+	 * @return bool
+	 */
+	private function has_valid_e164_addresses( SmsRequest $request ): bool {
+		if ( ! $this->is_e164( $request->from() ) ) {
+			return false;
+		}
+
+		foreach ( $request->recipients() as $recipient ) {
+			if ( ! is_string( $recipient ) || ! $this->is_e164( $recipient ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check the syntactic E.164 envelope documented by IPPanel.
+	 *
+	 * @param string $value Address value.
+	 * @return bool
+	 */
+	private function is_e164( string $value ): bool {
+		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value );
 	}
 
 	/**
