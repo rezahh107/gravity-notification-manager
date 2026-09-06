@@ -65,6 +65,7 @@ final class SmsRequest {
 	 * @param string|null           $message            Plain message.
 	 * @param string|null           $pattern_code       Pattern code.
 	 * @param array<string, scalar> $pattern_parameters Pattern parameters.
+	 * @throws InvalidArgumentException When normalized request invariants are not satisfied.
 	 */
 	private function __construct(
 		string $capability,
@@ -94,6 +95,7 @@ final class SmsRequest {
 	 * @param string             $from       Sender/from value.
 	 * @param string             $message    Plain message.
 	 * @return self
+	 * @throws InvalidArgumentException When plain request invariants are not satisfied.
 	 */
 	public static function plain( string $capability, array $recipients, string $from, string $message ): self {
 		if ( ! in_array( $capability, array( SmsCapability::PLAIN, SmsCapability::MULTI_RECIPIENT_PLAIN ), true ) ) {
@@ -124,6 +126,7 @@ final class SmsRequest {
 	 * @param string                $pattern_code       Pattern code.
 	 * @param array<string, scalar> $pattern_parameters Pattern parameters.
 	 * @return self
+	 * @throws InvalidArgumentException When pattern request invariants are not satisfied.
 	 */
 	public static function pattern(
 		string $capability,

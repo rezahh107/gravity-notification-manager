@@ -65,6 +65,7 @@ final class AttemptResult {
 	 * @param string|null        $capability          Requested capability.
 	 * @param array<int, string> $provider_references Safe provider references.
 	 * @param string             $diagnostic          Safe diagnostic classification.
+	 * @throws InvalidArgumentException When the attempt status is unsupported.
 	 */
 	public function __construct(
 		string $status,

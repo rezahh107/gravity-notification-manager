@@ -25,6 +25,7 @@ final class SmsProviderRegistry {
 	 * Register providers in configured order.
 	 *
 	 * @param array<int, SmsProviderInterface> $providers Ordered providers.
+	 * @throws InvalidArgumentException When provider identifiers are duplicated.
 	 */
 	public function __construct( array $providers ) {
 		$seen = array();

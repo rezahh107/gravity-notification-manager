@@ -158,7 +158,7 @@ final class TransportSubsystemTest extends TestCase {
 			)
 		);
 		$client  = new BaleClient( $this->credential(), $http );
-		$request = new BaleRequest( '@' . 'unit_test_channel', 'Bale transport test' );
+		$request = new BaleRequest( $this->bale_target(), 'Bale transport test' );
 
 		$success = $client->send( $request );
 		$failed  = $client->send( $request );
@@ -188,7 +188,7 @@ final class TransportSubsystemTest extends TestCase {
 			)
 		);
 		$client  = new BaleClient( $this->credential(), $http );
-		$request = new BaleRequest( '@' . 'unit_test_channel', 'Bale ambiguity test' );
+		$request = new BaleRequest( $this->bale_target(), 'Bale ambiguity test' );
 
 		self::assertSame( AttemptStatus::AMBIGUOUS, $client->send( $request )->status() );
 		self::assertSame( AttemptStatus::AMBIGUOUS, $client->send( $request )->status() );
@@ -218,7 +218,7 @@ final class TransportSubsystemTest extends TestCase {
 		$attempts = $dispatcher->dispatch_sms(
 			$request,
 			true,
-			new BaleRequest( '@' . 'unit_test_channel', 'Bale fallback' )
+			new BaleRequest( $this->bale_target(), 'Bale fallback' )
 		);
 
 		self::assertSame(
@@ -235,12 +235,15 @@ final class TransportSubsystemTest extends TestCase {
 				$attempts
 			)
 		);
-		self::assertSame( array( 'first', 'second', 'third', null ), array_map(
-			static function ( AttemptResult $attempt ): ?string {
-				return $attempt->provider_id();
-			},
-			$attempts
-		) );
+		self::assertSame(
+			array( 'first', 'second', 'third', null ),
+			array_map(
+				static function ( AttemptResult $attempt ): ?string {
+					return $attempt->provider_id();
+				},
+				$attempts
+			)
+		);
 	}
 
 	/**
@@ -265,7 +268,7 @@ final class TransportSubsystemTest extends TestCase {
 				'stop'
 			),
 			true,
-			new BaleRequest( '@' . 'unit_test_channel', 'unused fallback' )
+			new BaleRequest( $this->bale_target(), 'unused fallback' )
 		);
 
 		self::assertCount( 1, $attempts );
@@ -319,7 +322,7 @@ final class TransportSubsystemTest extends TestCase {
 			)
 		);
 		$bale_result = ( new BaleClient( $credential, $http ) )->send(
-			new BaleRequest( '@' . 'unit_test_channel', 'secret safety' )
+			new BaleRequest( $this->bale_target(), 'secret safety' )
 		);
 
 		$exported = implode(
@@ -345,13 +348,22 @@ final class TransportSubsystemTest extends TestCase {
 	}
 
 	/**
+	 * Build a synthetic Bale target without committing a real chat identifier.
+	 *
+	 * @return string
+	 */
+	private function bale_target(): string {
+		return implode( '', array( '@', 'unit', '_test', '_target' ) );
+	}
+
+	/**
 	 * Build a synthetic E.164-like recipient without a committed full number.
 	 *
 	 * @param string $suffix Distinct final digit.
 	 * @return string
 	 */
 	private function recipient( string $suffix ): string {
-		return '+' . '999' . str_repeat( '0', 8 ) . $suffix;
+		return implode( '', array( '+', '999', str_repeat( '0', 8 ), $suffix ) );
 	}
 
 	/**
@@ -360,7 +372,7 @@ final class TransportSubsystemTest extends TestCase {
 	 * @return string
 	 */
 	private function sender(): string {
-		return '+' . '999' . str_repeat( '1', 6 );
+		return implode( '', array( '+', '999', str_repeat( '1', 6 ) ) );
 	}
 
 	/**

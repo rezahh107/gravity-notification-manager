@@ -33,6 +33,7 @@ final class BaleRequest {
 	 *
 	 * @param int|string $chat_id Already-resolved target.
 	 * @param string     $text    Message text.
+	 * @throws InvalidArgumentException When the target or message length is invalid.
 	 */
 	public function __construct( int|string $chat_id, string $text ) {
 		$length = function_exists( 'mb_strlen' ) ? mb_strlen( $text ) : strlen( $text );

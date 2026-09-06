@@ -45,6 +45,7 @@ final class FakeHttpTransport implements HttpTransportInterface {
 	 * @param string $url  URL.
 	 * @param array  $args Request arguments.
 	 * @return HttpResponse
+	 * @throws RuntimeException When no deterministic response is queued.
 	 */
 	public function post( string $url, array $args ): HttpResponse {
 		$this->requests[] = array(
