@@ -57,14 +57,19 @@
     <!-- Enforce text domain for i18n -->
     <rule ref="WordPress.WP.I18n">
         <properties>
-            <property name="text_domain" type="array" value="gfsms"/>
+            <property name="text_domain" type="array">
+                <element value="gravity-notification-manager"/>
+            </property>
         </properties>
     </rule>
 
     <!-- Require prefixing all hooks with plugin slug -->
     <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
         <properties>
-            <property name="prefixes" type="array" value="gfsms"/>
+            <property name="prefixes" type="array">
+                <element value="GravityNotify"/>
+                <element value="gravity_notify"/>
+            </property>
         </properties>
     </rule>
 
@@ -84,5 +89,7 @@
     <!-- Severity adjustments -->
     <rule ref="WordPress.Files.FileName">
         <severity>5</severity>
+        <exclude-pattern>*/src/*</exclude-pattern>
+        <exclude-pattern>*/tests/*</exclude-pattern>
     </rule>
 </ruleset>

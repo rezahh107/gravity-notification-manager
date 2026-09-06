@@ -1,6 +1,5 @@
 {
     "name": "gravityflow-sms-ippanel/gravityflow-sms-ippanel",
-    "version": "1.0.0",
     "description": "Sends SMS notifications for Gravity Flow workflow events and Gravity Forms submissions through IPPanel.",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
@@ -25,6 +24,7 @@
     },
     "autoload": {
         "psr-4": {
+            "GravityNotify\\": "src/",
             "GFSMS\\": "includes/",
             "GFSMS\\Admin\\": "includes/Admin/",
             "GFSMS\\Domain\\": "includes/Domain/",
@@ -38,14 +38,17 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "GravityNotify\\Tests\\": "tests/",
             "GFSMS\\Tests\\": "tests/"
         }
     },
     "scripts": {
         "lint": "phpcs --standard=phpcs.xml",
         "lint-fix": "phpcbf --standard=phpcs.xml",
+        "lint:wu00": "@php vendor/bin/phpcs -n --standard=phpcs.xml src tests",
         "stan": "phpstan analyse --memory-limit=2G",
         "test": "phpunit",
+        "test:wu00": "@php vendor/bin/phpunit --configuration phpunit.xml.dist",
         "phpcompat": "phpcs -p --standard=phpcompat.xml"
     },
     "config": {
