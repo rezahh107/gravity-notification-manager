@@ -48,8 +48,8 @@ final class RecipientResolver {
 	/**
 	 * Constructor.
 	 *
-	 * @param EntryFieldReader   $entry_fields   Gravity Forms Entry reader.
-	 * @param UserDirectory      $users          WordPress user/contact directory.
+	 * @param EntryFieldReader   $entry_fields Gravity Forms Entry reader.
+	 * @param UserDirectory      $users WordPress user/contact directory.
 	 * @param FlowAssigneeReader $flow_assignees Gravity Flow assignee reader.
 	 */
 	public function __construct( EntryFieldReader $entry_fields, UserDirectory $users, FlowAssigneeReader $flow_assignees ) {
@@ -61,9 +61,9 @@ final class RecipientResolver {
 	/**
 	 * Resolve one normalized WU-01 feed metadata record.
 	 *
-	 * @param array $rule  Normalized WU-01 feed metadata.
+	 * @param array $rule Normalized WU-01 feed metadata.
 	 * @param array $entry Current Gravity Forms Entry object.
-	 * @param array $form  Current Gravity Forms Form object.
+	 * @param array $form Current Gravity Forms Form object.
 	 * @return ResolutionResult
 	 */
 	public function resolve( array $rule, array $entry = array(), array $form = array() ): ResolutionResult {
@@ -94,11 +94,11 @@ final class RecipientResolver {
 	/**
 	 * Resolve one Gravity Forms Entry field/input source.
 	 *
-	 * @param string $channel     Requested channel.
+	 * @param string $channel Requested channel.
 	 * @param string $source_type Source type.
-	 * @param string $selector    Field/input ID selector.
-	 * @param array  $entry       Entry object.
-	 * @param array  $form        Form object.
+	 * @param string $selector Field/input ID selector.
+	 * @param array  $entry Entry object.
+	 * @param array  $form Form object.
 	 * @return ResolutionResult
 	 */
 	private function resolve_entry_field( string $channel, string $source_type, string $selector, array $entry, array $form ): ResolutionResult {
@@ -122,9 +122,9 @@ final class RecipientResolver {
 	/**
 	 * Resolve one fixed channel target.
 	 *
-	 * @param string $channel     Requested channel.
+	 * @param string $channel Requested channel.
 	 * @param string $source_type Source type.
-	 * @param string $source      Configured fixed target.
+	 * @param string $source Configured fixed target.
 	 * @return ResolutionResult
 	 */
 	private function resolve_fixed( string $channel, string $source_type, string $source ): ResolutionResult {
@@ -138,9 +138,9 @@ final class RecipientResolver {
 	/**
 	 * Resolve one configured WordPress user.
 	 *
-	 * @param string $channel     Requested channel.
+	 * @param string $channel Requested channel.
 	 * @param string $source_type Source type.
-	 * @param string $source      Configured user selector.
+	 * @param string $source Configured user selector.
 	 * @return ResolutionResult
 	 */
 	private function resolve_user( string $channel, string $source_type, string $source ): ResolutionResult {
@@ -159,9 +159,9 @@ final class RecipientResolver {
 	/**
 	 * Resolve all matching WordPress role users.
 	 *
-	 * @param string $channel     Requested channel.
+	 * @param string $channel Requested channel.
 	 * @param string $source_type Source type.
-	 * @param string $role        Role slug.
+	 * @param string $role Role slug.
 	 * @return ResolutionResult
 	 */
 	private function resolve_role( string $channel, string $source_type, string $role ): ResolutionResult {
@@ -180,10 +180,10 @@ final class RecipientResolver {
 	/**
 	 * Resolve current Gravity Flow step assignees through documented identities.
 	 *
-	 * @param string $channel     Requested channel.
+	 * @param string $channel Requested channel.
 	 * @param string $source_type Source type.
-	 * @param array  $entry       Entry object.
-	 * @param array  $form        Form object.
+	 * @param array  $entry Entry object.
+	 * @param array  $form Form object.
 	 * @return ResolutionResult
 	 */
 	private function resolve_flow_assignees( string $channel, string $source_type, array $entry, array $form ): ResolutionResult {
@@ -253,9 +253,9 @@ final class RecipientResolver {
 	/**
 	 * Resolve channel contacts for a deterministic set of user IDs.
 	 *
-	 * @param string          $channel      Requested channel.
-	 * @param string          $source_type  Source type.
-	 * @param array<int, int> $user_ids     WordPress user IDs.
+	 * @param string          $channel Requested channel.
+	 * @param string          $source_type Source type.
+	 * @param array<int, int> $user_ids WordPress user IDs.
 	 * @param string          $subject_base Safe skip subject prefix.
 	 * @return ResolutionResult
 	 */
@@ -273,11 +273,11 @@ final class RecipientResolver {
 	/**
 	 * Append one user's channel contact or a safe missing-contact skip.
 	 *
-	 * @param string                                         $channel      Requested channel.
-	 * @param int                                            $user_id      WordPress user ID.
-	 * @param string                                         $subject_base Skip subject prefix.
-	 * @param array<int, string>                             $destinations Destination accumulator.
-	 * @param array<int, array{subject:string,reason:string}> $skips       Skip accumulator.
+	 * @param string                                          $channel Requested channel.
+	 * @param int                                             $user_id WordPress user ID.
+	 * @param string                                          $subject_base Skip subject prefix.
+	 * @param array<int, string>                              $destinations Destination accumulator.
+	 * @param array<int, array{subject:string,reason:string}> $skips Skip accumulator.
 	 * @return void
 	 */
 	private function append_user_contact( string $channel, int $user_id, string $subject_base, array &$destinations, array &$skips ): void {
@@ -334,10 +334,10 @@ final class RecipientResolver {
 	/**
 	 * Build one result containing a single skip.
 	 *
-	 * @param string $channel     Requested channel.
+	 * @param string $channel Requested channel.
 	 * @param string $source_type Source type.
-	 * @param string $subject     Safe skip subject.
-	 * @param string $reason      Safe skip reason.
+	 * @param string $subject Safe skip subject.
+	 * @param string $reason Safe skip reason.
 	 * @return ResolutionResult
 	 */
 	private function result_with_skip( string $channel, string $source_type, string $subject, string $reason ): ResolutionResult {
@@ -348,7 +348,7 @@ final class RecipientResolver {
 	 * Build one safe skip record.
 	 *
 	 * @param string $subject Safe subject.
-	 * @param string $reason  Safe reason classification.
+	 * @param string $reason Safe reason classification.
 	 * @return array{subject:string,reason:string}
 	 */
 	private function skip( string $subject, string $reason ): array {
