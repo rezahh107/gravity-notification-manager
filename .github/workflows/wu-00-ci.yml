@@ -44,5 +44,8 @@ jobs:
       - name: Run WU-02 transport unit target
         run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Delivery
 
+      - name: Run WU-03 recipient resolver target
+        run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Recipient
+
       - name: Lint WU-00 PHP surfaces
         run: composer lint:wu00
