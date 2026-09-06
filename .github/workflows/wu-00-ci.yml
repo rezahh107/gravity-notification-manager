@@ -41,5 +41,8 @@ jobs:
       - name: Run no-send unit tests
         run: composer test:wu00
 
+      - name: Run WU-02 transport unit target
+        run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Delivery
+
       - name: Lint WU-00 PHP surfaces
         run: composer lint:wu00
