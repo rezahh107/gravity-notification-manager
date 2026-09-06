@@ -14,7 +14,13 @@ use GravityNotify\Recipient\FlowAssigneeReader;
  */
 final class GravityFlowAssigneeReader implements FlowAssigneeReader {
 
-	/** {@inheritDoc} */
+	/**
+	 * Read current-step assignees through the documented Gravity Flow API.
+	 *
+	 * @param array $entry Current Gravity Forms Entry object.
+	 * @param array $form  Current Gravity Forms Form object.
+	 * @return array<string, mixed>
+	 */
 	public function read( array $entry, array $form ): array {
 		if ( ! class_exists( '\\Gravity_Flow_API' ) ) {
 			return $this->unavailable( 'flow_api_unavailable' );
@@ -28,8 +34,7 @@ final class GravityFlowAssigneeReader implements FlowAssigneeReader {
 		try {
 			$api  = new \Gravity_Flow_API( $form_id );
 			$step = $api->get_current_step( $entry );
-		} catch ( \Throwable $exception ) {
-			unset( $exception );
+		} catch ( \Throwable ) {
 			return $this->unavailable( 'flow_context_unavailable' );
 		}
 
