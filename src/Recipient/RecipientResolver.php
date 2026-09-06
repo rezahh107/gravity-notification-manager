@@ -14,19 +14,35 @@ use GravityNotify\GravityForms\FeedRuleSchema;
  */
 final class RecipientResolver {
 
-	/** Closed SMS user-meta key. */
+	/**
+	 * Closed SMS user-meta key.
+	 */
 	public const SMS_META_KEY = 'wudm_notification_mobile';
 
-	/** Closed Bale user-meta key. */
+	/**
+	 * Closed Bale user-meta key.
+	 */
 	public const BALE_META_KEY = 'wudm_bale_chat_id';
 
-	/** @var EntryFieldReader */
+	/**
+	 * Gravity Forms Entry reader.
+	 *
+	 * @var EntryFieldReader
+	 */
 	private EntryFieldReader $entry_fields;
 
-	/** @var UserDirectory */
+	/**
+	 * WordPress user/contact directory seam.
+	 *
+	 * @var UserDirectory
+	 */
 	private UserDirectory $users;
 
-	/** @var FlowAssigneeReader */
+	/**
+	 * Gravity Flow current-step assignee seam.
+	 *
+	 * @var FlowAssigneeReader
+	 */
 	private FlowAssigneeReader $flow_assignees;
 
 	/**
@@ -257,11 +273,11 @@ final class RecipientResolver {
 	/**
 	 * Append one user's channel contact or a safe missing-contact skip.
 	 *
-	 * @param string                                                $channel      Requested channel.
-	 * @param int                                                   $user_id      WordPress user ID.
-	 * @param string                                                $subject_base Skip subject prefix.
-	 * @param array<int, string>                                    $destinations Destination accumulator.
-	 * @param array<int, array{subject:string,reason:string}>        $skips        Skip accumulator.
+	 * @param string                                         $channel      Requested channel.
+	 * @param int                                            $user_id      WordPress user ID.
+	 * @param string                                         $subject_base Skip subject prefix.
+	 * @param array<int, string>                             $destinations Destination accumulator.
+	 * @param array<int, array{subject:string,reason:string}> $skips       Skip accumulator.
 	 * @return void
 	 */
 	private function append_user_contact( string $channel, int $user_id, string $subject_base, array &$destinations, array &$skips ): void {
