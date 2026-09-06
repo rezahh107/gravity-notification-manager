@@ -12,6 +12,9 @@ use GravityNotify\Recipient\EntryFieldReader;
 use GravityNotify\Recipient\FlowAssigneeReader;
 use GravityNotify\Recipient\RecipientResolver;
 use GravityNotify\Recipient\UserDirectory;
+use GravityNotify\Tests\Support\Recipient\FakeEntryFieldReader;
+use GravityNotify\Tests\Support\Recipient\FakeFlowAssigneeReader;
+use GravityNotify\Tests\Support\Recipient\FakeUserDirectory;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -113,7 +116,15 @@ final class RecipientResolverTest extends TestCase {
 		$result = $this->resolver( null, $users )->resolve( $this->rule( FeedRuleSchema::RECIPIENT_ROLE, 'reviewer' ) );
 
 		$this->assertSame( array( 'sms-role-31', 'sms-role-33' ), $result->destinations() );
-		$this->assertSame( array( array( 'subject' => 'role_member:32', 'reason' => 'missing_contact' ) ), $result->skips() );
+		$this->assertSame(
+			array(
+				array(
+					'subject' => 'role_member:32',
+					'reason'  => 'missing_contact',
+				),
+			),
+			$result->skips()
+		);
 	}
 
 	/**
@@ -137,10 +148,22 @@ final class RecipientResolverTest extends TestCase {
 				'available' => true,
 				'reason'    => '',
 				'assignees' => array(
-					array( 'type' => 'user_id', 'id' => '41' ),
-					array( 'type' => 'role', 'id' => 'approver' ),
-					array( 'type' => 'email', 'id' => 'flow-user@example.test' ),
-					array( 'type' => 'token', 'id' => 'opaque' ),
+					array(
+						'type' => 'user_id',
+						'id'   => '41',
+					),
+					array(
+						'type' => 'role',
+						'id'   => 'approver',
+					),
+					array(
+						'type' => 'email',
+						'id'   => 'flow-user@example.test',
+					),
+					array(
+						'type' => 'token',
+						'id'   => 'opaque',
+					),
 				),
 			)
 		);
@@ -198,8 +221,8 @@ final class RecipientResolverTest extends TestCase {
 	 * Build normalized WU-01-style recipient metadata.
 	 *
 	 * @param string $source_type Recipient source type.
-	 * @param string $source      Source value.
-	 * @param string $channel     Channel.
+	 * @param string $source Source value.
+	 * @param string $channel Channel.
 	 * @return array<string, string>
 	 */
 	private function rule( string $source_type, string $source, string $channel = FeedRuleSchema::CHANNEL_SMS ): array {
@@ -214,155 +237,21 @@ final class RecipientResolverTest extends TestCase {
 	 * Build the resolver with deterministic fakes.
 	 *
 	 * @param EntryFieldReader|null   $fields Entry-field seam.
-	 * @param UserDirectory|null      $users  User/contact seam.
-	 * @param FlowAssigneeReader|null $flow   Flow assignee seam.
+	 * @param UserDirectory|null      $users User/contact seam.
+	 * @param FlowAssigneeReader|null $flow Flow assignee seam.
 	 * @return RecipientResolver
 	 */
 	private function resolver( ?EntryFieldReader $fields = null, ?UserDirectory $users = null, ?FlowAssigneeReader $flow = null ): RecipientResolver {
 		return new RecipientResolver(
 			$fields ?? new FakeEntryFieldReader( array() ),
 			$users ?? new FakeUserDirectory( array(), array(), array() ),
-			$flow ?? new FakeFlowAssigneeReader( array( 'available' => true, 'reason' => '', 'assignees' => array() ) )
+			$flow ?? new FakeFlowAssigneeReader(
+				array(
+					'available' => true,
+					'reason'    => '',
+					'assignees' => array(),
+				)
+			)
 		);
-	}
-}
-
-/**
- * Deterministic Entry field fake.
- */
-final class FakeEntryFieldReader implements EntryFieldReader {
-
-	/**
-	 * Selector-to-value map.
-	 *
-	 * @var array<string, mixed>
-	 */
-	private array $values;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param array<string, mixed> $values Selector map.
-	 */
-	public function __construct( array $values ) {
-		$this->values = $values;
-	}
-
-	/**
-	 * Read one fake Entry field value.
-	 *
-	 * @param string $selector Configured field/input selector.
-	 * @param array  $entry    Ignored Entry object.
-	 * @param array  $form     Ignored Form object.
-	 * @return mixed
-	 */
-	public function read( string $selector, array $entry, array $form ) {
-		unset( $entry, $form );
-		return $this->values[ $selector ] ?? null;
-	}
-}
-
-/**
- * Deterministic WordPress user/contact fake.
- */
-final class FakeUserDirectory implements UserDirectory {
-
-	/**
-	 * User selector map.
-	 *
-	 * @var array<string, int>
-	 */
-	private array $selectors;
-
-	/**
-	 * Role membership map.
-	 *
-	 * @var array<string, array<int, int>>
-	 */
-	private array $roles;
-
-	/**
-	 * Contact meta map.
-	 *
-	 * @var array<int, array<string, mixed>>
-	 */
-	private array $contacts;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param array<string, int>               $selectors User selector map.
-	 * @param array<string, array<int, int>>   $roles     Role membership map.
-	 * @param array<int, array<string, mixed>> $contacts  Contact meta map.
-	 */
-	public function __construct( array $selectors, array $roles, array $contacts ) {
-		$this->selectors = $selectors;
-		$this->roles      = $roles;
-		$this->contacts   = $contacts;
-	}
-
-	/**
-	 * Resolve one fake user selector.
-	 *
-	 * @param string $selector User selector.
-	 * @return int|null
-	 */
-	public function find_user_id( string $selector ): ?int {
-		return $this->selectors[ $selector ] ?? null;
-	}
-
-	/**
-	 * Resolve fake role members.
-	 *
-	 * @param string $role Role slug.
-	 * @return array<int, int>
-	 */
-	public function find_user_ids_by_role( string $role ): array {
-		return $this->roles[ $role ] ?? array();
-	}
-
-	/**
-	 * Read one fake contact meta value.
-	 *
-	 * @param int    $user_id  User ID.
-	 * @param string $meta_key Contact meta key.
-	 * @return mixed
-	 */
-	public function get_contact( int $user_id, string $meta_key ) {
-		return $this->contacts[ $user_id ][ $meta_key ] ?? null;
-	}
-}
-
-/**
- * Deterministic Gravity Flow assignee fake.
- */
-final class FakeFlowAssigneeReader implements FlowAssigneeReader {
-
-	/**
-	 * Assignee collection.
-	 *
-	 * @var array<string, mixed>
-	 */
-	private array $collection;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param array<string, mixed> $collection Assignee collection.
-	 */
-	public function __construct( array $collection ) {
-		$this->collection = $collection;
-	}
-
-	/**
-	 * Return the configured fake assignee collection.
-	 *
-	 * @param array $entry Ignored Entry object.
-	 * @param array $form  Ignored Form object.
-	 * @return array<string, mixed>
-	 */
-	public function read( array $entry, array $form ): array {
-		unset( $entry, $form );
-		return $this->collection;
 	}
 }
