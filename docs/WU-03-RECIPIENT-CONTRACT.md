@@ -56,4 +56,38 @@ WU-03 performs only generic normalization required for stable recipient identity
 
 ## Legacy differential review
 
-Pending until the initial greenfield WU-03 implementation has passed the repository PHPUnit/PHPCS/Composer checks, as required by `docs/SALVAGE_REFERENCE.md`.
+Work Unit: `WU-03`
+
+New implementation Head reviewed: `c15bbed22c1939a5bd3ac992085e96db91695030`
+
+Legacy authority: tag `legacy-source-pre-greenfield-2026-09-02`, commit `7556f86ecc65f37d34d9563ce2087f16235bbca5`
+
+Legacy assets inspected:
+
+- `includes/Services/RecipientResolver.php`
+- `includes/Services/PhoneNumberNormalizer.php`
+
+Material difference found: `NO`
+
+Decision: `NO_MATERIAL_FINDING`
+
+Findings checked:
+
+- Legacy `fixed` SMS handling split comma/whitespace-delimited values into multiple numbers. The current WU-01 metadata/UI and WU-03 contract define one `recipient_source_value` for a singular `Fixed target`; WU-03 therefore does not import legacy multi-value parsing without a current requirement.
+- Legacy `submitter` resolution is not part of the closed WU-01 recipient source set and is not imported.
+- Legacy user-contact fallback keys `billing_phone`, `mobile`, and `plato_user_mobile` conflict with the closed WU-03 contact authority and are intentionally rejected.
+- Legacy recipient caching is unnecessary for the bounded resolver and would add state/behavior not required by WU-03.
+- Legacy `PhoneNumberNormalizer` delegated normalization to the selected provider. WU-03 intentionally does not recreate provider-dependent normalization because provider acceptance/transport semantics remain owned by WU-02.
+- Legacy acceptance of raw scalar assignee representations is not imported; WU-03 uses only the documented current Gravity Flow assignee object contract.
+
+Current official contract checked: the Gravity Forms, WordPress, and Gravity Flow sources listed above, plus the existing WU-01 `Fixed target` metadata boundary and WU-02 already-resolved transport boundary.
+
+Target architecture compatibility: `PASS`
+
+Exact behavior incorporated: none.
+
+Legacy behavior intentionally NOT incorporated: multi-fixed parsing, submitter source, legacy contact-key fallbacks, recipient cache, provider-driven normalization, and undocumented/scalar assignee inference.
+
+Tests added/updated after review: none; no current-valid material gap was found.
+
+Revalidation result: pending exact-final-head validation after this review record is committed.
