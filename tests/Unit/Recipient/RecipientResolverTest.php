@@ -19,7 +19,11 @@ use PHPUnit\Framework\TestCase;
  */
 final class RecipientResolverTest extends TestCase {
 
-	/** @return void */
+	/**
+	 * Fixed SMS and Bale targets stay channel-local and unchanged.
+	 *
+	 * @return void
+	 */
 	public function test_fixed_targets_for_both_channels(): void {
 		$resolver = $this->resolver();
 
@@ -31,7 +35,11 @@ final class RecipientResolverTest extends TestCase {
 		$this->assertSame( array( 'bale-target-alpha' ), $bale->destinations() );
 	}
 
-	/** @return void */
+	/**
+	 * Entry-field sources accept only field/input IDs and scalar non-empty values.
+	 *
+	 * @return void
+	 */
 	public function test_entry_field_resolution_and_invalid_values(): void {
 		$fields = new FakeEntryFieldReader(
 			array(
@@ -50,7 +58,11 @@ final class RecipientResolverTest extends TestCase {
 		$this->assertSame( 'missing_destination', $resolver->resolve( $this->rule( FeedRuleSchema::RECIPIENT_ENTRY_FIELD, '10' ) )->skips()[0]['reason'] );
 	}
 
-	/** @return void */
+	/**
+	 * User sources read only the channel-specific closed contact meta.
+	 *
+	 * @return void
+	 */
 	public function test_user_channel_specific_contact_lookup(): void {
 		$users = new FakeUserDirectory(
 			array( 'operator' => 11 ),
@@ -70,7 +82,11 @@ final class RecipientResolverTest extends TestCase {
 		$this->assertNotContains( 'forbidden-legacy-contact', $resolver->resolve( $this->rule( FeedRuleSchema::RECIPIENT_USER, 'operator' ) )->destinations() );
 	}
 
-	/** @return void */
+	/**
+	 * Missing users and contacts are structured skips, not exceptions.
+	 *
+	 * @return void
+	 */
 	public function test_missing_user_and_missing_contact_are_nonfatal_skips(): void {
 		$users = new FakeUserDirectory( array( 'known' => 12 ), array(), array( 12 => array() ) );
 		$resolver = $this->resolver( null, $users );
@@ -79,7 +95,11 @@ final class RecipientResolverTest extends TestCase {
 		$this->assertSame( 'missing_contact', $resolver->resolve( $this->rule( FeedRuleSchema::RECIPIENT_USER, 'known' ) )->skips()[0]['reason'] );
 	}
 
-	/** @return void */
+	/**
+	 * Role resolution is deterministic and keeps valid contacts when peers are missing.
+	 *
+	 * @return void
+	 */
 	public function test_role_multiplicity_and_partial_missing_contacts(): void {
 		$users = new FakeUserDirectory(
 			array(),
@@ -96,7 +116,11 @@ final class RecipientResolverTest extends TestCase {
 		$this->assertSame( array( array( 'subject' => 'role_member:32', 'reason' => 'missing_contact' ) ), $result->skips() );
 	}
 
-	/** @return void */
+	/**
+	 * Flow user, role, and email assignees map back to the same WordPress meta contract.
+	 *
+	 * @return void
+	 */
 	public function test_flow_assignee_multiplicity_and_supported_identity_forms(): void {
 		$users = new FakeUserDirectory(
 			array( 'flow-user@example.test' => 44 ),
@@ -127,7 +151,11 @@ final class RecipientResolverTest extends TestCase {
 		$this->assertSame( 'unsupported_assignee_type', $result->skips()[1]['reason'] );
 	}
 
-	/** @return void */
+	/**
+	 * Missing or unsupported flow context stays a bounded unresolved outcome.
+	 *
+	 * @return void
+	 */
 	public function test_unavailable_flow_context_is_a_safe_skip(): void {
 		$flow = new FakeFlowAssigneeReader(
 			array(
@@ -142,7 +170,11 @@ final class RecipientResolverTest extends TestCase {
 		$this->assertSame( 'flow_step_unavailable', $result->skips()[0]['reason'] );
 	}
 
-	/** @return void */
+	/**
+	 * Empty/invalid configured values do not become destinations.
+	 *
+	 * @return void
+	 */
 	public function test_invalid_or_empty_configured_values(): void {
 		$resolver = $this->resolver();
 
@@ -151,7 +183,11 @@ final class RecipientResolverTest extends TestCase {
 		$this->assertSame( 'invalid_role', $resolver->resolve( $this->rule( FeedRuleSchema::RECIPIENT_ROLE, '' ) )->skips()[0]['reason'] );
 	}
 
-	/** @return void */
+	/**
+	 * The WU-03 harness explicitly blocks external HTTP and performs no provider calls.
+	 *
+	 * @return void
+	 */
 	public function test_no_provider_or_network_io_guard_is_active(): void {
 		$this->assertTrue( defined( 'GRAVITY_NOTIFY_TEST_NO_SEND' ) && GRAVITY_NOTIFY_TEST_NO_SEND );
 		$this->assertTrue( defined( 'WP_HTTP_BLOCK_EXTERNAL' ) && WP_HTTP_BLOCK_EXTERNAL );
@@ -159,6 +195,8 @@ final class RecipientResolverTest extends TestCase {
 	}
 
 	/**
+	 * Build normalized WU-01-style recipient metadata.
+	 *
 	 * @param string $source_type Recipient source type.
 	 * @param string $source      Source value.
 	 * @param string $channel     Channel.
@@ -173,6 +211,8 @@ final class RecipientResolverTest extends TestCase {
 	}
 
 	/**
+	 * Build the resolver with deterministic fakes.
+	 *
 	 * @param EntryFieldReader|null   $fields Entry-field seam.
 	 * @param UserDirectory|null      $users  User/contact seam.
 	 * @param FlowAssigneeReader|null $flow   Flow assignee seam.
@@ -187,33 +227,70 @@ final class RecipientResolverTest extends TestCase {
 	}
 }
 
-/** Deterministic Entry field fake. */
+/**
+ * Deterministic Entry field fake.
+ */
 final class FakeEntryFieldReader implements EntryFieldReader {
-	/** @var array<string, mixed> */
+
+	/**
+	 * Selector-to-value map.
+	 *
+	 * @var array<string, mixed>
+	 */
 	private array $values;
 
-	/** @param array<string, mixed> $values Selector map. */
+	/**
+	 * Constructor.
+	 *
+	 * @param array<string, mixed> $values Selector map.
+	 */
 	public function __construct( array $values ) {
 		$this->values = $values;
 	}
 
-	/** {@inheritDoc} */
+	/**
+	 * Read one fake Entry field value.
+	 *
+	 * @param string $selector Configured field/input selector.
+	 * @param array  $entry    Ignored Entry object.
+	 * @param array  $form     Ignored Form object.
+	 * @return mixed
+	 */
 	public function read( string $selector, array $entry, array $form ) {
 		unset( $entry, $form );
 		return $this->values[ $selector ] ?? null;
 	}
 }
 
-/** Deterministic WordPress user/contact fake. */
+/**
+ * Deterministic WordPress user/contact fake.
+ */
 final class FakeUserDirectory implements UserDirectory {
-	/** @var array<string, int> */
+
+	/**
+	 * User selector map.
+	 *
+	 * @var array<string, int>
+	 */
 	private array $selectors;
-	/** @var array<string, array<int, int>> */
+
+	/**
+	 * Role membership map.
+	 *
+	 * @var array<string, array<int, int>>
+	 */
 	private array $roles;
-	/** @var array<int, array<string, mixed>> */
+
+	/**
+	 * Contact meta map.
+	 *
+	 * @var array<int, array<string, mixed>>
+	 */
 	private array $contacts;
 
 	/**
+	 * Constructor.
+	 *
 	 * @param array<string, int>               $selectors User selector map.
 	 * @param array<string, array<int, int>>   $roles     Role membership map.
 	 * @param array<int, array<string, mixed>> $contacts  Contact meta map.
@@ -224,33 +301,66 @@ final class FakeUserDirectory implements UserDirectory {
 		$this->contacts   = $contacts;
 	}
 
-	/** {@inheritDoc} */
+	/**
+	 * Resolve one fake user selector.
+	 *
+	 * @param string $selector User selector.
+	 * @return int|null
+	 */
 	public function find_user_id( string $selector ): ?int {
 		return $this->selectors[ $selector ] ?? null;
 	}
 
-	/** {@inheritDoc} */
+	/**
+	 * Resolve fake role members.
+	 *
+	 * @param string $role Role slug.
+	 * @return array<int, int>
+	 */
 	public function find_user_ids_by_role( string $role ): array {
 		return $this->roles[ $role ] ?? array();
 	}
 
-	/** {@inheritDoc} */
+	/**
+	 * Read one fake contact meta value.
+	 *
+	 * @param int    $user_id  User ID.
+	 * @param string $meta_key Contact meta key.
+	 * @return mixed
+	 */
 	public function get_contact( int $user_id, string $meta_key ) {
 		return $this->contacts[ $user_id ][ $meta_key ] ?? null;
 	}
 }
 
-/** Deterministic Gravity Flow assignee fake. */
+/**
+ * Deterministic Gravity Flow assignee fake.
+ */
 final class FakeFlowAssigneeReader implements FlowAssigneeReader {
-	/** @var array<string, mixed> */
+
+	/**
+	 * Assignee collection.
+	 *
+	 * @var array<string, mixed>
+	 */
 	private array $collection;
 
-	/** @param array<string, mixed> $collection Assignee collection. */
+	/**
+	 * Constructor.
+	 *
+	 * @param array<string, mixed> $collection Assignee collection.
+	 */
 	public function __construct( array $collection ) {
 		$this->collection = $collection;
 	}
 
-	/** {@inheritDoc} */
+	/**
+	 * Return the configured fake assignee collection.
+	 *
+	 * @param array $entry Ignored Entry object.
+	 * @param array $form  Ignored Form object.
+	 * @return array<string, mixed>
+	 */
 	public function read( array $entry, array $form ): array {
 		unset( $entry, $form );
 		return $this->collection;
