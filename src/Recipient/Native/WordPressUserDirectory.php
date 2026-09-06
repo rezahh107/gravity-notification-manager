@@ -14,7 +14,12 @@ use GravityNotify\Recipient\UserDirectory;
  */
 final class WordPressUserDirectory implements UserDirectory {
 
-	/** {@inheritDoc} */
+	/**
+	 * Resolve one configured user selector through WordPress user APIs.
+	 *
+	 * @param string $selector Configured user selector.
+	 * @return int|null
+	 */
 	public function find_user_id( string $selector ): ?int {
 		$selector = trim( $selector );
 		if ( '' === $selector || ! function_exists( 'get_user_by' ) ) {
@@ -35,7 +40,12 @@ final class WordPressUserDirectory implements UserDirectory {
 		return is_object( $user ) && isset( $user->ID ) && 0 < (int) $user->ID ? (int) $user->ID : null;
 	}
 
-	/** {@inheritDoc} */
+	/**
+	 * Resolve matching user IDs for one WordPress role.
+	 *
+	 * @param string $role Role slug.
+	 * @return array<int, int>
+	 */
 	public function find_user_ids_by_role( string $role ): array {
 		$role = trim( $role );
 		if ( '' === $role || ! function_exists( 'get_users' ) ) {
@@ -54,7 +64,13 @@ final class WordPressUserDirectory implements UserDirectory {
 		return is_array( $users ) ? array_map( 'intval', $users ) : array();
 	}
 
-	/** {@inheritDoc} */
+	/**
+	 * Read one channel-specific contact meta value.
+	 *
+	 * @param int    $user_id  WordPress user ID.
+	 * @param string $meta_key Closed WU-03 contact meta key.
+	 * @return mixed
+	 */
 	public function get_contact( int $user_id, string $meta_key ) {
 		if ( 0 >= $user_id || ! function_exists( 'get_user_meta' ) ) {
 			return null;
