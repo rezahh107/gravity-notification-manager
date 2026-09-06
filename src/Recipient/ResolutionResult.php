@@ -43,10 +43,10 @@ final class ResolutionResult {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                                           $channel      Requested channel.
-	 * @param string                                           $source_type  Configured recipient source type.
-	 * @param array<int, string>                               $destinations Resolved destinations.
-	 * @param array<int, array{subject:string,reason:string}>  $skips        Safe skip records.
+	 * @param string                                          $channel Requested channel.
+	 * @param string                                          $source_type Configured recipient source type.
+	 * @param array<int, string>                              $destinations Resolved destinations.
+	 * @param array<int, array{subject:string,reason:string}> $skips Safe skip records.
 	 */
 	public function __construct( string $channel, string $source_type, array $destinations, array $skips ) {
 		$this->channel      = $channel;
