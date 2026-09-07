@@ -57,6 +57,8 @@ All automated WU-04 tests use deterministic in-memory provider/channel fakes. No
 
 ## Bounded legacy differential review
 
-Status: `PENDING_INITIAL_GREENFIELD_TEST_PASS`.
+Status: `NO_MATERIAL_FINDING`.
 
-Per `docs/SALVAGE_REFERENCE.md`, equivalent legacy Flow-triggering material is not inspected until the initial greenfield implementation and focused tests pass.
+The review was performed only after the initial greenfield WU-04 implementation and tests passed. The immutable legacy reference inspected was tag `legacy-source-pre-greenfield-2026-09-02`, commit `7556f86ecc65f37d34d9563ce2087f16235bbca5`, limited to relevant Flow-triggering material in `includes/Integration/Listener.php`.
+
+`docs/SALVAGE_REFERENCE.md` classifies that listener path as `RETIRE` because the compatible Feed-Step mechanism replaces the lifecycle-hook delivery trigger. The bounded review found no current-valid material behavior to incorporate. No legacy listener, queue, scheduler, or dispatcher orchestration was transplanted into WU-04.
