@@ -38,9 +38,9 @@ final class NotificationExecutionResult {
 	/**
 	 * Constructor.
 	 *
-	 * @param array<int, AttemptResult>                         $attempts Transport attempts.
-	 * @param array<int, array{subject:string,reason:string}>   $skips Safe skip classifications.
-	 * @param bool                                              $delivery_succeeded Delivery acceptance.
+	 * @param array<int, AttemptResult>                       $attempts Transport attempts.
+	 * @param array<int, array{subject:string,reason:string}> $skips Safe skip classifications.
+	 * @param bool                                            $delivery_succeeded Delivery acceptance.
 	 */
 	public function __construct( array $attempts, array $skips, bool $delivery_succeeded ) {
 		$this->attempts           = array_values( $attempts );
