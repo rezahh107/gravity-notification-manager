@@ -7,10 +7,8 @@
 
 namespace GravityNotify\Tests\Unit\GravityForms;
 
-use GravityNotify\Delivery\AttemptResult;
 use GravityNotify\Delivery\AttemptStatus;
 use GravityNotify\Delivery\Bale\BaleChannelInterface;
-use GravityNotify\Delivery\Bale\BaleRequest;
 use GravityNotify\Delivery\Sms\SmsCapability;
 use GravityNotify\Delivery\Sms\SmsProviderInterface;
 use GravityNotify\Delivery\Sms\SmsProviderRegistry;
@@ -19,6 +17,8 @@ use GravityNotify\Delivery\SynchronousDispatcher;
 use GravityNotify\GravityForms\FeedRuleSchema;
 use GravityNotify\GravityForms\NotificationFeedProcessor;
 use GravityNotify\Recipient\RecipientResolver;
+use GravityNotify\Tests\Support\Delivery\FakeBaleChannel;
+use GravityNotify\Tests\Support\Delivery\FakeSmsProvider;
 use GravityNotify\Tests\Support\Recipient\FakeEntryFieldReader;
 use GravityNotify\Tests\Support\Recipient\FakeFlowAssigneeReader;
 use GravityNotify\Tests\Support\Recipient\FakeUserDirectory;
@@ -35,9 +35,9 @@ final class NotificationFeedProcessorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_sms_feed_uses_recipient_resolver_and_synchronous_dispatcher(): void {
-		$provider   = $this->provider( AttemptStatus::SUCCESS );
-		$processor  = $this->processor( array( $provider ), null, '+982100000000' );
-		$result     = $processor->execute(
+		$provider  = new FakeSmsProvider( AttemptStatus::SUCCESS );
+		$processor = $this->processor( array( $provider ), null, '+982100000000' );
+		$result    = $processor->execute(
 			$this->rule(
 				FeedRuleSchema::CHANNEL_SMS,
 				FeedRuleSchema::RECIPIENT_FIXED,
@@ -63,8 +63,8 @@ final class NotificationFeedProcessorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_feed_fallback_policy_controls_sms_provider_fallback(): void {
-		$first  = $this->provider( AttemptStatus::FAILED, 'first' );
-		$second = $this->provider( AttemptStatus::SUCCESS, 'second' );
+		$first       = new FakeSmsProvider( AttemptStatus::FAILED, 'first' );
+		$second      = new FakeSmsProvider( AttemptStatus::SUCCESS, 'second' );
 		$no_fallback = $this->processor( array( $first, $second ), null, '+982100000000' );
 
 		$result = $no_fallback->execute(
@@ -82,8 +82,8 @@ final class NotificationFeedProcessorTest extends TestCase {
 		self::assertSame( 1, $first->send_count );
 		self::assertSame( 0, $second->send_count );
 
-		$first_again  = $this->provider( AttemptStatus::FAILED, 'first' );
-		$second_again = $this->provider( AttemptStatus::SUCCESS, 'second' );
+		$first_again   = new FakeSmsProvider( AttemptStatus::FAILED, 'first' );
+		$second_again  = new FakeSmsProvider( AttemptStatus::SUCCESS, 'second' );
 		$with_fallback = $this->processor( array( $first_again, $second_again ), null, '+982100000000' );
 
 		$result = $with_fallback->execute(
@@ -108,7 +108,7 @@ final class NotificationFeedProcessorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_bale_feed_uses_separate_synchronous_channel(): void {
-		$bale      = $this->bale( AttemptStatus::SUCCESS );
+		$bale      = new FakeBaleChannel( AttemptStatus::SUCCESS );
 		$processor = $this->processor( array(), $bale );
 		$result    = $processor->execute(
 			$this->rule(
@@ -123,7 +123,6 @@ final class NotificationFeedProcessorTest extends TestCase {
 
 		self::assertTrue( $result->delivery_succeeded() );
 		self::assertSame( 1, $bale->send_count );
-		self::assertInstanceOf( BaleRequest::class, $bale->last_request );
 		self::assertSame( 'test-chat', $bale->last_request->chat_id() );
 	}
 
@@ -133,7 +132,7 @@ final class NotificationFeedProcessorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_missing_destination_returns_safe_failure_without_transport(): void {
-		$provider  = $this->provider( AttemptStatus::SUCCESS );
+		$provider  = new FakeSmsProvider( AttemptStatus::SUCCESS );
 		$processor = $this->processor( array( $provider ), null, '+982100000000' );
 		$result    = $processor->execute(
 			$this->rule(
@@ -157,7 +156,7 @@ final class NotificationFeedProcessorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_provider_failure_is_observable_without_throwing(): void {
-		$provider  = $this->provider( AttemptStatus::FAILED );
+		$provider  = new FakeSmsProvider( AttemptStatus::FAILED );
 		$processor = $this->processor( array( $provider ), null, '+982100000000' );
 		$result    = $processor->execute(
 			$this->rule(
@@ -174,39 +173,53 @@ final class NotificationFeedProcessorTest extends TestCase {
 		self::assertSame( AttemptStatus::FAILED, $result->attempts()[0]->status() );
 	}
 
+	/**
+	 * Build the real WU-03 resolver plus WU-02 dispatcher.
+	 *
+	 * @param array<int, SmsProviderInterface> $providers  SMS providers.
+	 * @param BaleChannelInterface|null        $bale       Bale channel.
+	 * @param string                           $sms_sender Sender.
+	 * @return NotificationFeedProcessor
+	 */
 	private function processor( array $providers, ?BaleChannelInterface $bale, string $sms_sender = '' ): NotificationFeedProcessor {
 		$resolver = new RecipientResolver(
 			new FakeEntryFieldReader( array() ),
 			new FakeUserDirectory( array(), array(), array() ),
-			new FakeFlowAssigneeReader( array( 'available' => false, 'reason' => 'flow_context_unavailable', 'assignees' => array() ) )
+			new FakeFlowAssigneeReader(
+				array(
+					'available' => false,
+					'reason'    => 'flow_context_unavailable',
+					'assignees' => array(),
+				)
+			)
 		);
-		return new NotificationFeedProcessor( $resolver, new SynchronousDispatcher( new SmsProviderRegistry( $providers ), $bale ), $sms_sender );
+
+		return new NotificationFeedProcessor(
+			$resolver,
+			new SynchronousDispatcher( new SmsProviderRegistry( $providers ), $bale ),
+			$sms_sender
+		);
 	}
 
+	/**
+	 * Build one normalized Feed rule.
+	 *
+	 * @param string $channel     Channel.
+	 * @param string $source_type Recipient source type.
+	 * @param string $source      Recipient source value.
+	 * @param string $fallback    Fallback policy.
+	 * @return array<string, int|string>
+	 */
 	private function rule( string $channel, string $source_type, string $source, string $fallback ): array {
-		return FeedRuleSchema::normalize( array( 'feedName' => 'Case update', 'message' => 'Case accepted', 'recipient_source_type' => $source_type, 'recipient_source_value' => $source, 'channel' => $channel, 'fallback_policy' => $fallback ) );
-	}
-
-	private function provider( string $status, string $identifier = 'fake' ): SmsProviderInterface {
-		return new class( $status, $identifier ) implements SmsProviderInterface {
-			public int $send_count = 0;
-			public ?SmsRequest $last_request = null;
-			private string $status;
-			private string $identifier;
-			public function __construct( string $status, string $identifier ) { $this->status = $status; $this->identifier = $identifier; }
-			public function identifier(): string { return $this->identifier; }
-			public function capabilities(): array { return array( SmsCapability::PLAIN, SmsCapability::MULTI_RECIPIENT_PLAIN ); }
-			public function send( SmsRequest $request ): AttemptResult { ++$this->send_count; $this->last_request = $request; return new AttemptResult( $this->status, 'sms', $this->identifier, $request->capability(), array(), 'test' ); }
-		};
-	}
-
-	private function bale( string $status ): BaleChannelInterface {
-		return new class( $status ) implements BaleChannelInterface {
-			public int $send_count = 0;
-			public ?BaleRequest $last_request = null;
-			private string $status;
-			public function __construct( string $status ) { $this->status = $status; }
-			public function send( BaleRequest $request ): AttemptResult { ++$this->send_count; $this->last_request = $request; return new AttemptResult( $this->status, 'bale', null, null, array(), 'test' ); }
-		};
+		return FeedRuleSchema::normalize(
+			array(
+				'feedName'               => 'Case update',
+				'message'                => 'Case accepted',
+				'recipient_source_type'  => $source_type,
+				'recipient_source_value' => $source,
+				'channel'                => $channel,
+				'fallback_policy'        => $fallback,
+			)
+		);
 	}
 }
