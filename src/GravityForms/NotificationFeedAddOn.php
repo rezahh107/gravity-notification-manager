@@ -7,6 +7,8 @@
 
 namespace GravityNotify\GravityForms;
 
+use GravityNotify\GravityFlow\FeedStepRegistration;
+
 /**
  * Defines one logical notification per Gravity Forms Feed.
  */
@@ -55,7 +57,26 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	protected $_async_feed_processing = false;
 
 	/**
+	 * Request-local WU-04 execution dependency.
+	 *
+	 * Production settings/provider composition remains a later cutover concern.
+	 *
+	 * @var NotificationFeedProcessor|null
+	 */
+	private ?NotificationFeedProcessor $processor = null;
+
+	/**
+	 * Last request-local execution result.
+	 *
+	 * @var NotificationExecutionResult|null
+	 */
+	private ?NotificationExecutionResult $last_execution_result = null;
+
+	/**
 	 * Return the singleton Add-On instance.
+	 *
+	 * Also boots the optional Gravity Flow registration bridge without requiring
+	 * Gravity Flow to be installed or loaded.
 	 *
 	 * @return self
 	 */
@@ -64,7 +85,31 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 			self::$_instance = new self();
 		}
 
+		FeedStepRegistration::boot();
+
 		return self::$_instance;
+	}
+
+	/**
+	 * Inject the already-composed synchronous WU-04 execution dependency.
+	 *
+	 * This seam avoids coupling Feed execution to legacy settings or activating
+	 * production senders before the controlled cutover Work Unit.
+	 *
+	 * @param NotificationFeedProcessor|null $processor Processor or null to disable runtime delivery.
+	 * @return void
+	 */
+	public function configure_processor( ?NotificationFeedProcessor $processor ): void {
+		$this->processor = $processor;
+	}
+
+	/**
+	 * Return the latest request-local execution result.
+	 *
+	 * @return NotificationExecutionResult|null
+	 */
+	public function last_execution_result(): ?NotificationExecutionResult {
+		return $this->last_execution_result;
 	}
 
 	/**
@@ -142,25 +187,46 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	}
 
 	/**
-	 * Synchronous Gravity Forms feed-processing boundary for WU-01.
+	 * Shared synchronous Gravity Forms / Gravity Flow Feed-processing boundary.
 	 *
-	 * The foundation intentionally performs no provider/network delivery and
-	 * does not create delivery-state semantics. Later Work Units own those
-	 * responsibilities.
+	 * Gravity Forms and Gravity Flow evaluate their native Feed condition before
+	 * invoking this method. The returned boolean is delivery outcome evidence for
+	 * the native Feed framework; Gravity Flow step completion remains owned by
+	 * the Feed-Step base and is not coupled to this value.
 	 *
 	 * @param array $feed  Gravity Forms feed.
 	 * @param array $entry Gravity Forms entry.
 	 * @param array $form  Gravity Forms form.
-	 * @return void
+	 * @return bool Whether delivery obtained documented acceptance.
 	 */
 	public function process_feed( $feed, $entry, $form ) {
-		unset( $entry, $form );
-
 		$meta = is_array( $feed ) && isset( $feed['meta'] ) && is_array( $feed['meta'] )
 			? $feed['meta']
 			: array();
 
-		FeedRuleSchema::normalize( $meta );
+		$rule = FeedRuleSchema::normalize( $meta );
+
+		if ( null === $this->processor ) {
+			$this->last_execution_result = new NotificationExecutionResult(
+				array(),
+				array(
+					array(
+						'subject' => 'runtime',
+						'reason'  => 'runtime_not_configured',
+					),
+				),
+				false
+			);
+			return false;
+		}
+
+		$this->last_execution_result = $this->processor->execute(
+			$rule,
+			is_array( $entry ) ? $entry : array(),
+			is_array( $form ) ? $form : array()
+		);
+
+		return $this->last_execution_result->delivery_succeeded();
 	}
 
 	/**
