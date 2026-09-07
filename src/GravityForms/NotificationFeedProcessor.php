@@ -47,9 +47,9 @@ final class NotificationFeedProcessor {
 	/**
 	 * Constructor.
 	 *
-	 * @param RecipientResolver      $resolver Recipient resolver.
+	 * @param RecipientResolver     $resolver Recipient resolver.
 	 * @param SynchronousDispatcher $dispatcher Synchronous transport dispatcher.
-	 * @param string                 $sms_sender Already-configured SMS sender.
+	 * @param string                $sms_sender Already-configured SMS sender.
 	 */
 	public function __construct(
 		RecipientResolver $resolver,
