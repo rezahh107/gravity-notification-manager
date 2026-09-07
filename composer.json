@@ -43,7 +43,7 @@
         }
     },
     "scripts": {
-        "lint": "@php vendor/bin/phpcs --standard=phpcs.xml",
+        "lint": "@php vendor/bin/phpcs -n --standard=phpcs.xml src tests",
         "lint-fix": "phpcbf --standard=phpcs.xml",
         "lint:wu00": "@php vendor/bin/phpcs -n --standard=phpcs.xml src tests",
         "stan": "phpstan analyse --memory-limit=2G",
