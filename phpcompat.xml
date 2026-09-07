@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<ruleset name="GravityNotify-PHPCompatibility">
+    <description>PHP compatibility checks for greenfield Gravity Notification Manager development surfaces.</description>
+    <arg name="extensions" value="php"/>
+    <file>src</file>
+    <file>tests</file>
+    <config name="testVersion" value="8.2-"/>
+    <rule ref="PHPCompatibilityWP"/>
+</ruleset>
