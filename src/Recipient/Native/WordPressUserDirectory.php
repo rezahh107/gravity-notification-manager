@@ -55,7 +55,7 @@ final class WordPressUserDirectory implements UserDirectory {
 		$users = get_users(
 			array(
 				'role'    => $role,
-				'fields'  => 'ids',
+				'fields'  => 'ID',
 				'orderby' => 'ID',
 				'order'   => 'ASC',
 			)
