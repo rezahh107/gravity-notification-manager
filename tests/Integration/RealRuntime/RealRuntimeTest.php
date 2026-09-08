@@ -205,7 +205,7 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 	/**
 	 * Prove GFLOW-REAL-03 native condition inside Flow lifecycle.
 	 *
-	 * @testdox GFLOW-REAL-03 native condition inside Flow lifecycle
+	 * @testdox GFLOW-REAL-03 native condition inside flow
 	 */
 	public function test_gflow_real_03_native_condition_inside_flow(): void {
 		$fixture = $this->create_flow_fixture( AttemptStatus::SUCCESS, 'Not Alice' );
@@ -338,7 +338,9 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 				),
 			);
 		}
-		$feed_id = $this->add_on->add_feed( $this->form_id, $meta, 'Real runtime notification' );
+		$feed_id = GFAPI::add_feed( $this->form_id, $meta, $this->add_on->get_slug() );
+		self::assertNotWPError( $feed_id );
+		self::assertIsInt( $feed_id );
 		self::assertGreaterThan( 0, $feed_id );
 		return $feed_id;
 	}
