@@ -17,15 +17,34 @@ final class ManualRetryHandler {
 	 */
 	public const ACTION = 'gravity_notify_retry_notification';
 
+	/** Successful Retry result. */
 	public const RESULT_SUCCESS = 'retry_success';
+
+	/** Unresolved Retry result. */
 	public const RESULT_UNRESOLVED = 'retry_unresolved';
+
+	/** Non-POST request error. */
 	public const ERROR_METHOD = 'invalid_method';
+
+	/** Capability error. */
 	public const ERROR_CAPABILITY = 'invalid_capability';
+
+	/** Entry identifier error. */
 	public const ERROR_ENTRY_ID = 'invalid_entry_id';
+
+	/** Feed identifier error. */
 	public const ERROR_FEED_ID = 'invalid_feed_id';
+
+	/** Nonce error. */
 	public const ERROR_NONCE = 'invalid_nonce';
+
+	/** Entry lookup error. */
 	public const ERROR_ENTRY = 'invalid_entry';
+
+	/** Feed lookup/identity error. */
 	public const ERROR_FEED = 'invalid_feed';
+
+	/** Persisted state eligibility error. */
 	public const ERROR_STATE = 'invalid_state';
 
 	/**
@@ -52,11 +71,11 @@ final class ManualRetryHandler {
 	/**
 	 * Constructor.
 	 *
-	 * @param NotificationFeedAddOn      $add_on Add-On execution seam.
+	 * @param NotificationFeedAddOn       $add_on Add-On execution seam.
 	 * @param ManualRetryRuntimeInterface $runtime Runtime APIs.
 	 */
 	public function __construct( NotificationFeedAddOn $add_on, ManualRetryRuntimeInterface $runtime ) {
-		$this->add_on = $add_on;
+		$this->add_on  = $add_on;
 		$this->runtime = $runtime;
 	}
 
@@ -84,6 +103,7 @@ final class ManualRetryHandler {
 	 * @return void
 	 */
 	public function handle(): void {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Compared only to the literal POST method; no state is derived from it.
 		$method  = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] )
 			? strtoupper( $_SERVER['REQUEST_METHOD'] )
 			: '';
@@ -92,9 +112,12 @@ final class ManualRetryHandler {
 		$code    = $this->response_code( $result );
 
 		if ( function_exists( 'wp_die' ) ) {
+			$title = function_exists( 'esc_html__' )
+				? esc_html__( 'Gravity Notification Manager Retry', 'gravity-notification-manager' )
+				: 'Gravity Notification Manager Retry';
 			wp_die(
 				function_exists( 'esc_html' ) ? esc_html( $result ) : $result,
-				'Gravity Notification Manager Retry',
+				$title,
 				array( 'response' => $code )
 			);
 		}
@@ -162,11 +185,16 @@ final class ManualRetryHandler {
 	/**
 	 * Read and sanitize only the WU-05 request fields.
 	 *
+	 * Reading occurs before nonce verification because the Entry/Feed identifiers
+	 * are inputs to the nonce action. No mutation or send occurs until dispatch()
+	 * validates the nonce and capability.
+	 *
 	 * @return array<string, string>
 	 */
 	private function sanitized_post_request(): array {
 		$request = array();
 		foreach ( array( 'entry_id', 'feed_id', '_wpnonce' ) as $key ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Sanitized here; dispatch() verifies the target-bound nonce before any mutation/send.
 			$value = $_POST[ $key ] ?? '';
 			if ( function_exists( 'wp_unslash' ) ) {
 				$value = wp_unslash( $value );
