@@ -40,6 +40,8 @@ Relied-upon facts:
 - `is_wp_error()` is the supported check for a WordPress error object.
 - `wp_remote_retrieve_response_code()` retrieves the HTTP response code.
 - `wp_remote_retrieve_body()` retrieves the response body.
+- A `WP_Error` does not contain a provider acceptance/rejection response, so WordPress/HTTP transport failure with no provider response is classified `AMBIGUOUS` with diagnostic `transport_error`.
+- Explicit HTTP rejection or documented provider/API rejection remains `FAILED`.
 - Production transport is therefore a narrow adapter around these supported WordPress functions; tests inject a fake seam and make no real network request.
 
 ## Bale Bot API
