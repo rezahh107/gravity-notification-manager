@@ -167,8 +167,9 @@ final class RecipientResolverTest extends TestCase {
 				),
 			)
 		);
-		$result = $this->resolver( null, $users, $flow )->resolve( $this->rule( FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE, '', FeedRuleSchema::CHANNEL_BALE ) );
+		$result = $this->resolver( null, $users, $flow )->resolve( $this->rule( FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE, '71', FeedRuleSchema::CHANNEL_BALE ) );
 
+		$this->assertSame( 71, $flow->last_step_id );
 		$this->assertSame( array( 'bale-flow-41', 'bale-flow-42', 'bale-flow-44' ), $result->destinations() );
 		$this->assertSame( 'missing_contact', $result->skips()[0]['reason'] );
 		$this->assertSame( 'unsupported_assignee_type', $result->skips()[1]['reason'] );
@@ -187,8 +188,9 @@ final class RecipientResolverTest extends TestCase {
 				'assignees' => array(),
 			)
 		);
-		$result = $this->resolver( null, null, $flow )->resolve( $this->rule( FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE, '' ) );
+		$result = $this->resolver( null, null, $flow )->resolve( $this->rule( FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE, '72' ) );
 
+		$this->assertSame( 72, $flow->last_step_id );
 		$this->assertSame( array(), $result->destinations() );
 		$this->assertSame( 'flow_step_unavailable', $result->skips()[0]['reason'] );
 	}

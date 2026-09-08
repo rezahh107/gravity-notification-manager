@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
 /**
- * Proves the bounded WU-01 feed contract without provider delivery.
+ * Proves the Feed contract remains native, synchronous and safely unconfigured.
  */
 final class NotificationFeedAddOnTest extends TestCase {
 
@@ -29,6 +29,16 @@ final class NotificationFeedAddOnTest extends TestCase {
 		if ( ! class_exists( 'GFFeedAddOn', false ) ) {
 			class_alias( GFFeedAddOnStub::class, 'GFFeedAddOn' );
 		}
+	}
+
+	/**
+	 * Ensure singleton execution dependencies do not leak between tests.
+	 *
+	 * @return void
+	 */
+	protected function tearDown(): void {
+		NotificationFeedAddOn::get_instance()->configure_processor( null );
+		parent::tearDown();
 	}
 
 	/**
@@ -52,7 +62,7 @@ final class NotificationFeedAddOnTest extends TestCase {
 	}
 
 	/**
-	 * Required WU-01 fields use native condition and merge-tag facilities.
+	 * Required fields retain native condition and merge-tag facilities.
 	 *
 	 * @return void
 	 */
@@ -109,7 +119,7 @@ final class NotificationFeedAddOnTest extends TestCase {
 	}
 
 	/**
-	 * Fallback intent never changes the message semantics in WU-01.
+	 * Fallback intent never changes the message semantics in the Feed schema.
 	 *
 	 * @return void
 	 */
@@ -128,17 +138,15 @@ final class NotificationFeedAddOnTest extends TestCase {
 	}
 
 	/**
-	 * The WU-01 process boundary performs no external delivery action.
+	 * Runtime delivery remains disabled until a composed WU-04 processor is injected.
 	 *
 	 * @return void
 	 */
-	public function test_process_feed_is_side_effect_free_for_external_delivery(): void {
-		$before = array(
-			'no_send_enabled' => defined( 'GRAVITY_NOTIFY_TEST_NO_SEND' ) && GRAVITY_NOTIFY_TEST_NO_SEND,
-			'http_blocked'    => defined( 'WP_HTTP_BLOCK_EXTERNAL' ) && WP_HTTP_BLOCK_EXTERNAL,
-		);
+	public function test_process_feed_without_runtime_configuration_is_safe_and_observable(): void {
+		$add_on = NotificationFeedAddOn::get_instance();
+		$add_on->configure_processor( null );
 
-		NotificationFeedAddOn::get_instance()->process_feed(
+		$result = $add_on->process_feed(
 			array(
 				'meta' => array(
 					'feedName'               => 'No-send foundation',
@@ -153,12 +161,9 @@ final class NotificationFeedAddOnTest extends TestCase {
 			array()
 		);
 
-		self::assertSame(
-			$before,
-			array(
-				'no_send_enabled' => defined( 'GRAVITY_NOTIFY_TEST_NO_SEND' ) && GRAVITY_NOTIFY_TEST_NO_SEND,
-				'http_blocked'    => defined( 'WP_HTTP_BLOCK_EXTERNAL' ) && WP_HTTP_BLOCK_EXTERNAL,
-			)
-		);
+		self::assertFalse( $result );
+		self::assertNotNull( $add_on->last_execution_result() );
+		self::assertFalse( $add_on->last_execution_result()->delivery_succeeded() );
+		self::assertSame( 'runtime_not_configured', $add_on->last_execution_result()->skips()[0]['reason'] );
 	}
 }

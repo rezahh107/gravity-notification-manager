@@ -2,9 +2,9 @@
 
 Status: `IMPLEMENTATION_CONTRACT / WU-03 / CURRENT-SOURCE SNAPSHOT`
 
-Snapshot date: 2026-09-06
+Snapshot date: 2026-09-08
 
-Scope: only current Gravity Forms Entry/form access, WordPress user/role/user-meta access, and Gravity Flow current-step assignee access used by WU-03. This document does not redefine WU-01 Feed metadata or WU-02 transport semantics.
+Scope: only current Gravity Forms Entry/form access, WordPress user/role/user-meta access, and Gravity Flow explicitly selected-Step assignee access used by WU-03/WU-04. This document does not redefine WU-01 Feed metadata or WU-02 transport semantics.
 
 ## Gravity Forms
 
@@ -33,22 +33,27 @@ Facts relied upon:
 
 ## Gravity Flow
 
-Official sources:
+Official/current sources:
 
 - https://docs.gravityflow.io/the-workflow-orchestration-api/
 - https://docs.gravityflow.io/step-class/
-- https://docs.gravityflow.io/assignee-class/
+- https://docs.gravityflow.io/gravityflow_step_assignees/
+- https://docs.gravityflow.io/the-workflow-step-framework/
+
+Owner-verified primary source: Gravity Flow 3.1.0 `gravityflow.zip`, SHA-256 `ac0573b75831380417a21a455176e25eb746d718bbbd0bb70d6da6f48cba5404`.
 
 Facts relied upon:
 
-- The documented local orchestration API is `new Gravity_Flow_API( $form_id )`; `get_current_step( $entry )` returns the current `Gravity_Flow_Step` when available.
-- `Gravity_Flow_Step::get_assignees()` returns current-step assignee objects.
-- `Gravity_Flow_Assignee::get_type()` and `get_id()` expose documented assignee identity. WU-03 supports `user_id`, `role`, and `email` only when the email maps to a WordPress user; all channel contact lookup then uses the same closed WordPress user-meta keys above.
-- Missing current-step context, missing assignees, or unsupported assignee types become structured unresolved/skip results. WU-03 does not infer routing, mutate assignments, or scrape internal workflow state.
+- For `recipient_source_type = flow_assignee`, the existing `recipient_source_value` is the authoritative explicit positive Gravity Flow Step ID. It is not a user/role identifier in this source mode.
+- Gravity Flow's documented Step contract uses Entry-bound exact-Step lookup via `gravity_flow()->get_step( $step_id, $entry )`; the owner-verified 3.1.0 `Gravity_Flow_API::get_step( $step_id, $entry )` delegates to that supported exact-Step path. WU-03 uses that API with the current Entry context.
+- `Gravity_Flow_Step::get_assignees()` returns assignee objects for the selected Step.
+- `Gravity_Flow_Assignee::get_type()` and `get_id()` expose assignee identity. WU-03 supports `user_id`, `role`, and `email` only when the email maps to a WordPress user; all channel contact lookup then uses the same closed WordPress user-meta keys above.
+- WU-03 never infers the assignee source from the current Notification Feed Step, previous Step, workflow/list/history order, routing adjacency, or current user.
+- Missing/invalid Step selectors, unavailable selected Steps, unavailable assignee APIs/collections, empty assignee collections, or unsupported assignee types become structured unresolved/skip results. WU-03 does not mutate assignments or workflow topology.
 
 ## WU-03 normalization boundary
 
-WU-03 performs only generic normalization required for stable recipient identity: scalar conversion, whitespace trimming, positive field/input selector syntax, stable user-ID ordering/deduplication, and rejection of empty destinations. It intentionally does not copy legacy country/provider phone normalization or WU-02 provider acceptance rules.
+WU-03 performs only generic normalization required for stable recipient identity: scalar conversion, whitespace trimming, positive field/input selector syntax, positive integer Flow Step selector syntax, stable user-ID ordering/deduplication, and rejection of empty destinations. It intentionally does not copy legacy country/provider phone normalization or WU-02 provider acceptance rules.
 
 ## Result and side-effect boundary
 
@@ -84,10 +89,10 @@ Current official contract checked: the Gravity Forms, WordPress, and Gravity Flo
 
 Target architecture compatibility: `PASS`
 
-Exact behavior incorporated: none.
+Exact behavior incorporated: none from legacy. RUN-020 supersedes only the earlier current-Step wording with the Owner-selected explicit configured Step-ID semantics.
 
-Legacy behavior intentionally NOT incorporated: multi-fixed parsing, submitter source, legacy contact-key fallbacks, recipient cache, provider-driven normalization, and undocumented/scalar assignee inference.
+Legacy behavior intentionally NOT incorporated: multi-fixed parsing, submitter source, legacy contact-key fallbacks, recipient cache, provider-driven normalization, undocumented/scalar assignee inference, and any current/previous/order/history/current-user Step heuristic.
 
-Tests added/updated after review: none; no current-valid material gap was found.
+Tests added/updated after review: RUN-020 adds explicit-Step selector, exact-Step, identity, failure, integration, and anti-heuristic coverage.
 
-Revalidation result: pending exact-final-head validation after this review record is committed.
+Revalidation result: pending exact-final-head validation after the RUN-020 repair is committed.

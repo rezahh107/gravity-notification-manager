@@ -39,7 +39,7 @@ final class RecipientResolver {
 	private UserDirectory $users;
 
 	/**
-	 * Gravity Flow current-step assignee seam.
+	 * Gravity Flow explicit-step assignee seam.
 	 *
 	 * @var FlowAssigneeReader
 	 */
@@ -85,7 +85,7 @@ final class RecipientResolver {
 			case FeedRuleSchema::RECIPIENT_ROLE:
 				return $this->resolve_role( $channel, $source_type, $source );
 			case FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE:
-				return $this->resolve_flow_assignees( $channel, $source_type, $entry, $form );
+				return $this->resolve_flow_assignees( $channel, $source_type, $source, $entry, $form );
 			default:
 				return $this->result_with_skip( $channel, $source_type, 'configured_source', 'unsupported_source_type' );
 		}
@@ -178,18 +178,28 @@ final class RecipientResolver {
 	}
 
 	/**
-	 * Resolve current Gravity Flow step assignees through documented identities.
+	 * Resolve assignees from the explicitly configured Gravity Flow Step.
 	 *
 	 * @param string $channel Requested channel.
 	 * @param string $source_type Source type.
+	 * @param string $selector Explicit Gravity Flow Step ID selector.
 	 * @param array  $entry Entry object.
 	 * @param array  $form Form object.
 	 * @return ResolutionResult
 	 */
-	private function resolve_flow_assignees( string $channel, string $source_type, array $entry, array $form ): ResolutionResult {
-		$collection = $this->flow_assignees->read( $entry, $form );
+	private function resolve_flow_assignees( string $channel, string $source_type, string $selector, array $entry, array $form ): ResolutionResult {
+		if ( 1 !== preg_match( '/^[1-9][0-9]*$/', $selector ) ) {
+			return $this->result_with_skip( $channel, $source_type, 'configured_source', 'flow_step_selector_invalid' );
+		}
+
+		$step_id = (int) $selector;
+		if ( 0 >= $step_id || (string) $step_id !== $selector ) {
+			return $this->result_with_skip( $channel, $source_type, 'configured_source', 'flow_step_selector_invalid' );
+		}
+
+		$collection = $this->flow_assignees->read( $entry, $form, $step_id );
 		$available  = true === ( $collection['available'] ?? false );
-		$reason     = $this->scalar_string( $collection['reason'] ?? 'flow_context_unavailable' );
+		$reason     = $this->scalar_string( $collection['reason'] ?? 'flow_step_unavailable' );
 		$assignees  = is_array( $collection['assignees'] ?? null ) ? $collection['assignees'] : array();
 
 		if ( ! $available ) {
@@ -322,13 +332,13 @@ final class RecipientResolver {
 	 */
 	private function safe_flow_reason( string $reason ): string {
 		$allowed = array(
-			'flow_api_unavailable',
-			'flow_context_unavailable',
+			'flow_step_selector_invalid',
 			'flow_step_unavailable',
 			'flow_assignee_api_unavailable',
+			'flow_assignee_empty',
 		);
 
-		return in_array( $reason, $allowed, true ) ? $reason : 'flow_context_unavailable';
+		return in_array( $reason, $allowed, true ) ? $reason : 'flow_step_unavailable';
 	}
 
 	/**

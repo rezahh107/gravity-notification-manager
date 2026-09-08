@@ -51,12 +51,14 @@ final class SynchronousDispatcher {
 	 * @param SmsRequest       $request             Normalized SMS request.
 	 * @param bool             $allow_bale_fallback Whether Bale fallback is logically permitted.
 	 * @param BaleRequest|null $bale_request        Already-resolved Bale fallback request.
+	 * @param bool             $allow_sms_fallback  Whether another eligible SMS provider may be tried after failure.
 	 * @return array<int, AttemptResult>
 	 */
 	public function dispatch_sms(
 		SmsRequest $request,
 		bool $allow_bale_fallback = false,
-		?BaleRequest $bale_request = null
+		?BaleRequest $bale_request = null,
+		bool $allow_sms_fallback = true
 	): array {
 		$attempts = array();
 
@@ -73,11 +75,15 @@ final class SynchronousDispatcher {
 				continue;
 			}
 
-			$attempt = $provider->send( $request );
+			$attempt    = $provider->send( $request );
 			$attempts[] = $attempt;
 
 			if ( AttemptStatus::SUCCESS === $attempt->status() ) {
 				return $attempts;
+			}
+
+			if ( ! $allow_sms_fallback ) {
+				break;
 			}
 		}
 
@@ -86,5 +92,28 @@ final class SynchronousDispatcher {
 		}
 
 		return $attempts;
+	}
+
+	/**
+	 * Dispatch one already-resolved Bale request synchronously.
+	 *
+	 * @param BaleRequest $request Normalized Bale request.
+	 * @return array<int, AttemptResult>
+	 */
+	public function dispatch_bale( BaleRequest $request ): array {
+		if ( null === $this->bale ) {
+			return array(
+				new AttemptResult(
+					AttemptStatus::SKIPPED,
+					'bale',
+					null,
+					null,
+					array(),
+					'bale_channel_unavailable'
+				),
+			);
+		}
+
+		return array( $this->bale->send( $request ) );
 	}
 }

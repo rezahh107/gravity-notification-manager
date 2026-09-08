@@ -47,5 +47,17 @@ jobs:
       - name: Run WU-03 recipient resolver target
         run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Recipient
 
+      - name: Run WU-04 focused unit targets
+        run: |
+          php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/GravityFlow/NotificationFeedStepTest.php
+          php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/GravityForms/NotificationFeedAddOnTest.php
+          php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/GravityForms/NotificationFeedProcessorTest.php
+
       - name: Lint WU-00 PHP surfaces
         run: composer lint:wu00
+
+      - name: Lint full repository
+        run: composer lint
+
+      - name: Run PHPCompatibility
+        run: composer phpcompat
