@@ -5,6 +5,7 @@ readonly RESULT_UNAVAILABLE=78
 readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 readonly RUNTIME_DIR="${ROOT}/.wp-env.runtime"
 readonly OVERRIDE_FILE="${ROOT}/.wp-env.override.json"
+readonly POLYFILLS_COMMIT="134921bfca9b02d8f374c48381451da1d98402f9"
 
 state() { printf 'GNM_REAL_INTEGRATION_STATE=%s\n' "$1"; }
 fail() { state "$1"; printf '%s\n' "$2" >&2; exit "${3:-1}"; }
@@ -18,6 +19,7 @@ cleanup() {
 trap cleanup EXIT
 
 need docker
+need git
 need npm
 need php
 need sha256sum
@@ -29,12 +31,21 @@ done
 
 source_class="${GNM_PACKAGE_SOURCE_CLASS:-OWNER_LOCAL_PACKAGE}"
 case "$source_class" in
-	OWNER_LOCAL_PACKAGE|OWNER_AUTHORIZED_SECURE_SOURCE) ;;
+	OWNER_LOCAL_PACKAGE|OWNER_AUTHORIZED_SECURE_SOURCE|OWNER_AUTHORIZED_PUBLIC_SOURCE) ;;
 	*) fail PACKAGE_SOURCE_UNAUTHORIZED 'Package source class is not owner-authorized.' ;;
 esac
 
 rm -rf "$RUNTIME_DIR"
 mkdir -p "$RUNTIME_DIR/vendor"
+export WP_ENV_HOME="${RUNTIME_DIR}/wp-env-home"
+
+polyfills_dir="${RUNTIME_DIR}/phpunit-polyfills"
+git init -q "$polyfills_dir"
+git -C "$polyfills_dir" remote add origin https://github.com/Yoast/PHPUnit-Polyfills.git
+git -C "$polyfills_dir" fetch --quiet --depth=1 origin "$POLYFILLS_COMMIT"
+git -C "$polyfills_dir" checkout --quiet --detach FETCH_HEAD
+[[ "$(git -C "$polyfills_dir" rev-parse HEAD)" == "$POLYFILLS_COMMIT" ]] || fail HARNESS_FAILURE 'PHPUnit Polyfills checkout did not match the pinned commit.'
+rm -rf "$polyfills_dir/.git"
 
 admit_package() {
 	local label="$1" zip_path="$2" expected="$3" slug="$4" destination="$5"
@@ -50,9 +61,9 @@ admit_package() {
 	local plugin_dir header version
 	plugin_dir="$(find "$destination" -mindepth 1 -maxdepth 1 -type d -name "$slug" -print -quit)"
 	[[ -n "$plugin_dir" ]] || fail PACKAGE_INVALID "$label ZIP does not contain the expected $slug plugin directory."
-	header="$(find "$plugin_dir" -maxdepth 1 -type f -name '*.php' -exec awk '/^[[:space:]]*\*[[:space:]]*Plugin Name:/{found=1} END{exit found?0:1}' {} \; -print -quit)"
+	header="$(find "$plugin_dir" -maxdepth 1 -type f -name '*.php' -exec awk '/^[[:space:]]*(\*[[:space:]]*)?Plugin Name:/{found=1} END{exit found?0:1}' {} \; -print -quit)"
 	[[ -n "$header" ]] || fail PACKAGE_INVALID "$label plugin header was not detected."
-	version="$(awk -F: '/^[[:space:]]*\*[[:space:]]*Version:/{sub(/^[[:space:]]+/,"",$2); print $2; exit}' "$header")"
+	version="$(awk -F: '/^[[:space:]]*(\*[[:space:]]*)?Version:/{sub(/^[[:space:]]+/,"",$2); print $2; exit}' "$header")"
 	[[ -n "$version" ]] || fail PACKAGE_INVALID "$label plugin version was not detected."
 	printf 'PACKAGE label=%s filename=%s slug=%s version=%s sha256=%s source=%s\n' "$label" "$(basename "$zip_path")" "$slug" "$version" "$actual" "$source_class"
 }
@@ -68,7 +79,6 @@ if ($json === false || file_put_contents($argv[3], $json . PHP_EOL) === false) {
 
 cd "$ROOT"
 state READY
-npx wp-env clean all
 npx wp-env start --update
 set +e
 npx wp-env run tests-cli --env-cwd=wp-content/plugins/gravity-notification-manager-source \
