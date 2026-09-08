@@ -7,6 +7,8 @@
 
 namespace GravityNotify\GravityForms;
 
+use GravityNotify\DeliveryState\DeliveryStateManager;
+use GravityNotify\DeliveryState\EntryMetaDeliveryStore;
 use GravityNotify\GravityFlow\FeedStepRegistration;
 
 /**
@@ -66,6 +68,15 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	private ?NotificationFeedProcessor $processor = null;
 
 	/**
+	 * Request-local WU-05 state manager override.
+	 *
+	 * Real Gravity Forms runtime lazily uses EntryMetaDeliveryStore when this is null.
+	 *
+	 * @var DeliveryStateManager|null
+	 */
+	private ?DeliveryStateManager $delivery_state_manager = null;
+
+	/**
 	 * Last request-local execution result.
 	 *
 	 * @var NotificationExecutionResult|null
@@ -91,6 +102,18 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	}
 
 	/**
+	 * Initialize native Add-On behavior and the authenticated manual Retry handler.
+	 *
+	 * Registration is side-effect-free with respect to notification delivery.
+	 *
+	 * @return void
+	 */
+	public function init() {
+		parent::init();
+		ManualRetryHandler::boot( $this );
+	}
+
+	/**
 	 * Inject the already-composed synchronous WU-04 execution dependency.
 	 *
 	 * This seam avoids coupling Feed execution to legacy settings or activating
@@ -101,6 +124,16 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	 */
 	public function configure_processor( ?NotificationFeedProcessor $processor ): void {
 		$this->processor = $processor;
+	}
+
+	/**
+	 * Inject deterministic state persistence for tests or bounded composition.
+	 *
+	 * @param DeliveryStateManager|null $manager State manager, or null for native lazy Entry Meta storage.
+	 * @return void
+	 */
+	public function configure_delivery_state_manager( ?DeliveryStateManager $manager ): void {
+		$this->delivery_state_manager = $manager;
 	}
 
 	/**
@@ -200,14 +233,97 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	 * @return bool Whether delivery obtained documented acceptance.
 	 */
 	public function process_feed( $feed, $entry, $form ) {
-		$meta = is_array( $feed ) && isset( $feed['meta'] ) && is_array( $feed['meta'] )
+		$result = $this->execute_feed(
+			is_array( $feed ) ? $feed : array(),
+			is_array( $entry ) ? $entry : array(),
+			is_array( $form ) ? $form : array(),
+			false
+		);
+
+		return $result->delivery_succeeded();
+	}
+
+	/**
+	 * Explicit manual Retry execution seam used only by the secure handler.
+	 *
+	 * Retry requires an existing valid target with Attention Required and bypasses
+	 * only ordinary duplicate suppression. Recipient resolution and transport
+	 * routing remain exactly the current WU-03/WU-02 synchronous chain.
+	 *
+	 * @param array $feed  Validated Feed object.
+	 * @param array $entry Validated Entry object.
+	 * @param array $form  Validated Form object.
+	 * @return NotificationExecutionResult|null Null when persisted state is not eligible for Retry.
+	 */
+	public function retry_feed( array $feed, array $entry, array $form ): ?NotificationExecutionResult {
+		$manager  = $this->delivery_state_manager();
+		$entry_id = $this->positive_identifier( $entry['id'] ?? null );
+		$feed_id  = $this->positive_identifier( $feed['id'] ?? null );
+
+		if ( null === $manager || null === $entry_id || null === $feed_id ) {
+			return null;
+		}
+
+		if ( DeliveryStateManager::RETRY_ALLOWED !== $manager->retry_eligibility( $entry_id, $feed_id ) ) {
+			return null;
+		}
+
+		return $this->execute_feed( $feed, $entry, $form, true );
+	}
+
+	/**
+	 * Execute one normalized Feed rule and persist bounded WU-05 state.
+	 *
+	 * @param array $feed         Feed object.
+	 * @param array $entry        Entry object.
+	 * @param array $form         Form object.
+	 * @param bool  $manual_retry Whether duplicate suppression must be bypassed.
+	 * @return NotificationExecutionResult
+	 */
+	private function execute_feed( array $feed, array $entry, array $form, bool $manual_retry ): NotificationExecutionResult {
+		$meta = isset( $feed['meta'] ) && is_array( $feed['meta'] )
 			? $feed['meta']
 			: array();
 
-		$rule = FeedRuleSchema::normalize( $meta );
+		$rule       = FeedRuleSchema::normalize( $meta );
+		$manager    = $this->delivery_state_manager();
+		$entry_id   = $this->positive_identifier( $entry['id'] ?? null );
+		$form_id    = $this->positive_identifier( $form['id'] ?? null );
+		$feed_id    = $this->positive_identifier( $feed['id'] ?? null );
+		$feed_name  = (string) ( $rule['feedName'] ?? '' );
+		$channel    = (string) ( $rule['channel'] ?? '' );
+		$can_record = null !== $manager && null !== $entry_id && null !== $form_id && null !== $feed_id;
+
+		if ( ! $manual_retry && $can_record && $manager->is_confirmed_complete( $entry_id, $feed_id ) ) {
+			$result = new NotificationExecutionResult(
+				array(),
+				array(
+					array(
+						'subject' => 'delivery_state',
+						'reason'  => 'duplicate_suppressed',
+					),
+				),
+				true
+			);
+
+			if ( ! $manager->record_execution(
+				$entry_id,
+				$form_id,
+				$feed_id,
+				$feed_name,
+				$channel,
+				$result,
+				DeliveryStateManager::EXECUTION_DUPLICATE_SUPPRESSED
+			) ) {
+				$result = $this->with_state_persistence_failure( $result );
+			}
+
+			$this->last_execution_result = $result;
+			return $result;
+		}
 
 		if ( null === $this->processor ) {
-			$this->last_execution_result = new NotificationExecutionResult(
+			$result = new NotificationExecutionResult(
 				array(),
 				array(
 					array(
@@ -217,16 +333,70 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 				),
 				false
 			);
-			return false;
+		} else {
+			$result = $this->processor->execute( $rule, $entry, $form );
 		}
 
-		$this->last_execution_result = $this->processor->execute(
-			$rule,
-			is_array( $entry ) ? $entry : array(),
-			is_array( $form ) ? $form : array()
+		if ( $can_record ) {
+			$execution_type = $manual_retry
+				? DeliveryStateManager::EXECUTION_MANUAL_RETRY
+				: DeliveryStateManager::EXECUTION_ORDINARY;
+
+			if ( ! $manager->record_execution( $entry_id, $form_id, $feed_id, $feed_name, $channel, $result, $execution_type ) ) {
+				$result = $this->with_state_persistence_failure( $result );
+			}
+		}
+
+		$this->last_execution_result = $result;
+		return $result;
+	}
+
+	/**
+	 * Lazily compose the native Entry Meta store only when Gravity Forms meta APIs exist.
+	 *
+	 * @return DeliveryStateManager|null
+	 */
+	private function delivery_state_manager(): ?DeliveryStateManager {
+		if ( null === $this->delivery_state_manager && function_exists( 'gform_get_meta' ) && function_exists( 'gform_update_meta' ) ) {
+			$this->delivery_state_manager = new DeliveryStateManager( new EntryMetaDeliveryStore() );
+		}
+
+		return $this->delivery_state_manager;
+	}
+
+	/**
+	 * Add a request-local state persistence failure without changing transport truth.
+	 *
+	 * @param NotificationExecutionResult $result Current result.
+	 * @return NotificationExecutionResult
+	 */
+	private function with_state_persistence_failure( NotificationExecutionResult $result ): NotificationExecutionResult {
+		$skips   = $result->skips();
+		$skips[] = array(
+			'subject' => 'delivery_state',
+			'reason'  => 'persistence_failed',
 		);
 
-		return $this->last_execution_result->delivery_succeeded();
+		return new NotificationExecutionResult( $result->attempts(), $skips, $result->delivery_succeeded() );
+	}
+
+	/**
+	 * Require a positive integer identity without coercing malformed strings.
+	 *
+	 * @param mixed $value Raw identifier.
+	 * @return int|null
+	 */
+	private function positive_identifier( $value ): ?int {
+		if ( is_int( $value ) ) {
+			return $value > 0 ? $value : null;
+		}
+
+		if ( ! is_string( $value ) || 1 !== preg_match( '/^[1-9][0-9]*$/', $value ) ) {
+			return null;
+		}
+
+		$identifier = (int) $value;
+		return $identifier > 0 ? $identifier : null;
 	}
 
 	/**
