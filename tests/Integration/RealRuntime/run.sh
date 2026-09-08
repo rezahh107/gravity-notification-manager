@@ -35,6 +35,7 @@ esac
 
 rm -rf "$RUNTIME_DIR"
 mkdir -p "$RUNTIME_DIR/vendor"
+export WP_ENV_HOME="${RUNTIME_DIR}/wp-env-home"
 
 admit_package() {
 	local label="$1" zip_path="$2" expected="$3" slug="$4" destination="$5"
@@ -68,7 +69,6 @@ if ($json === false || file_put_contents($argv[3], $json . PHP_EOL) === false) {
 
 cd "$ROOT"
 state READY
-npx wp-env clean all
 npx wp-env start --update
 set +e
 npx wp-env run tests-cli --env-cwd=wp-content/plugins/gravity-notification-manager-source \
