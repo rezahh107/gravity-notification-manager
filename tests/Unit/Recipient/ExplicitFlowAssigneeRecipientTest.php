@@ -20,6 +20,8 @@ use PHPUnit\Framework\TestCase;
 final class ExplicitFlowAssigneeRecipientTest extends TestCase {
 
 	/**
+	 * Invalid configured Flow Step selectors fail before reader invocation.
+	 *
 	 * @dataProvider invalid_selector_provider
 	 *
 	 * @param string $selector Invalid configured Step selector.
@@ -30,7 +32,12 @@ final class ExplicitFlowAssigneeRecipientTest extends TestCase {
 			array(
 				'available' => true,
 				'reason'    => '',
-				'assignees' => array( array( 'type' => 'user_id', 'id' => '41' ) ),
+				'assignees' => array(
+					array(
+						'type' => 'user_id',
+						'id'   => '41',
+					),
+				),
 			)
 		);
 		$resolver = new RecipientResolver(
@@ -52,7 +59,11 @@ final class ExplicitFlowAssigneeRecipientTest extends TestCase {
 		self::assertNull( $flow->last_step_id );
 	}
 
-	/** @return array<string, array{0:string}> */
+	/**
+	 * Provide invalid explicit Step selectors.
+	 *
+	 * @return array<string, array{0:string}>
+	 */
 	public function invalid_selector_provider(): array {
 		return array(
 			'empty'         => array( '' ),

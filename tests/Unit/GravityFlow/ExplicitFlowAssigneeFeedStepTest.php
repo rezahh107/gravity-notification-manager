@@ -29,7 +29,11 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExplicitFlowAssigneeFeedStepTest extends TestCase {
 
-	/** @return void */
+	/**
+	 * Install deterministic Gravity Forms and Gravity Flow base aliases.
+	 *
+	 * @return void
+	 */
 	public static function setUpBeforeClass(): void {
 		parent::setUpBeforeClass();
 
@@ -41,7 +45,11 @@ final class ExplicitFlowAssigneeFeedStepTest extends TestCase {
 		}
 	}
 
-	/** @return void */
+	/**
+	 * Clear request-local processor state after each test.
+	 *
+	 * @return void
+	 */
 	protected function tearDown(): void {
 		NotificationFeedAddOn::get_instance()->configure_processor( null );
 		parent::tearDown();
@@ -57,10 +65,23 @@ final class ExplicitFlowAssigneeFeedStepTest extends TestCase {
 		$flow     = $this->flow_reader();
 		$add_on   = NotificationFeedAddOn::get_instance();
 		$add_on->configure_processor( $this->processor( $provider, $flow ) );
-		$add_on->set_test_feeds( array( $this->feed( 41, 73 ) ) );
+		$add_on->set_test_feeds(
+			array(
+				$this->feed( 41, 73 ),
+			)
+		);
 
 		$step = new NotificationFeedStep();
-		$step->configure_test_context( array( 'id' => 9 ), array( 'id' => 501, 'form_id' => 9 ), array( 41 ) );
+		$step->configure_test_context(
+			array(
+				'id' => 9,
+			),
+			array(
+				'id'      => 501,
+				'form_id' => 9,
+			),
+			array( 41 )
+		);
 
 		self::assertTrue( $step->process() );
 		self::assertSame( 73, $flow->last_step_id );
@@ -80,10 +101,23 @@ final class ExplicitFlowAssigneeFeedStepTest extends TestCase {
 		$flow     = $this->flow_reader();
 		$add_on   = NotificationFeedAddOn::get_instance();
 		$add_on->configure_processor( $this->processor( $provider, $flow ) );
-		$add_on->set_test_feeds( array( $this->feed( 42, 74 ) ) );
+		$add_on->set_test_feeds(
+			array(
+				$this->feed( 42, 74 ),
+			)
+		);
 
 		$step = new NotificationFeedStep();
-		$step->configure_test_context( array( 'id' => 9 ), array( 'id' => 502, 'form_id' => 9 ), array( 42 ) );
+		$step->configure_test_context(
+			array(
+				'id' => 9,
+			),
+			array(
+				'id'      => 502,
+				'form_id' => 9,
+			),
+			array( 42 )
+		);
 
 		self::assertTrue( $step->process() );
 		self::assertSame( 74, $flow->last_step_id );
@@ -93,7 +127,11 @@ final class ExplicitFlowAssigneeFeedStepTest extends TestCase {
 		self::assertSame( AttemptStatus::FAILED, $add_on->last_execution_result()->attempts()[0]->status() );
 	}
 
-	/** @return FakeFlowAssigneeReader */
+	/**
+	 * Build a selected-Step assignee reader fake.
+	 *
+	 * @return FakeFlowAssigneeReader
+	 */
 	private function flow_reader(): FakeFlowAssigneeReader {
 		return new FakeFlowAssigneeReader(
 			array(
@@ -110,8 +148,10 @@ final class ExplicitFlowAssigneeFeedStepTest extends TestCase {
 	}
 
 	/**
+	 * Build the shared WU-04 processor around deterministic fakes.
+	 *
 	 * @param SmsProviderInterface   $provider Provider fake.
-	 * @param FakeFlowAssigneeReader $flow Explicit-Step assignee fake.
+	 * @param FakeFlowAssigneeReader $flow     Explicit-Step assignee fake.
 	 * @return NotificationFeedProcessor
 	 */
 	private function processor( SmsProviderInterface $provider, FakeFlowAssigneeReader $flow ): NotificationFeedProcessor {
@@ -120,7 +160,11 @@ final class ExplicitFlowAssigneeFeedStepTest extends TestCase {
 			new FakeUserDirectory(
 				array(),
 				array(),
-				array( 88 => array( RecipientResolver::SMS_META_KEY => '+989121110088' ) )
+				array(
+					88 => array(
+						RecipientResolver::SMS_META_KEY => '+989121110088',
+					),
+				)
 			),
 			$flow
 		);
@@ -133,7 +177,9 @@ final class ExplicitFlowAssigneeFeedStepTest extends TestCase {
 	}
 
 	/**
-	 * @param int $feed_id Feed ID.
+	 * Build one deterministic Flow notification Feed.
+	 *
+	 * @param int $feed_id           Feed ID.
 	 * @param int $recipient_step_id Explicit assignee-bearing business Step ID.
 	 * @return array<string, mixed>
 	 */
