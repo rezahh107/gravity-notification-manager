@@ -85,7 +85,7 @@ final class BaleClient implements BaleChannelInterface {
 	 */
 	private function classify_response( HttpResponse $response ): AttemptResult {
 		if ( $response->is_transport_error() ) {
-			return $this->result( AttemptStatus::FAILED, array(), 'transport_error' );
+			return $this->result( AttemptStatus::AMBIGUOUS, array(), 'transport_error' );
 		}
 
 		if ( 200 > $response->status_code() || 300 <= $response->status_code() ) {
