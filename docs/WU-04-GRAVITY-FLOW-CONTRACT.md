@@ -1,6 +1,6 @@
 # WU-04 Gravity Flow Feed-Step Contract Snapshot
 
-Run: `GNM-001-WU-04-RUN-014`
+Run: `GNM-001-WU-04-RUN-014`, recipient-contract correction `GNM-001-WU-04-RUN-020`
 
 This document records the bounded current contract used by WU-04. It does not activate production senders, define WU-05 delivery state, or authorize a parallel workflow/interception engine.
 
@@ -13,12 +13,14 @@ This document records the bounded current contract used by WU-04. It does not ac
 - Current public Gravity Forms documentation/changelog inspected on 2026-09-07; `GFFeedAddOn::process_feed()` remains the supported synchronous Feed processing seam and native Feed conditions remain part of the Feed Add-On Framework.
 - Gravity Flow installed deployment version: not observable from this execution environment.
 - Owner-supplied primary source: `gravityflow.zip`, SHA-256 `ac0573b75831380417a21a455176e25eb746d718bbbd0bb70d6da6f48cba5404`, plugin header version 3.1.0.
-- Current public Gravity Flow changelog inspected on 2026-09-07: current release 3.1.1 (2026-08-25). No 3.1.1 entry removes or replaces the Feed-Step base contract used here.
+- Current public Gravity Flow documentation/changelog re-checked on 2026-09-08; current release remains 3.1.1 (2026-08-25), and the documented Step contract continues to use Entry-bound exact-Step lookup for non-current Steps.
 
 ## Official/current sources
 
 - https://docs.gravityflow.io/step_feed_class/
 - https://docs.gravityflow.io/step-class/
+- https://docs.gravityflow.io/the-workflow-orchestration-api/
+- https://docs.gravityflow.io/gravityflow_step_assignees/
 - https://docs.gravityflow.io/the-workflow-step-framework/
 - https://docs.gravityflow.io/changelog/
 - https://docs.gravityforms.com/gffeedaddon/
@@ -46,6 +48,8 @@ Current official documentation continues to publish `Gravity_Flow_Step_Feed_Add_
 - `GravityNotify\GravityFlow\FeedStepRegistration` registers immediately when the public Feed-Step surface is loaded or defers to `gravityflow_loaded`. Missing Gravity Flow is a safe no-op and cannot fatal GNM.
 - `NotificationFeedAddOn::process_feed()` remains the single logical execution seam for both ordinary Gravity Forms Feed processing and Gravity Flow Feed-Step processing.
 - `NotificationFeedProcessor` delegates recipient topology to WU-03 `RecipientResolver` and transport to WU-02 `SynchronousDispatcher`.
+- For `recipient_source_type = flow_assignee`, the Feed's existing `recipient_source_value` is the explicit positive ID of the assignee-bearing Gravity Flow business Step. Recipient resolution performs an Entry-bound exact-Step lookup and reads only that Step's assignees; it never substitutes the current Notification Feed Step or infers another Step from workflow order/history/routing/current user.
+- Invalid/unavailable explicit Flow Step context produces a bounded no-send/skip result; it does not block the workflow or fall back to another Step.
 - WU-01 currently exposes one message field and no Pattern code/parameter metadata. WU-04 therefore renders that message as native Gravity Forms text and sends it as Plain SMS; it does not perform Pattern-to-Plain conversion.
 - WU-02 requires an already-configured SMS sender. WU-04 accepts that sender through request-time composition rather than reading legacy settings or activating production credentials.
 - Native `process_feed()` boolean status is used as request-local/framework-visible delivery outcome; Gravity Flow's Feed-Step completion contract remains separate so a delivery failure does not intentionally strand workflow.

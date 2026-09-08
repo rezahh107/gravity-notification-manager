@@ -1,6 +1,6 @@
 <?php
 /**
- * Native Gravity Flow current-step assignee reader.
+ * Native Gravity Flow explicit-step assignee reader.
  *
  * @package GravityNotify
  */
@@ -10,32 +10,40 @@ namespace GravityNotify\Recipient\Native;
 use GravityNotify\Recipient\FlowAssigneeReader;
 
 /**
- * Reads documented current-step assignee identity without workflow mutation.
+ * Reads documented assignee identity from one explicitly selected workflow Step.
  */
 final class GravityFlowAssigneeReader implements FlowAssigneeReader {
 
 	/**
-	 * Read current-step assignees through the documented Gravity Flow API.
+	 * Read assignees from one explicit Step through the documented Gravity Flow API.
 	 *
-	 * @param array $entry Current Gravity Forms Entry object.
-	 * @param array $form  Current Gravity Forms Form object.
+	 * @param array $entry   Current Gravity Forms Entry object.
+	 * @param array $form    Current Gravity Forms Form object.
+	 * @param int   $step_id Explicit positive Gravity Flow Step ID.
 	 * @return array<string, mixed>
 	 */
-	public function read( array $entry, array $form ): array {
+	public function read( array $entry, array $form, int $step_id ): array {
+		if ( 0 >= $step_id ) {
+			return $this->unavailable( 'flow_step_selector_invalid' );
+		}
+
 		if ( ! class_exists( '\\Gravity_Flow_API' ) ) {
-			return $this->unavailable( 'flow_api_unavailable' );
+			return $this->unavailable( 'flow_assignee_api_unavailable' );
 		}
 
 		$form_id = $this->form_id( $entry, $form );
 		if ( null === $form_id ) {
-			return $this->unavailable( 'flow_context_unavailable' );
+			return $this->unavailable( 'flow_step_unavailable' );
 		}
 
 		try {
-			$api  = new \Gravity_Flow_API( $form_id );
-			$step = $api->get_current_step( $entry );
+			$api = new \Gravity_Flow_API( $form_id );
+			if ( ! method_exists( $api, 'get_step' ) ) {
+				return $this->unavailable( 'flow_assignee_api_unavailable' );
+			}
+			$step = $api->get_step( $step_id, $entry );
 		} catch ( \Throwable ) {
-			return $this->unavailable( 'flow_context_unavailable' );
+			return $this->unavailable( 'flow_step_unavailable' );
 		}
 
 		if ( ! is_object( $step ) ) {
@@ -46,7 +54,12 @@ final class GravityFlowAssigneeReader implements FlowAssigneeReader {
 			return $this->unavailable( 'flow_assignee_api_unavailable' );
 		}
 
-		$objects = $step->get_assignees();
+		try {
+			$objects = $step->get_assignees();
+		} catch ( \Throwable ) {
+			return $this->unavailable( 'flow_assignee_api_unavailable' );
+		}
+
 		if ( ! is_array( $objects ) ) {
 			return $this->unavailable( 'flow_assignee_api_unavailable' );
 		}
@@ -61,8 +74,17 @@ final class GravityFlowAssigneeReader implements FlowAssigneeReader {
 				continue;
 			}
 
-			$type = $assignee->get_type();
-			$id   = $assignee->get_id();
+			try {
+				$type = $assignee->get_type();
+				$id   = $assignee->get_id();
+			} catch ( \Throwable ) {
+				$assignees[] = array(
+					'type' => '',
+					'id'   => '',
+				);
+				continue;
+			}
+
 			$assignees[] = array(
 				'type' => is_scalar( $type ) ? (string) $type : '',
 				'id'   => is_scalar( $id ) ? (string) $id : '',
