@@ -5,6 +5,7 @@ readonly RESULT_UNAVAILABLE=78
 readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 readonly RUNTIME_DIR="${ROOT}/.wp-env.runtime"
 readonly OVERRIDE_FILE="${ROOT}/.wp-env.override.json"
+readonly POLYFILLS_COMMIT="134921bfca9b02d8f374c48381451da1d98402f9"
 
 state() { printf 'GNM_REAL_INTEGRATION_STATE=%s\n' "$1"; }
 fail() { state "$1"; printf '%s\n' "$2" >&2; exit "${3:-1}"; }
@@ -18,6 +19,7 @@ cleanup() {
 trap cleanup EXIT
 
 need docker
+need git
 need npm
 need php
 need sha256sum
@@ -36,6 +38,14 @@ esac
 rm -rf "$RUNTIME_DIR"
 mkdir -p "$RUNTIME_DIR/vendor"
 export WP_ENV_HOME="${RUNTIME_DIR}/wp-env-home"
+
+polyfills_dir="${RUNTIME_DIR}/phpunit-polyfills"
+git init -q "$polyfills_dir"
+git -C "$polyfills_dir" remote add origin https://github.com/Yoast/PHPUnit-Polyfills.git
+git -C "$polyfills_dir" fetch --quiet --depth=1 origin "$POLYFILLS_COMMIT"
+git -C "$polyfills_dir" checkout --quiet --detach FETCH_HEAD
+[[ "$(git -C "$polyfills_dir" rev-parse HEAD)" == "$POLYFILLS_COMMIT" ]] || fail HARNESS_FAILURE 'PHPUnit Polyfills checkout did not match the pinned commit.'
+rm -rf "$polyfills_dir/.git"
 
 admit_package() {
 	local label="$1" zip_path="$2" expected="$3" slug="$4" destination="$5"
