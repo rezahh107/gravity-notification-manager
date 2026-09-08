@@ -116,6 +116,32 @@ final class TransportSubsystemTest extends TestCase {
 	}
 
 	/**
+	 * IPPanel transport failure cannot establish provider acceptance or rejection.
+	 *
+	 * @return void
+	 */
+	public function test_ippanel_transport_error_is_ambiguous_without_provider_reference(): void {
+		$http = new FakeHttpTransport(
+			array(
+				HttpResponse::from_transport_error( 'simulated_network_error' ),
+			)
+		);
+		$provider = new IPPanelProvider( $this->credential(), $http );
+		$request  = SmsRequest::plain(
+			SmsCapability::PLAIN,
+			array( $this->recipient( '4' ) ),
+			$this->sender(),
+			'transport ambiguity'
+		);
+
+		$result = $provider->send( $request );
+
+		self::assertSame( AttemptStatus::AMBIGUOUS, $result->status() );
+		self::assertSame( 'transport_error', $result->diagnostic() );
+		self::assertSame( array(), $result->provider_references() );
+	}
+
+	/**
 	 * Provider response classification is conservative and deterministic.
 	 *
 	 * @return void
@@ -138,7 +164,7 @@ final class TransportSubsystemTest extends TestCase {
 		);
 		$provider = new IPPanelProvider( $this->credential(), $http );
 
-		self::assertSame( AttemptStatus::FAILED, $provider->send( $request )->status() );
+		self::assertSame( AttemptStatus::AMBIGUOUS, $provider->send( $request )->status() );
 		self::assertSame( AttemptStatus::FAILED, $provider->send( $request )->status() );
 		self::assertSame( AttemptStatus::AMBIGUOUS, $provider->send( $request )->status() );
 		self::assertSame( AttemptStatus::FAILED, $provider->send( $request )->status() );
@@ -170,9 +196,31 @@ final class TransportSubsystemTest extends TestCase {
 		self::assertNull( $success->provider_id() );
 		self::assertSame( array( '29' ), $success->provider_references() );
 		self::assertSame( AttemptStatus::FAILED, $failed->status() );
+		self::assertSame( 'api_rejection', $failed->diagnostic() );
 		self::assertStringEndsWith( '/sendMessage', $sent['url'] );
 		self::assertSame( $request->chat_id(), $payload['chat_id'] );
 		self::assertSame( $request->text(), $payload['text'] );
+	}
+
+	/**
+	 * Bale transport failure cannot establish channel acceptance or rejection.
+	 *
+	 * @return void
+	 */
+	public function test_bale_transport_error_is_ambiguous_without_provider_reference(): void {
+		$http = new FakeHttpTransport(
+			array(
+				HttpResponse::from_transport_error( 'simulated_network_error' ),
+			)
+		);
+		$client  = new BaleClient( $this->credential(), $http );
+		$request = new BaleRequest( $this->bale_target(), 'Bale transport ambiguity' );
+
+		$result = $client->send( $request );
+
+		self::assertSame( AttemptStatus::AMBIGUOUS, $result->status() );
+		self::assertSame( 'transport_error', $result->diagnostic() );
+		self::assertSame( array(), $result->provider_references() );
 	}
 
 	/**
@@ -244,6 +292,66 @@ final class TransportSubsystemTest extends TestCase {
 				$attempts
 			)
 		);
+	}
+
+	/**
+	 * Transport ambiguity preserves the existing SMS fallback policy.
+	 *
+	 * @return void
+	 */
+	public function test_transport_ambiguity_preserves_sms_fallback_policy(): void {
+		$request = SmsRequest::plain(
+			SmsCapability::PLAIN,
+			array( $this->recipient( '5' ) ),
+			$this->sender(),
+			'transport fallback'
+		);
+
+		$fallback_http = new FakeHttpTransport(
+			array(
+				HttpResponse::from_transport_error( 'simulated_network_error' ),
+			)
+		);
+		$fallback_dispatcher = new SynchronousDispatcher(
+			new SmsProviderRegistry(
+				array(
+					new IPPanelProvider( $this->credential(), $fallback_http ),
+					$this->provider_stub( 'second', array( SmsCapability::PLAIN ), AttemptStatus::SUCCESS ),
+				)
+			)
+		);
+
+		$with_fallback = $fallback_dispatcher->dispatch_sms( $request, false, null, true );
+
+		self::assertSame(
+			array( AttemptStatus::AMBIGUOUS, AttemptStatus::SUCCESS ),
+			array_map(
+				static function ( AttemptResult $attempt ): string {
+					return $attempt->status();
+				},
+				$with_fallback
+			)
+		);
+		self::assertSame( array( 'ippanel', 'second' ), array_map( static fn ( AttemptResult $attempt ): ?string => $attempt->provider_id(), $with_fallback ) );
+
+		$no_fallback_http = new FakeHttpTransport(
+			array(
+				HttpResponse::from_transport_error( 'simulated_network_error' ),
+			)
+		);
+		$no_fallback_dispatcher = new SynchronousDispatcher(
+			new SmsProviderRegistry(
+				array(
+					new IPPanelProvider( $this->credential(), $no_fallback_http ),
+					$this->provider_stub( 'second', array( SmsCapability::PLAIN ), AttemptStatus::SUCCESS ),
+				)
+			)
+		);
+
+		$without_fallback = $no_fallback_dispatcher->dispatch_sms( $request, false, null, false );
+
+		self::assertSame( array( AttemptStatus::AMBIGUOUS ), array_map( static fn ( AttemptResult $attempt ): string => $attempt->status(), $without_fallback ) );
+		self::assertSame( array( 'ippanel' ), array_map( static fn ( AttemptResult $attempt ): ?string => $attempt->provider_id(), $without_fallback ) );
 	}
 
 	/**
