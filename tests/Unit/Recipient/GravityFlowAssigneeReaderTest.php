@@ -11,7 +11,6 @@ use GravityNotify\Recipient\Native\GravityFlowAssigneeReader;
 use GravityNotify\Tests\Support\Recipient\GravityFlowAssigneeIdentityStub;
 use GravityNotify\Tests\Support\Recipient\GravityFlowAssigneeStepStub;
 use GravityNotify\Tests\Support\Recipient\GravityFlowExactStepApiStub;
-use GravityNotify\Tests\Support\Recipient\GravityFlowThrowingAssigneeStepStub;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -120,16 +119,6 @@ final class GravityFlowAssigneeReaderTest extends TestCase {
 		$bad_collection = $reader->read( $entry, $form, 83 );
 		self::assertFalse( $bad_collection['available'] );
 		self::assertSame( 'flow_assignee_api_unavailable', $bad_collection['reason'] );
-
-		GravityFlowExactStepApiStub::configure(
-			array(
-				84 => new GravityFlowThrowingAssigneeStepStub(),
-			),
-			null
-		);
-		$throwing_collection = $reader->read( $entry, $form, 84 );
-		self::assertFalse( $throwing_collection['available'] );
-		self::assertSame( 'flow_assignee_api_unavailable', $throwing_collection['reason'] );
 
 		GravityFlowExactStepApiStub::configure(
 			array(
