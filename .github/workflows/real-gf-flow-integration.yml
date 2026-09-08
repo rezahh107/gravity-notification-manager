@@ -1,6 +1,9 @@
 name: Real GF Flow Integration
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -20,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      EXPECTED_HEAD: ${{ inputs.target_sha || github.sha }}
+      EXPECTED_HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || inputs.target_sha || github.sha }}
       GNM_GF_SHA256: 542f56ae0747f3661d1474996527298027db3fb8ed3e6469a6391aaabf61069b
       GNM_GFLOW_SHA256: ac0573b75831380417a21a455176e25eb746d718bbbd0bb70d6da6f48cba5404
       GNM_PACKAGE_SOURCE_CLASS: OWNER_AUTHORIZED_PUBLIC_SOURCE
@@ -40,7 +43,7 @@ jobs:
       - name: Checkout exact target
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.target_sha || github.sha }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || inputs.target_sha || github.sha }}
 
       - name: Verify exact target identity
         shell: bash
