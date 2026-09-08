@@ -15,6 +15,15 @@ if ( ! defined( 'WP_HTTP_BLOCK_EXTERNAL' ) ) {
 	define( 'WP_HTTP_BLOCK_EXTERNAL', true );
 }
 
+$gravity_notify_polyfills_path = dirname( __DIR__, 3 ) . '/.wp-env.runtime/phpunit-polyfills';
+if ( ! is_dir( $gravity_notify_polyfills_path ) ) {
+	throw new RuntimeException( 'Pinned PHPUnit Polyfills runtime is missing.' );
+}
+if ( ! defined( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) ) {
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Required by WordPress test bootstrap.
+	define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', $gravity_notify_polyfills_path );
+}
+
 $gravity_notify_tests_dir = getenv( 'WP_TESTS_DIR' );
 if ( ! is_string( $gravity_notify_tests_dir ) || '' === $gravity_notify_tests_dir ) {
 	$gravity_notify_tests_dir = '/wordpress-phpunit';
