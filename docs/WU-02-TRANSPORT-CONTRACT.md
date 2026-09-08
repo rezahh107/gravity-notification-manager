@@ -40,6 +40,8 @@ Relied-upon facts:
 - `is_wp_error()` is the supported check for a WordPress error object.
 - `wp_remote_retrieve_response_code()` retrieves the HTTP response code.
 - `wp_remote_retrieve_body()` retrieves the response body.
+- A `WP_Error` does not contain a provider acceptance/rejection response, so WordPress/HTTP transport failure with no provider response is classified `AMBIGUOUS` with diagnostic `transport_error`.
+- Explicit HTTP rejection or documented provider/API rejection remains `FAILED`.
 - Production transport is therefore a narrow adapter around these supported WordPress functions; tests inject a fake seam and make no real network request.
 
 ## Bale Bot API
@@ -75,3 +77,16 @@ Relied-upon facts:
 - Intentionally not incorporated: legacy local/Iranian phone normalization, legacy API mode, Bearer-auth alternative, scheduled-send handling, retry classification, diagnostics/logging, raw response retention, and legacy orchestration. Those are stale, out of scope, undocumented by the current relied-upon contract, or owned by later Work Units.
 - WordPress seam review found no additional current-valid material gap: the greenfield seam already preserves the relevant `WP_Error`/status/body normalization while intentionally discarding raw potentially sensitive error text.
 - Bale had no manifest-approved equivalent legacy asset, so no unapproved legacy Bale implementation was inspected.
+
+## Transport-outcome repair differential confirmation
+
+- Work Unit: `WU-GNM-TRANSPORT-OUTCOME-REPAIR-01`.
+- Repair Head reviewed before this differential confirmation: `873b5a33062f639f071bb23523482c7c1a79ff4a`.
+- Inspection date: `2026-09-08`.
+- Inspected only the manifest-approved immutable legacy assets `includes/Integration/IPPanel_Provider.php`, `includes/Integration/Wp_HTTP_Client.php`, and `includes/Integration/HTTP_Client_Interface.php` at `7556f86ecc65f37d34d9563ce2087f16235bbca5`.
+- Review question: did legacy contain a current-valid transport-uncertainty edge case missed by this repair?
+- Finding: `NO_MATERIAL_FINDING`.
+- Current-contract validation: legacy also represented WordPress/network failure without an HTTP/provider response as a low-level failure with no response status/body suitable for provider acceptance/rejection classification. The repaired greenfield `HttpResponse` seam already preserves that no-response distinction, and the current classifier now reports it as `AMBIGUOUS`.
+- Intentionally not incorporated: legacy retryable/permanent error policy, timeout retry behavior, raw error retention, diagnostics/logging, alternate API modes, and orchestration. These are outside the selected repair method and the closed target architecture.
+- Selected-method impact: none; `MTH-CHANNEL-TRANSPORT-AMBIGUOUS-01` remains valid and no production-code change was required by the differential review.
+- Result: `NO_MATERIAL_FINDING / SELECTED_METHOD_UNCHANGED`.
