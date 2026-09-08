@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="bootstrap.php" colors="true" failOnWarning="true" failOnRisky="true">
+<phpunit bootstrap="bootstrap.php" colors="true" failOnWarning="true" failOnRisky="true" failOnIncomplete="true" failOnSkipped="true">
     <testsuites>
         <testsuite name="Real WordPress, Gravity Forms, and Gravity Flow">
             <directory suffix="Test.php">.</directory>

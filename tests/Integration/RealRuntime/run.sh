@@ -70,6 +70,23 @@ cd "$ROOT"
 state READY
 npx wp-env clean all
 npx wp-env start --update
+set +e
 npx wp-env run tests-cli --env-cwd=wp-content/plugins/gravity-notification-manager-source \
-	php vendor/bin/phpunit --configuration tests/Integration/RealRuntime/phpunit.xml.dist
+	php vendor/bin/phpunit --configuration tests/Integration/RealRuntime/phpunit.xml.dist \
+	--log-junit .wp-env.runtime/real-runtime-junit.xml
+phpunit_status=$?
+set -e
+
+set +e
+php tests/Integration/RealRuntime/validate-junit.php "$RUNTIME_DIR/real-runtime-junit.xml"
+manifest_status=$?
+set -e
+
+if [[ "$manifest_status" -ne 0 ]]; then
+	exit "$manifest_status"
+fi
+if [[ "$phpunit_status" -ne 0 ]]; then
+	state HARNESS_FAILURE
+	exit "$phpunit_status"
+fi
 state REAL_INTEGRATION_PASS

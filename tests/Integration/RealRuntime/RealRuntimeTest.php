@@ -135,11 +135,11 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 		$this->create_fixture();
 		$provider = $this->configure_provider( AttemptStatus::SUCCESS );
 		$this->add_feed( 'Conditional', 'Not Alice' );
-		$this->submit_fixture();
+		$this->process_gravity_forms_feeds();
 		self::assertSame( 0, $provider->send_count );
 		$this->add_on->delete_feeds( $this->form_id );
 		$this->add_feed( 'Conditional', 'Alice' );
-		$this->submit_fixture();
+		$this->process_gravity_forms_feeds();
 		self::assertSame( 1, $provider->send_count );
 	}
 
@@ -152,7 +152,7 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 		$this->create_fixture();
 		$provider = $this->configure_provider( AttemptStatus::SUCCESS );
 		$this->add_feed( 'Hello {Name:1}' );
-		$this->submit_fixture();
+		$this->process_gravity_forms_feeds();
 		self::assertSame( 1, $provider->send_count );
 		self::assertSame( 'Hello Alice', $provider->last_request->message() );
 	}
@@ -423,10 +423,10 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 	 * @return string
 	 */
 	private function get_framework_feed_status( int $feed_id ): string {
-		if ( ! is_callable( array( $this->add_on, 'get_feed_status' ) ) ) {
-			$this->markTestIncomplete( 'The loaded supported Gravity Forms runtime does not expose get_feed_status(); framework status is NOT_ASSESSABLE.' );
+		if ( ! is_callable( array( GFAPI::class, 'get_entry_feed_status' ) ) ) {
+			self::fail( 'Required GFAPI::get_entry_feed_status() is unavailable; framework status evidence cannot pass.' );
 		}
-		return (string) $this->add_on->get_feed_status( $feed_id, $this->entry_id );
+		return (string) GFAPI::get_entry_feed_status( $this->entry_id, $feed_id );
 	}
 
 	/** Advance the fixture using the real Gravity Flow API. */
