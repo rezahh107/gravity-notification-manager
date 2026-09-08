@@ -61,6 +61,12 @@ jobs:
           php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/GravityForms/NotificationFeedAddOnTest.php
           php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/GravityForms/NotificationFeedProcessorTest.php
 
+      - name: Run WU-05 focused unit targets
+        run: |
+          php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/DeliveryState
+          php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/GravityForms/NotificationDeliveryStateTest.php
+          php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/GravityForms/ManualRetryHandlerTest.php
+
       - name: Lint WU-00 PHP surfaces
         run: composer lint:wu00
 
