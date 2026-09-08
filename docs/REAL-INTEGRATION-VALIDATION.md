@@ -70,14 +70,17 @@ The wrapper validates inputs, creates ignored ephemeral extraction/configuration
 
 ## CI execution and exact target
 
-The **Real GF Flow Integration** workflow has two supported triggers:
+The **Real GF Flow Integration** workflow has three supported triggers:
 
-1. every `push` to `main`, including normal PR merges;
-2. manual `workflow_dispatch` for an optional exact `target_sha`.
+1. every pull request targeting `main`;
+2. every `push` to `main`, including normal PR merges;
+3. manual `workflow_dispatch` for an optional exact `target_sha`.
 
-On an automatic `main` run, the exact triggering `github.sha` is validated. On a manual run, `target_sha` is used when supplied; otherwise the workflow falls back to the triggering SHA. Before environment setup, the workflow checks out the resolved exact SHA, compares it with `git rev-parse HEAD`, and records repository/ref/SHA/run/job identity.
+For pull requests, the workflow deliberately validates `github.event.pull_request.head.sha` rather than GitHub's synthetic merge SHA. For automatic `main` runs, the exact triggering `github.sha` is validated. On a manual run, `target_sha` is used when supplied; otherwise the workflow falls back to the triggering SHA. Before environment setup, the workflow checks out the resolved exact SHA, compares it with `git rev-parse HEAD`, and records repository/ref/SHA/run/job identity.
 
 The current owner-authorized public Google Drive package IDs and expected hashes are pinned in the workflow. No package URL/hash Secrets are required for this public-source configuration. Downloads use Google Drive's direct-download endpoint and must pass both SHA-256 verification and `unzip -t` before the real-runtime harness begins.
+
+Because the package source is public and no repository Secrets are required, the real-runtime contract can be validated before merge on the exact PR Head and then rerun automatically after merge on the resulting `main` SHA.
 
 ## Results and troubleshooting
 
