@@ -50,9 +50,9 @@ admit_package() {
 	local plugin_dir header version
 	plugin_dir="$(find "$destination" -mindepth 1 -maxdepth 1 -type d -name "$slug" -print -quit)"
 	[[ -n "$plugin_dir" ]] || fail PACKAGE_INVALID "$label ZIP does not contain the expected $slug plugin directory."
-	header="$(find "$plugin_dir" -maxdepth 1 -type f -name '*.php' -exec awk '/^[[:space:]]*\*[[:space:]]*Plugin Name:/{found=1} END{exit found?0:1}' {} \; -print -quit)"
+	header="$(find "$plugin_dir" -maxdepth 1 -type f -name '*.php' -exec awk '/^[[:space:]]*(\*[[:space:]]*)?Plugin Name:/{found=1} END{exit found?0:1}' {} \; -print -quit)"
 	[[ -n "$header" ]] || fail PACKAGE_INVALID "$label plugin header was not detected."
-	version="$(awk -F: '/^[[:space:]]*\*[[:space:]]*Version:/{sub(/^[[:space:]]+/,"",$2); print $2; exit}' "$header")"
+	version="$(awk -F: '/^[[:space:]]*(\*[[:space:]]*)?Version:/{sub(/^[[:space:]]+/,"",$2); print $2; exit}' "$header")"
 	[[ -n "$version" ]] || fail PACKAGE_INVALID "$label plugin version was not detected."
 	printf 'PACKAGE label=%s filename=%s slug=%s version=%s sha256=%s source=%s\n' "$label" "$(basename "$zip_path")" "$slug" "$version" "$actual" "$source_class"
 }
