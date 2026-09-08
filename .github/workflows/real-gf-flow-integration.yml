@@ -1,0 +1,80 @@
+name: Real GF Flow Integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Exact commit SHA to validate (never a synthetic merge SHA)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  real-integration:
+    name: WordPress 7.1 / PHP 8.3 / real premium plugins
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPECTED_HEAD: ${{ inputs.target_sha }}
+      GNM_GF_SHA256: ${{ secrets.GNM_GF_SHA256 }}
+      GNM_GFLOW_SHA256: ${{ secrets.GNM_GFLOW_SHA256 }}
+      GNM_PACKAGE_SOURCE_CLASS: OWNER_AUTHORIZED_SECURE_SOURCE
+
+    steps:
+      - name: Validate target input
+        run: |
+          if [[ ! "$EXPECTED_HEAD" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "target_sha must be one full commit SHA." >&2
+            exit 2
+          fi
+
+      - name: Checkout exact target
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.target_sha }}
+
+      - name: Verify exact target identity
+        run: |
+          observed="$(git rev-parse HEAD)"
+          printf 'repository=%s ref=%s expected_sha=%s observed_sha=%s run=%s job=%s\n' \
+            "$GITHUB_REPOSITORY" "$GITHUB_REF" "$EXPECTED_HEAD" "$observed" "$GITHUB_RUN_ID" "$GITHUB_JOB"
+          test "$observed" = "$EXPECTED_HEAD"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked harness dependencies
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci
+
+      - name: Admit owner-authorized premium packages
+        env:
+          GF_URL: ${{ secrets.GNM_GF_PACKAGE_URL }}
+          GFLOW_URL: ${{ secrets.GNM_GFLOW_PACKAGE_URL }}
+        run: |
+          if [[ -z "$GF_URL" || -z "$GFLOW_URL" || -z "$GNM_GF_SHA256" || -z "$GNM_GFLOW_SHA256" ]]; then
+            echo 'GNM_REAL_INTEGRATION_STATE=NOT_EXECUTED_ENVIRONMENT_UNAVAILABLE'
+            echo 'Owner-authorized package URLs and expected hashes must all be configured.' >&2
+            exit 78
+          fi
+          mkdir -p "$RUNNER_TEMP/gnm-premium"
+          curl --fail --silent --show-error --location "$GF_URL" --output "$RUNNER_TEMP/gnm-premium/gravityforms.zip"
+          curl --fail --silent --show-error --location "$GFLOW_URL" --output "$RUNNER_TEMP/gnm-premium/gravityflow.zip"
+          echo "GNM_GF_ZIP=$RUNNER_TEMP/gnm-premium/gravityforms.zip" >> "$GITHUB_ENV"
+          echo "GNM_GFLOW_ZIP=$RUNNER_TEMP/gnm-premium/gravityflow.zip" >> "$GITHUB_ENV"
+
+      - name: Execute real-runtime contract
+        run: npm run test:integration:real
