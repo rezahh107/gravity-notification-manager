@@ -426,7 +426,7 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 		if ( ! is_callable( array( GFAPI::class, 'get_entry_feed_status' ) ) ) {
 			self::fail( 'Required GFAPI::get_entry_feed_status() is unavailable; framework status evidence cannot pass.' );
 		}
-		return (string) GFAPI::get_entry_feed_status( $this->entry_id, $feed_id );
+		return (string) GFAPI::get_entry_feed_status( $this->entry_id, $feed_id, true );
 	}
 
 	/** Advance the fixture using the real Gravity Flow API. */
