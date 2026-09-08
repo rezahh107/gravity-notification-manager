@@ -184,7 +184,7 @@ final class IPPanelProvider implements SmsProviderInterface {
 	 */
 	private function classify_response( SmsRequest $request, HttpResponse $response ): AttemptResult {
 		if ( $response->is_transport_error() ) {
-			return $this->result( AttemptStatus::FAILED, $request, array(), 'transport_error' );
+			return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'transport_error' );
 		}
 
 		if ( 200 > $response->status_code() || 300 <= $response->status_code() ) {
