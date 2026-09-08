@@ -16,59 +16,37 @@ use GravityNotify\Delivery\AttemptResult;
  */
 final class DeliveryStateManager {
 
-	/**
-	 * Schema namespace identity.
-	 */
+	/** Schema namespace identity. */
 	public const SCHEMA_NAMESPACE = 'gravity_notify.delivery_state';
 
-	/**
-	 * Current state schema version.
-	 */
+	/** Current state schema version. */
 	public const SCHEMA_VERSION = 1;
 
-	/**
-	 * Confirmed logical delivery resolved.
-	 */
+	/** Confirmed logical delivery resolved. */
 	public const FINAL_RESOLVED = 'RESOLVED';
 
-	/**
-	 * No confirmed logical delivery success exists.
-	 */
+	/** No confirmed logical delivery success exists. */
 	public const FINAL_UNRESOLVED = 'UNRESOLVED';
 
-	/**
-	 * Ordinary native Feed execution.
-	 */
+	/** Ordinary native Feed execution. */
 	public const EXECUTION_ORDINARY = 'ORDINARY';
 
-	/**
-	 * Explicit user-requested manual Retry execution.
-	 */
+	/** Explicit user-requested manual Retry execution. */
 	public const EXECUTION_MANUAL_RETRY = 'MANUAL_RETRY';
 
-	/**
-	 * Ordinary repeat suppressed because delivery is already confirmed complete.
-	 */
+	/** Ordinary repeat suppressed because delivery is already confirmed complete. */
 	public const EXECUTION_DUPLICATE_SUPPRESSED = 'DUPLICATE_SUPPRESSED';
 
-	/**
-	 * Manual Retry is allowed for the target.
-	 */
+	/** Manual Retry is allowed for the target. */
 	public const RETRY_ALLOWED = 'allowed';
 
-	/**
-	 * Manual Retry state is missing.
-	 */
+	/** Manual Retry state is missing. */
 	public const RETRY_STATE_MISSING = 'state_missing';
 
-	/**
-	 * Manual Retry state is malformed.
-	 */
+	/** Manual Retry state is malformed. */
 	public const RETRY_STATE_MALFORMED = 'state_malformed';
 
-	/**
-	 * Target exists but does not currently require attention.
-	 */
+	/** Target exists but does not currently require attention. */
 	public const RETRY_NOT_REQUIRED = 'not_required';
 
 	/**
@@ -153,8 +131,8 @@ final class DeliveryStateManager {
 	 * this method unless retry_eligibility() first reports RETRY_ALLOWED.
 	 *
 	 * @param int                         $entry_id Entry ID.
-	 * @param int                         $form_id  Form ID.
-	 * @param int                         $feed_id  Feed ID.
+	 * @param int                         $form_id Form ID.
+	 * @param int                         $feed_id Feed ID.
 	 * @param string                      $feed_name Logical Feed name.
 	 * @param string                      $channel Current logical channel.
 	 * @param NotificationExecutionResult $result Execution facts from WU-04.
@@ -243,7 +221,7 @@ final class DeliveryStateManager {
 	 * Read one valid target, or null for missing/malformed state.
 	 *
 	 * @param int $entry_id Entry ID.
-	 * @param int $feed_id  Feed ID.
+	 * @param int $feed_id Feed ID.
 	 * @return array<string, mixed>|null
 	 */
 	public function target_state( int $entry_id, int $feed_id ): ?array {
@@ -268,11 +246,11 @@ final class DeliveryStateManager {
 	/**
 	 * Build one logical Feed target state.
 	 *
-	 * @param int    $entry_id  Entry ID.
-	 * @param int    $form_id   Form ID.
-	 * @param int    $feed_id   Feed ID.
+	 * @param int    $entry_id Entry ID.
+	 * @param int    $form_id Form ID.
+	 * @param int    $feed_id Feed ID.
 	 * @param string $feed_name Feed name.
-	 * @param string $channel   Channel.
+	 * @param string $channel Channel.
 	 * @return array<string, mixed>
 	 */
 	private function new_target( int $entry_id, int $form_id, int $feed_id, string $feed_name, string $channel ): array {
@@ -295,7 +273,7 @@ final class DeliveryStateManager {
 	 * Find one valid persisted target.
 	 *
 	 * @param int $entry_id Entry ID.
-	 * @param int $feed_id  Feed ID.
+	 * @param int $feed_id Feed ID.
 	 * @return array<string, mixed>|null
 	 */
 	private function valid_target( int $entry_id, int $feed_id ): ?array {
@@ -317,7 +295,7 @@ final class DeliveryStateManager {
 	/**
 	 * Validate only the bounded root schema required for safe reads.
 	 *
-	 * @param array<string, mixed> $state    State document.
+	 * @param array<string, mixed> $state State document.
 	 * @param int                  $entry_id Entry ID.
 	 * @return bool
 	 */
@@ -332,9 +310,9 @@ final class DeliveryStateManager {
 	/**
 	 * Validate the bounded target fields required for suppression/Retry decisions.
 	 *
-	 * @param array<string, mixed> $target   Target state.
+	 * @param array<string, mixed> $target Target state.
 	 * @param int                  $entry_id Entry ID.
-	 * @param int                  $feed_id  Feed ID.
+	 * @param int                  $feed_id Feed ID.
 	 * @return bool
 	 */
 	private function is_valid_target( array $target, int $entry_id, int $feed_id ): bool {
@@ -356,7 +334,10 @@ final class DeliveryStateManager {
 	/**
 	 * Convert transport attempts to bounded persistence-ready arrays.
 	 *
-	 * @param array<int, AttemptResult> $attempts  Execution attempts.
+	 * Provider references are retained when safe scalar identifiers exist. Provider
+	 * diagnostics/raw error data are deliberately not persisted in Entry Meta.
+	 *
+	 * @param array<int, AttemptResult> $attempts Execution attempts.
 	 * @param int                       $execution Execution sequence.
 	 * @param string                    $timestamp Timestamp.
 	 * @return array<int, array<string, mixed>>
@@ -384,7 +365,6 @@ final class DeliveryStateManager {
 				'provider'            => null === $attempt->provider_id() ? null : $this->safe_string( $attempt->provider_id() ),
 				'capability'          => null === $attempt->capability() ? null : $this->safe_string( $attempt->capability() ),
 				'provider_references' => $references,
-				'diagnostic'          => $this->safe_string( $attempt->diagnostic() ),
 			);
 		}
 
@@ -441,7 +421,7 @@ final class DeliveryStateManager {
 	}
 
 	/**
-	 * Bound scalar diagnostic identifiers without storing message/recipient data.
+	 * Bound safe scalar identifiers without storing message/recipient data.
 	 *
 	 * @param string $value Value.
 	 * @return string
