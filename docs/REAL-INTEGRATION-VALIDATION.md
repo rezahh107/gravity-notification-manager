@@ -19,6 +19,8 @@ The harness does not change `src/`, activate the production plugin entrypoint, p
 
 Official contracts consulted are the WordPress [`wp-env`](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-env/) reference, Gravity Forms [`GFFeedAddOn`](https://docs.gravityforms.com/gffeedaddon/) and [`GFAddOn`](https://docs.gravityforms.com/gfaddon/) references, and Gravity Flow [Feed Step](https://docs.gravityflow.io/step_feed_class/) and [Workflow Step Framework](https://docs.gravityflow.io/the-workflow-step-framework/) references. The repository's closed architecture identifies WordPress 7.1 as its stable current reference. Direct documentation retrieval was unavailable in the implementation environment, so no newer unverified baseline was substituted.
 
+The PR #6 repair uses the documented `Gravity_Flow_API::add_step()`, `get_step()`, `process_workflow()`, and `get_status()` surfaces. A selected Feed is persisted as the Feed-Step checkbox setting `feed_<feed-id>` and read back from the real Step before workflow execution. It no longer manufactures `gravityflow_steps` form data or writes workflow-position Entry Meta. GF-REAL-06 enters through real `GFFeedAddOn::maybe_process_feed()` and reads `get_feed_status()` when the admitted Gravity Forms version exposes that supported status API; otherwise that status assertion is explicitly `NOT_ASSESSABLE` rather than inferred from `process_feed()`.
+
 ## Architecture and complexity decision
 
 - **Proposed machinery:** `@wordpress/env` 11.14.0 as a development-only Docker harness.
