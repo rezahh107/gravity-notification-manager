@@ -1,0 +1,7 @@
+{
+  "core": "WordPress/WordPress#7.1",
+  "phpVersion": "8.3",
+  "mappings": {
+    "wp-content/plugins/gravity-notification-manager-source": "."
+  }
+}

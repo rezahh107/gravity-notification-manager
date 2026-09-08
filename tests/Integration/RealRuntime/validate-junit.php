@@ -1,0 +1,84 @@
+<?php
+/**
+ * Fail-closed required-test manifest validation for real-runtime JUnit output.
+ *
+ * @package GravityNotify
+ */
+
+declare(strict_types=1);
+
+const GRAVITY_NOTIFY_REQUIRED_REAL_TESTS = array(
+	'ENV-REAL-01'   => 'test_env_real_01_real_runtime_identity',
+	'GF-REAL-01'    => 'test_gf_real_01_registration',
+	'GF-REAL-02'    => 'test_gf_real_02_settings_contract',
+	'GF-REAL-03'    => 'test_gf_real_03_feed_round_trip',
+	'GF-REAL-04'    => 'test_gf_real_04_native_condition_lifecycle',
+	'GF-REAL-05'    => 'test_gf_real_05_native_merge_tag_rendering',
+	'GF-REAL-06'    => 'test_gf_real_06_result_semantics',
+	'GFLOW-REAL-01' => 'test_gflow_real_01_step_discovery',
+	'GFLOW-REAL-02' => 'test_gflow_real_02_submission_and_workflow_position',
+	'GFLOW-REAL-03' => 'test_gflow_real_03_native_condition_inside_flow',
+	'GFLOW-REAL-04' => 'test_gflow_real_04_failure_does_not_strand_workflow',
+	'SAFE-REAL-01'  => 'test_safe_real_01_http_is_blocked',
+	'SAFE-REAL-02'  => 'test_safe_real_02_fake_attempt_evidence',
+	'SAFE-REAL-03'  => 'test_safe_real_03_wordpress_http_interception',
+);
+
+/**
+ * Emit a fail-closed state and stop validation.
+ *
+ * @param string $state  Approved integration state.
+ * @param string $detail Safe diagnostic detail.
+ * @return never
+ */
+function gravity_notify_manifest_state( string $state, string $detail ): never {
+	fwrite( STDERR, $detail . PHP_EOL );
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed CLI state vocabulary, never HTML.
+	printf( 'GNM_REAL_INTEGRATION_STATE=%s' . PHP_EOL, $state );
+	exit( 'REAL_INTEGRATION_INCOMPLETE' === $state ? 5 : ( 'REAL_INTEGRATION_DEFECT_FOUND' === $state ? 4 : 3 ) );
+}
+
+/**
+ * Validate the required test manifest from one JUnit result.
+ *
+ * @param string $result_path JUnit result path.
+ * @return void
+ */
+function gravity_notify_validate_manifest( string $result_path ): void {
+	if ( '' === $result_path || ! is_readable( $result_path ) ) {
+		gravity_notify_manifest_state( 'HARNESS_FAILURE', 'JUnit result is missing or unreadable.' );
+	}
+
+	$document = new DOMDocument();
+	if ( ! $document->load( $result_path, LIBXML_NONET ) ) {
+		gravity_notify_manifest_state( 'HARNESS_FAILURE', 'JUnit result is malformed.' );
+	}
+
+	$test_cases = array();
+	foreach ( $document->getElementsByTagName( 'testcase' ) as $test_case ) {
+		$name = $test_case->attributes?->getNamedItem( 'name' )?->nodeValue;
+		if ( is_string( $name ) ) {
+			$test_cases[ $name ] = $test_case;
+		}
+	}
+
+	foreach ( GRAVITY_NOTIFY_REQUIRED_REAL_TESTS as $test_id => $method ) {
+		if ( ! isset( $test_cases[ $method ] ) ) {
+			gravity_notify_manifest_state( 'REAL_INTEGRATION_INCOMPLETE', sprintf( 'Required test %s was not present in JUnit output.', $test_id ) );
+		}
+		$test_case = $test_cases[ $method ];
+		if ( 0 < $test_case->getElementsByTagName( 'error' )->length ) {
+			gravity_notify_manifest_state( 'HARNESS_FAILURE', sprintf( 'Required test %s ended with a harness/runtime error.', $test_id ) );
+		}
+		if ( 0 < $test_case->getElementsByTagName( 'failure' )->length ) {
+			gravity_notify_manifest_state( 'REAL_INTEGRATION_DEFECT_FOUND', sprintf( 'Required test %s observed an integration assertion failure.', $test_id ) );
+		}
+		if ( 0 < $test_case->getElementsByTagName( 'skipped' )->length ) {
+			gravity_notify_manifest_state( 'REAL_INTEGRATION_INCOMPLETE', sprintf( 'Required test %s was skipped or incomplete.', $test_id ) );
+		}
+	}
+
+	printf( 'GNM_REAL_INTEGRATION_MANIFEST=PASS tests=%d' . PHP_EOL, count( GRAVITY_NOTIFY_REQUIRED_REAL_TESTS ) );
+}
+
+gravity_notify_validate_manifest( $argv[1] ?? '' );

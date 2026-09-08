@@ -1,0 +1,4 @@
+/.wp-env.override.json
+/.wp-env.runtime/
+/.phpunit.result.cache
+/node_modules/

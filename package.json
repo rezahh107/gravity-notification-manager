@@ -1,0 +1,10 @@
+{
+  "name": "gravity-notification-manager-integration",
+  "private": true,
+  "scripts": {
+    "test:integration:real": "bash tests/Integration/RealRuntime/run.sh"
+  },
+  "devDependencies": {
+    "@wordpress/env": "11.14.0"
+  }
+}
