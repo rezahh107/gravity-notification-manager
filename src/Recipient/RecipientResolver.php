@@ -317,6 +317,7 @@ final class RecipientResolver {
 					$normalized[] = $user_id;
 				}
 			}
+		}
 
 		$normalized = array_values( array_unique( $normalized ) );
 		sort( $normalized, SORT_NUMERIC );
