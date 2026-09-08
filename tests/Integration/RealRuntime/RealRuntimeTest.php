@@ -201,7 +201,8 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Prove GFLOW-REAL-03 native condition inside Flow lifecycle.
+	 * Prove the negative branch of the native Flow feed condition.
+	 * The matching positive branch is exercised by GFLOW-REAL-02 in its own submission request lifecycle.
 	 *
 	 * @testdox GFLOW-REAL-03 native condition inside Flow lifecycle
 	 */
@@ -209,11 +210,6 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 		$fixture = $this->create_flow_fixture( AttemptStatus::SUCCESS, 'Not Alice' );
 		self::assertSame( $fixture['feed_id'], $this->selected_feed_id( $fixture['step'] ) );
 		self::assertSame( 0, $fixture['provider']->send_count );
-
-		$this->delete_fixture();
-		$fixture = $this->create_flow_fixture( AttemptStatus::SUCCESS, 'Alice' );
-		self::assertSame( $fixture['feed_id'], $this->selected_feed_id( $fixture['step'] ) );
-		self::assertSame( 1, $fixture['provider']->send_count );
 	}
 
 	/**
