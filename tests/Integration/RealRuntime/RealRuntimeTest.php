@@ -196,27 +196,23 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 	public function test_gflow_real_02_submission_and_workflow_position(): void {
 		$fixture = $this->create_flow_fixture( AttemptStatus::SUCCESS, 'Alice' );
 		self::assertSame( $fixture['feed_id'], $this->selected_feed_id( $fixture['step'] ) );
-		$this->process_gravity_forms_feeds();
-		self::assertSame( 0, $fixture['provider']->send_count );
-		$this->process_workflow();
+		self::assertSame( 0, $fixture['before_workflow_send_count'] );
 		self::assertSame( 1, $fixture['provider']->send_count );
 	}
 
 	/**
 	 * Prove GFLOW-REAL-03 native condition inside Flow lifecycle.
 	 *
-	 * @testdox GFLOW-REAL-03 native condition inside flow
+	 * @testdox GFLOW-REAL-03 native condition inside Flow lifecycle
 	 */
 	public function test_gflow_real_03_native_condition_inside_flow(): void {
 		$fixture = $this->create_flow_fixture( AttemptStatus::SUCCESS, 'Not Alice' );
 		self::assertSame( $fixture['feed_id'], $this->selected_feed_id( $fixture['step'] ) );
-		$this->process_workflow();
 		self::assertSame( 0, $fixture['provider']->send_count );
 
 		$this->delete_fixture();
 		$fixture = $this->create_flow_fixture( AttemptStatus::SUCCESS, 'Alice' );
 		self::assertSame( $fixture['feed_id'], $this->selected_feed_id( $fixture['step'] ) );
-		$this->process_workflow();
 		self::assertSame( 1, $fixture['provider']->send_count );
 	}
 
@@ -228,7 +224,6 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 	public function test_gflow_real_04_failure_does_not_strand_workflow(): void {
 		$fixture = $this->create_flow_fixture( AttemptStatus::FAILED, 'Alice' );
 		self::assertSame( $fixture['feed_id'], $this->selected_feed_id( $fixture['step'] ) );
-		$this->process_workflow();
 		self::assertSame( 1, $fixture['provider']->send_count );
 		self::assertFalse( $this->add_on->last_execution_result()->delivery_succeeded() );
 		$api = new \Gravity_Flow_API( $this->form_id );
@@ -374,14 +369,27 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Persist one Flow-positioned feed fixture.
+	 * Persist one Flow-positioned feed fixture through the real form-submission lifecycle.
 	 *
 	 * @param string $status Fake delivery status.
 	 * @param string $condition_value Native condition value.
-	 * @return array{provider:FakeSmsProvider,feed_id:int,step:NotificationFeedStep}
+	 * @return array{provider:FakeSmsProvider,feed_id:int,step:NotificationFeedStep,before_workflow_send_count:int}
 	 */
 	private function create_flow_fixture( string $status, string $condition_value ): array {
-		$this->create_fixture();
+		$this->form_id = GFAPI::add_form(
+			array(
+				'title'  => 'GNM real integration fixture',
+				'fields' => array(
+					array(
+						'id'    => 1,
+						'type'  => 'text',
+						'label' => 'Name',
+					),
+				),
+			)
+		);
+		self::assertGreaterThan( 0, $this->form_id );
+
 		$provider = $this->configure_provider( $status );
 		$feed_id  = $this->add_feed( 'Flow {Name:1}', $condition_value );
 		$api      = new \Gravity_Flow_API( $this->form_id );
@@ -393,12 +401,34 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 			)
 		);
 		self::assertGreaterThan( 0, $step_id );
+
+		$before_workflow_send_count = null;
+		$capture_before_workflow    = static function ( $entry ) use ( &$before_workflow_send_count, $provider ) {
+			$before_workflow_send_count = $provider->send_count;
+			return $entry;
+		};
+		add_filter( 'gform_entry_pre_handle_confirmation', $capture_before_workflow, 8, 2 );
+		$submission = GFAPI::submit_form(
+			$this->form_id,
+			array(
+				'input_1' => 'Alice',
+			)
+		);
+		remove_filter( 'gform_entry_pre_handle_confirmation', $capture_before_workflow, 8 );
+
+		self::assertNotWPError( $submission );
+		self::assertTrue( (bool) rgar( $submission, 'is_valid' ) );
+		$this->entry_id = (int) rgar( $submission, 'entry_id' );
+		self::assertGreaterThan( 0, $this->entry_id );
+		self::assertSame( 0, $before_workflow_send_count );
+
 		$step = $api->get_step( $step_id, GFAPI::get_entry( $this->entry_id ) );
 		self::assertInstanceOf( NotificationFeedStep::class, $step );
 		return array(
-			'provider' => $provider,
-			'feed_id'  => $feed_id,
-			'step'     => $step,
+			'provider'                   => $provider,
+			'feed_id'                    => $feed_id,
+			'step'                       => $step,
+			'before_workflow_send_count' => $before_workflow_send_count,
 		);
 	}
 
