@@ -31,6 +31,31 @@ class GFFeedAddOnStub {
 	}
 
 	/**
+	 * Return one configured Feed by ID.
+	 *
+	 * @param int $feed_id Feed ID.
+	 * @return array<string, mixed>|null
+	 */
+	public function get_feed( $feed_id ) {
+		foreach ( $this->test_feeds as $feed ) {
+			if ( isset( $feed['id'] ) && (int) $feed['id'] === (int) $feed_id ) {
+				return $feed;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Return the canonical Add-On slug used by Feed identity checks.
+	 *
+	 * @return string
+	 */
+	public function get_slug() {
+		return 'gravity-notification-manager';
+	}
+
+	/**
 	 * Configure deterministic test feeds.
 	 *
 	 * @param array<int, array<string, mixed>> $feeds Feeds.
