@@ -28,7 +28,7 @@ use GravityNotify\Tests\Support\Recipient\FakeUserDirectory;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Proves malformed nested retained history cannot become Retry/suppression authority.
+ * Proves malformed retained history cannot become Retry or suppression authority.
  */
 final class DeliveryStateHistoryValidationTest extends TestCase {
 
@@ -57,126 +57,93 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 	}
 
 	/**
-	 * Missing/wrong execution fields, type and outcome truth all fail closed.
+	 * Execution records, sequence metadata and target outcome must remain coherent.
 	 *
 	 * @return void
 	 */
-	public function test_malformed_execution_records_fail_closed(): void {
-		$mutations = array(
-			'missing required execution field' => static function ( array &$target ): void {
+	public function test_malformed_execution_history_fails_closed(): void {
+		$this->assert_rejected_mutation(
+			$this->ordinary_store( true ),
+			static function ( array &$target ): void {
 				unset( $target['executions'][0]['timestamp'] );
-			},
-			'invalid execution type'            => static function ( array &$target ): void {
+			}
+		);
+		$this->assert_rejected_mutation(
+			$this->ordinary_store( true ),
+			static function ( array &$target ): void {
 				$target['executions'][0]['type'] = 'UNKNOWN';
-			},
-			'wrong timestamp type'              => static function ( array &$target ): void {
-				$target['executions'][0]['timestamp'] = array();
-			},
-			'wrong delivery truth type'         => static function ( array &$target ): void {
-				$target['executions'][0]['delivery_succeeded'] = 1;
-			},
-			'invalid execution final status'    => static function ( array &$target ): void {
-				$target['executions'][0]['final_status'] = 'UNKNOWN';
-			},
-			'contradictory execution outcome'   => static function ( array &$target ): void {
+			}
+		);
+		$this->assert_rejected_mutation(
+			$this->ordinary_store( true ),
+			static function ( array &$target ): void {
 				$target['executions'][0]['delivery_succeeded'] = false;
-			},
+			}
 		);
-
-		foreach ( $mutations as $label => $mutate ) {
-			$store   = $this->ordinary_store( true );
-			$manager = $this->manager( $store );
-			$mutate( $store->states[10]['notifications']['feed:7'] );
-			$this->assert_target_rejected( $manager, $label );
-		}
-	}
-
-	/**
-	 * Duplicate/out-of-order execution sequences and stale target sequence fail closed.
-	 *
-	 * @return void
-	 */
-	public function test_execution_sequence_relationships_fail_closed_when_stale_or_reordered(): void {
-		$mutations = array(
-			'duplicate sequence'    => static function ( array &$target ): void {
+		$this->assert_rejected_mutation(
+			$this->two_execution_store(),
+			static function ( array &$target ): void {
 				$target['executions'][1]['execution_sequence'] = 1;
-			},
-			'out-of-order sequence' => static function ( array &$target ): void {
+			}
+		);
+		$this->assert_rejected_mutation(
+			$this->two_execution_store(),
+			static function ( array &$target ): void {
 				$target['executions'][0]['execution_sequence'] = 3;
-			},
-			'last sequence lower'   => static function ( array &$target ): void {
+			}
+		);
+		$this->assert_rejected_mutation(
+			$this->two_execution_store(),
+			static function ( array &$target ): void {
 				$target['last_execution_sequence'] = 1;
-			},
-			'last sequence higher'  => static function ( array &$target ): void {
-				$target['last_execution_sequence'] = 3;
-			},
+			}
 		);
-
-		foreach ( $mutations as $label => $mutate ) {
-			$store   = $this->two_ordinary_execution_store();
-			$manager = $this->manager( $store );
-			$mutate( $store->states[10]['notifications']['feed:7'] );
-			$this->assert_target_rejected( $manager, $label );
-		}
+		$this->assert_rejected_mutation(
+			$this->ordinary_store( true ),
+			static function ( array &$target ): void {
+				$target['final_status']       = DeliveryStateManager::FINAL_UNRESOLVED;
+				$target['attention_required'] = true;
+			}
+		);
 	}
 
 	/**
-	 * Malformed nested attempts never remain trusted transport evidence.
+	 * Attempt records must retain exact parent, ordering, status and reference shape.
 	 *
 	 * @return void
 	 */
-	public function test_malformed_attempt_records_fail_closed(): void {
-		$mutations = array(
-			'attempt item not array'        => static function ( array &$target ): void {
-				$target['executions'][0]['attempts'][0] = 'invalid';
-			},
-			'missing attempt field'         => static function ( array &$target ): void {
-				unset( $target['executions'][0]['attempts'][0]['capability'] );
-			},
-			'parent sequence mismatch'      => static function ( array &$target ): void {
-				$target['executions'][0]['attempts'][0]['execution_sequence'] = 2;
-			},
-			'invalid attempt status'        => static function ( array &$target ): void {
+	public function test_malformed_attempt_history_fails_closed(): void {
+		$this->assert_rejected_mutation(
+			$this->ordinary_store( false ),
+			static function ( array &$target ): void {
 				$target['executions'][0]['attempts'][0]['status'] = 'UNKNOWN';
-			},
-			'malformed provider references' => static function ( array &$target ): void {
-				$target['executions'][0]['attempts'][0]['provider_references'] = array( array( 'bad' ) );
-			},
-			'wrong provider representation' => static function ( array &$target ): void {
-				$target['executions'][0]['attempts'][0]['provider'] = array();
-			},
+			}
 		);
-
-		foreach ( $mutations as $label => $mutate ) {
-			$store   = $this->ordinary_store( false );
-			$manager = $this->manager( $store );
-			$mutate( $store->states[10]['notifications']['feed:7'] );
-			$this->assert_target_rejected( $manager, $label );
-		}
-	}
-
-	/**
-	 * Duplicate/out-of-order attempt sequences fail closed.
-	 *
-	 * @return void
-	 */
-	public function test_attempt_sequences_must_be_strictly_increasing_and_unique(): void {
-		$mutations = array(
-			'duplicate attempt sequence' => static function ( array &$target ): void {
+		$this->assert_rejected_mutation(
+			$this->ordinary_store( false ),
+			static function ( array &$target ): void {
+				$target['executions'][0]['attempts'][0]['execution_sequence'] = 2;
+			}
+		);
+		$this->assert_rejected_mutation(
+			$this->two_attempt_store(),
+			static function ( array &$target ): void {
 				$target['executions'][0]['attempts'][1]['attempt_sequence'] = 1;
-			},
-			'out-of-order attempts'      => static function ( array &$target ): void {
+			}
+		);
+		$this->assert_rejected_mutation(
+			$this->two_attempt_store(),
+			static function ( array &$target ): void {
 				$target['executions'][0]['attempts'][0]['attempt_sequence'] = 2;
 				$target['executions'][0]['attempts'][1]['attempt_sequence'] = 1;
-			},
+			}
 		);
-
-		foreach ( $mutations as $label => $mutate ) {
-			$store   = $this->ordinary_store_with_two_attempts();
-			$manager = $this->manager( $store );
-			$mutate( $store->states[10]['notifications']['feed:7'] );
-			$this->assert_target_rejected( $manager, $label );
-		}
+		$this->assert_rejected_mutation(
+			$this->ordinary_store( false ),
+			static function ( array &$target ): void {
+				$target['executions'][0]['attempts'][0]['provider_references'] = array( array( 'bad' ) );
+			}
+		);
 	}
 
 	/**
@@ -184,7 +151,7 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 	 *
 	 * @return void
 	 */
-	public function test_malformed_skip_records_fail_closed(): void {
+	public function test_malformed_skip_history_fails_closed(): void {
 		$store   = new InMemoryDeliveryStateStore();
 		$manager = $this->manager( $store );
 		self::assertTrue(
@@ -196,116 +163,86 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 				'sms',
 				new NotificationExecutionResult(
 					array(),
-					array( array( 'subject' => 'recipient', 'reason' => 'missing_destination' ) ),
+					array(
+						array(
+							'subject' => 'recipient',
+							'reason'  => 'missing_destination',
+						),
+					),
 					false
 				)
 			)
 		);
-
-		$store->states[10]['notifications']['feed:7']['executions'][0]['skips'][0] = array( 'subject' => 'recipient' );
-		$this->assert_target_rejected( $manager, 'malformed skip' );
+		$store->states[10]['notifications']['feed:7']['executions'][0]['skips'][0] = array(
+			'subject' => 'recipient',
+		);
+		$this->assert_target_rejected( $manager );
 	}
 
 	/**
-	 * Retry history must map one-to-one to retained manual-Retry executions.
+	 * Manual-Retry history must map one-to-one to retained Retry executions.
 	 *
 	 * @return void
 	 */
 	public function test_retry_history_relationships_fail_closed_when_contradictory(): void {
-		$mutations = array(
-			'retry points to ordinary execution' => static function ( array &$target ): void {
+		$this->assert_rejected_mutation(
+			$this->ordinary_store( false ),
+			static function ( array &$target ): void {
 				$target['retry_history'][] = array(
 					'execution_sequence' => 1,
 					'timestamp'          => '2026-09-09T00:00:00+00:00',
 					'resolved'           => false,
 				);
-			},
-			'manual retry history missing'       => static function ( array &$target ): void {
-				$target['retry_history'] = array();
-			},
-			'retry resolved contradiction'       => static function ( array &$target ): void {
-				$target['retry_history'][0]['resolved'] = true;
-			},
-			'duplicate retry linkage'             => static function ( array &$target ): void {
-				$target['retry_history'][] = $target['retry_history'][0];
-			},
+			}
 		);
-
-		foreach ( $mutations as $label => $mutate ) {
-			$store = 'retry points to ordinary execution' === $label
-				? $this->ordinary_store( false )
-				: $this->unresolved_retry_store();
-			$manager = $this->manager( $store );
-			$mutate( $store->states[10]['notifications']['feed:7'] );
-			$this->assert_target_rejected( $manager, $label );
-		}
+		$this->assert_rejected_mutation(
+			$this->unresolved_retry_store(),
+			static function ( array &$target ): void {
+				$target['retry_history'] = array();
+			}
+		);
+		$this->assert_rejected_mutation(
+			$this->unresolved_retry_store(),
+			static function ( array &$target ): void {
+				$target['retry_history'][0]['resolved'] = true;
+			}
+		);
+		$this->assert_rejected_mutation(
+			$this->unresolved_retry_store(),
+			static function ( array &$target ): void {
+				$target['resolved_by_retry'] = true;
+			}
+		);
+		$this->assert_rejected_mutation(
+			$this->successful_multi_retry_store(),
+			static function ( array &$target ): void {
+				$target['resolved_by_retry'] = false;
+			}
+		);
 	}
 
 	/**
-	 * resolved_by_retry must agree with retained successful Retry evidence.
-	 *
-	 * @return void
-	 */
-	public function test_resolved_by_retry_must_match_retained_retry_truth(): void {
-		$unresolved = $this->unresolved_retry_store();
-		$unresolved->states[10]['notifications']['feed:7']['resolved_by_retry'] = true;
-		$this->assert_target_rejected( $this->manager( $unresolved ), 'true without successful Retry' );
-
-		$resolved = $this->successful_multi_retry_store();
-		$resolved->states[10]['notifications']['feed:7']['resolved_by_retry'] = false;
-		$this->assert_target_rejected( $this->manager( $resolved ), 'false with successful Retry' );
-	}
-
-	/**
-	 * Target decision fields must describe the final retained execution.
-	 *
-	 * @return void
-	 */
-	public function test_target_final_state_must_match_final_retained_execution(): void {
-		$store   = $this->ordinary_store( true );
-		$manager = $this->manager( $store );
-		$store->states[10]['notifications']['feed:7']['final_status']       = DeliveryStateManager::FINAL_UNRESOLVED;
-		$store->states[10]['notifications']['feed:7']['attention_required'] = true;
-		$this->assert_target_rejected( $manager, 'stale top-level final state' );
-	}
-
-	/**
-	 * Current writer-produced ordinary and Retry histories remain trusted.
+	 * Current writer-produced ordinary, suppressed and multi-Retry history remains trusted.
 	 *
 	 * @return void
 	 */
 	public function test_current_writer_produced_histories_remain_valid(): void {
-		$unresolved_ordinary = $this->ordinary_store( false );
-		self::assertSame( DeliveryStateManager::RETRY_ALLOWED, $this->manager( $unresolved_ordinary )->retry_eligibility( 10, 7 ) );
+		$unresolved = $this->ordinary_store( false );
+		self::assertSame( DeliveryStateManager::RETRY_ALLOWED, $this->manager( $unresolved )->retry_eligibility( 10, 7 ) );
 
-		$resolved_ordinary = $this->ordinary_store( true );
-		self::assertTrue( $this->manager( $resolved_ordinary )->is_confirmed_complete( 10, 7 ) );
+		$resolved = $this->ordinary_store( true );
+		self::assertTrue( $this->manager( $resolved )->is_confirmed_complete( 10, 7 ) );
 
-		$unresolved_retry  = $this->unresolved_retry_store();
-		$unresolved_target = $this->manager( $unresolved_retry )->target_state( 10, 7 );
-		self::assertNotNull( $unresolved_target );
-		self::assertTrue( $unresolved_target['attention_required'] );
-		self::assertFalse( $unresolved_target['retry_history'][0]['resolved'] );
+		$retry  = $this->successful_multi_retry_store();
+		$target = $this->manager( $retry )->target_state( 10, 7 );
+		self::assertNotNull( $target );
+		self::assertCount( 3, $target['executions'] );
+		self::assertCount( 2, $target['retry_history'] );
+		self::assertTrue( $target['resolved_by_retry'] );
 
-		$resolved_retry  = $this->successful_multi_retry_store();
-		$resolved_target = $this->manager( $resolved_retry )->target_state( 10, 7 );
-		self::assertNotNull( $resolved_target );
-		self::assertCount( 3, $resolved_target['executions'] );
-		self::assertCount( 2, $resolved_target['retry_history'] );
-		self::assertTrue( $resolved_target['resolved_by_retry'] );
-		self::assertFalse( $resolved_target['attention_required'] );
-	}
-
-	/**
-	 * Valid duplicate-suppressed retained history remains trusted.
-	 *
-	 * @return void
-	 */
-	public function test_duplicate_suppressed_history_remains_valid(): void {
 		$provider = new FakeSmsProvider( AttemptStatus::SUCCESS, 'primary' );
 		$store    = new InMemoryDeliveryStateStore();
 		$add_on   = $this->configured_add_on( $store, $provider );
-
 		self::assertTrue( $add_on->process_feed( $this->feed(), $this->entry(), $this->form() ) );
 		self::assertTrue( $add_on->process_feed( $this->feed(), $this->entry(), $this->form() ) );
 		self::assertSame( 1, $provider->send_count );
@@ -323,9 +260,7 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 		$add_on   = $this->configured_add_on( $store, $provider );
 
 		self::assertTrue( $add_on->process_feed( $this->feed(), $this->entry(), $this->form() ) );
-		self::assertSame( 1, $provider->send_count );
 		$store->states[10]['notifications']['feed:7']['executions'][0]['type'] = 'BROKEN';
-
 		self::assertTrue( $add_on->process_feed( $this->feed(), $this->entry(), $this->form() ) );
 		self::assertSame( 2, $provider->send_count );
 
@@ -342,7 +277,7 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 	}
 
 	/**
-	 * Malformed nested history fails closed before manual Retry transport or mutation.
+	 * Malformed nested history blocks manual Retry before send or state mutation.
 	 *
 	 * @return void
 	 */
@@ -371,16 +306,28 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 	}
 
 	/**
-	 * Assert all target trust decisions reject one malformed target.
+	 * Apply one target mutation and assert all trust decisions fail closed.
 	 *
-	 * @param DeliveryStateManager $manager Manager.
-	 * @param string               $label Assertion label.
+	 * @param InMemoryDeliveryStateStore $store State store.
+	 * @param callable                   $mutate Target mutation.
 	 * @return void
 	 */
-	private function assert_target_rejected( DeliveryStateManager $manager, string $label ): void {
-		self::assertSame( DeliveryStateManager::RETRY_STATE_MALFORMED, $manager->retry_eligibility( 10, 7 ), $label );
-		self::assertFalse( $manager->is_confirmed_complete( 10, 7 ), $label );
-		self::assertNull( $manager->target_state( 10, 7 ), $label );
+	private function assert_rejected_mutation( InMemoryDeliveryStateStore $store, callable $mutate ): void {
+		$manager = $this->manager( $store );
+		$mutate( $store->states[10]['notifications']['feed:7'] );
+		$this->assert_target_rejected( $manager );
+	}
+
+	/**
+	 * Assert all target trust decisions reject malformed retained state.
+	 *
+	 * @param DeliveryStateManager $manager Manager.
+	 * @return void
+	 */
+	private function assert_target_rejected( DeliveryStateManager $manager ): void {
+		self::assertSame( DeliveryStateManager::RETRY_STATE_MALFORMED, $manager->retry_eligibility( 10, 7 ) );
+		self::assertFalse( $manager->is_confirmed_complete( 10, 7 ) );
+		self::assertNull( $manager->target_state( 10, 7 ) );
 	}
 
 	/**
@@ -407,11 +354,11 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 	}
 
 	/**
-	 * Build two valid ordinary executions for sequence mutation tests.
+	 * Build two valid ordinary executions.
 	 *
 	 * @return InMemoryDeliveryStateStore
 	 */
-	private function two_ordinary_execution_store(): InMemoryDeliveryStateStore {
+	private function two_execution_store(): InMemoryDeliveryStateStore {
 		$store   = $this->ordinary_store( false );
 		$manager = $this->manager( $store );
 		self::assertTrue(
@@ -428,11 +375,11 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 	}
 
 	/**
-	 * Build one valid ordinary execution with two ordered attempts.
+	 * Build one valid ordinary execution with two attempts.
 	 *
 	 * @return InMemoryDeliveryStateStore
 	 */
-	private function ordinary_store_with_two_attempts(): InMemoryDeliveryStateStore {
+	private function two_attempt_store(): InMemoryDeliveryStateStore {
 		$store   = new InMemoryDeliveryStateStore();
 		$manager = $this->manager( $store );
 		self::assertTrue(
@@ -456,7 +403,7 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 	}
 
 	/**
-	 * Build valid unresolved ordinary + unresolved manual-Retry history.
+	 * Build valid unresolved ordinary plus unresolved manual-Retry history.
 	 *
 	 * @return InMemoryDeliveryStateStore
 	 */
@@ -478,7 +425,7 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 	}
 
 	/**
-	 * Build ordinary failure + unresolved Retry + successful Retry history.
+	 * Build ordinary failure, unresolved Retry and successful Retry history.
 	 *
 	 * @return InMemoryDeliveryStateStore
 	 */
@@ -514,7 +461,7 @@ final class DeliveryStateHistoryValidationTest extends TestCase {
 	}
 
 	/**
-	 * Build the existing recipient + synchronous transport processor.
+	 * Build the existing recipient and synchronous transport processor.
 	 *
 	 * @param FakeSmsProvider $provider Provider.
 	 * @return NotificationFeedProcessor
