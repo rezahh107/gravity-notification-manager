@@ -59,6 +59,18 @@ if ( file_exists( GFSMS_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 }
 
 // ---------------------------------------------------------------------------
+// Greenfield WU-06 admin foundation.
+// Register before the legacy runtime dependency gate so diagnostics remain
+// available when optional Gravity Forms / Gravity Flow dependencies are absent.
+// ---------------------------------------------------------------------------
+if ( ! defined( 'GRAVITY_NOTIFY_PLUGIN_URL' ) ) {
+	define( 'GRAVITY_NOTIFY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+}
+if ( class_exists( '\GravityNotify\Admin\AdminController' ) ) {
+	\GravityNotify\Admin\AdminController::boot();
+}
+
+// ---------------------------------------------------------------------------
 // Activation / deactivation / uninstall hooks
 // ---------------------------------------------------------------------------
 register_activation_hook( GFSMS_PLUGIN_FILE, [ '\GFSMS\Lifecycle\Activator', 'activate' ] );
