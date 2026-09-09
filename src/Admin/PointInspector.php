@@ -106,7 +106,7 @@ final class PointInspector {
 			$point = $this->base_point( $form_id, $form_title, $feed_id, $rule );
 
 			if ( ! self::is_active( $feed['is_active'] ?? true ) ) {
-				$point['state']       = PointStatus::DISABL@„;
+				$point['state']       = PointStatus::DISABLED;
 				$point['detail']      = 'This notification Feed is disabled.';
 				$point['next_action'] = 'Enable the Feed in Gravity Forms when this notification should run.';
 				$points[]             = $point;
