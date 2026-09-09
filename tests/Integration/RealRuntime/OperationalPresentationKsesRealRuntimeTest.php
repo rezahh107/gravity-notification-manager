@@ -44,16 +44,32 @@ final class OperationalPresentationKsesRealRuntimeTest extends WP_UnitTestCase {
 	 */
 	private NotificationFeedAddOn $add_on;
 
-	/** Fixture Form ID. */
+	/**
+	 * Fixture Form ID.
+	 *
+	 * @var int
+	 */
 	private int $form_id = 0;
 
-	/** Fixture Entry ID. */
+	/**
+	 * Fixture Entry ID.
+	 *
+	 * @var int
+	 */
 	private int $entry_id = 0;
 
-	/** Original current user ID. */
+	/**
+	 * Original current user ID.
+	 *
+	 * @var int
+	 */
 	private int $original_user_id = 0;
 
-	/** Authorized operator user ID. */
+	/**
+	 * Authorized operator user ID.
+	 *
+	 * @var int
+	 */
 	private int $operator_user_id = 0;
 
 	/** Prepare an authorized real-runtime operator. */
