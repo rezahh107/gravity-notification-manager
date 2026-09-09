@@ -221,8 +221,8 @@ final class PointInspector {
 	/**
 	 * Return Flow placements that select one Feed ID.
 	 *
-	 * @param array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}> $placements Current placements.
-	 * @param int                                                                       $feed_id    GNM Feed ID.
+	 * @param array $placements Current placements.
+	 * @param int   $feed_id    GNM Feed ID.
 	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}>
 	 */
 	private function placements_for_feed( array $placements, int $feed_id ): array {

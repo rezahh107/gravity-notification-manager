@@ -29,10 +29,18 @@ final class MutableAdminSource implements ConfigurationSourceInterface {
 	 */
 	public ?array $placements = array();
 
-	/** @var int Number of read operations performed. */
+	/**
+	 * Number of read operations performed.
+	 *
+	 * @var int
+	 */
 	public int $read_count = 0;
 
-	/** @var int Mutation sentinel; WU-06 must leave this at zero. */
+	/**
+	 * Mutation sentinel; WU-06 must leave this at zero.
+	 *
+	 * @var int
+	 */
 	public int $mutation_count = 0;
 
 	/**
