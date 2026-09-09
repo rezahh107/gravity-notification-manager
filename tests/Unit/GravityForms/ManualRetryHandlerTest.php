@@ -160,10 +160,13 @@ final class ManualRetryHandlerTest extends TestCase {
 		$add_on->configure_delivery_state_manager( $manager );
 		$add_on->configure_processor( $this->processor( $provider ) );
 
-		$runtime = new FakeManualRetryRuntime();
-		$runtime->entries[10] = array( 'id' => 10, 'form_id' => 5 );
-		$runtime->forms[5]    = array( 'id' => 5 );
-		$runtime->feeds[7]    = $this->feed();
+		$runtime              = new FakeManualRetryRuntime();
+		$runtime->entries[10] = array(
+			'id'      => 10,
+			'form_id' => 5,
+		);
+		$runtime->forms[5] = array( 'id' => 5 );
+		$runtime->feeds[7] = $this->feed();
 
 		return array(
 			'handler'  => new ManualRetryHandler( $add_on, $runtime ),
@@ -218,7 +221,11 @@ final class ManualRetryHandlerTest extends TestCase {
 		);
 	}
 
-	/** @return array<string, string> */
+	/**
+	 * Build a valid Retry request.
+	 *
+	 * @return array<string, string>
+	 */
 	private function valid_request(): array {
 		return array(
 			'entry_id' => '10',
@@ -227,7 +234,11 @@ final class ManualRetryHandlerTest extends TestCase {
 		);
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Build a valid logical Feed fixture.
+	 *
+	 * @return array<string, mixed>
+	 */
 	private function feed(): array {
 		return array(
 			'id'         => 7,
