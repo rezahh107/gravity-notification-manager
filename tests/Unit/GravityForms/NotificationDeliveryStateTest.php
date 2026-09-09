@@ -181,8 +181,8 @@ final class NotificationDeliveryStateTest extends TestCase {
 	/**
 	 * Configure the singleton with deterministic WU-05 state and current WU-02/03/04 processor.
 	 *
-	 * @param InMemoryDeliveryStateStore          $store State store.
-	 * @param array<int, SmsProviderInterface>     $providers Providers.
+	 * @param InMemoryDeliveryStateStore $store State store.
+	 * @param array<int, SmsProviderInterface> $providers Providers.
 	 * @return NotificationFeedAddOn
 	 */
 	private function configured_add_on( InMemoryDeliveryStateStore $store, array $providers ): NotificationFeedAddOn {
@@ -242,12 +242,23 @@ final class NotificationDeliveryStateTest extends TestCase {
 		);
 	}
 
-	/** @return array<string, int> */
+	/**
+	 * Build one Entry fixture.
+	 *
+	 * @return array<string, int>
+	 */
 	private function entry(): array {
-		return array( 'id' => 10, 'form_id' => 5 );
+		return array(
+			'id'      => 10,
+			'form_id' => 5,
+		);
 	}
 
-	/** @return array<string, int> */
+	/**
+	 * Build one Form fixture.
+	 *
+	 * @return array<string, int>
+	 */
 	private function form(): array {
 		return array( 'id' => 5 );
 	}
