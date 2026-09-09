@@ -14,19 +14,39 @@ use GravityNotify\GravityForms\ManualRetryRuntimeInterface;
  */
 final class FakeManualRetryRuntime implements ManualRetryRuntimeInterface {
 
-	/** @var bool */
+	/**
+	 * Capability result.
+	 *
+	 * @var bool
+	 */
 	public bool $capability = true;
 
-	/** @var bool */
+	/**
+	 * Nonce verification result.
+	 *
+	 * @var bool
+	 */
 	public bool $nonce_valid = true;
 
-	/** @var array<int, array> */
+	/**
+	 * Entry fixtures.
+	 *
+	 * @var array<int, array>
+	 */
 	public array $entries = array();
 
-	/** @var array<int, array> */
+	/**
+	 * Form fixtures.
+	 *
+	 * @var array<int, array>
+	 */
 	public array $forms = array();
 
-	/** @var array<int, array> */
+	/**
+	 * Feed fixtures.
+	 *
+	 * @var array<int, array>
+	 */
 	public array $feeds = array();
 
 	/**
