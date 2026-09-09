@@ -73,6 +73,58 @@ final class ManualRetryHandlerTest extends TestCase {
 		self::assertFalse( $target['attention_required'] );
 	}
 
+	/**
+	 * T-RETRY-01: transport success without a persisted Retry transition is a state error.
+	 *
+	 * @return void
+	 */
+	public function test_transport_success_with_retry_state_write_failure_returns_state_error(): void {
+		$context          = $this->context();
+		$persisted_before = $context['store']->states[10];
+		$writes_before    = $context['store']->write_count;
+		$context['store']->fail_writes = true;
+
+		$result = $context['handler']->dispatch( 'POST', $this->valid_request() );
+
+		self::assertSame( ManualRetryHandler::ERROR_STATE, $result );
+		self::assertSame( 1, $context['provider']->send_count );
+		self::assertSame( $writes_before + 1, $context['store']->write_count );
+		self::assertSame( $persisted_before, $context['store']->states[10] );
+		self::assertTrue( $context['store']->states[10]['notifications']['feed:7']['attention_required'] );
+		self::assertSame( array(), $context['store']->states[10]['notifications']['feed:7']['retry_history'] );
+
+		$execution = $context['add_on']->last_execution_result();
+		self::assertNotNull( $execution );
+		self::assertTrue( $execution->delivery_succeeded() );
+		self::assertContains(
+			array(
+				'subject' => 'delivery_state',
+				'reason'  => 'persistence_failed',
+			),
+			$execution->skips()
+		);
+	}
+
+	/**
+	 * T-RETRY-02: a persisted unresolved Retry still returns retry_unresolved truthfully.
+	 *
+	 * @return void
+	 */
+	public function test_persisted_ambiguous_retry_remains_retry_unresolved(): void {
+		$context = $this->context( AttemptStatus::AMBIGUOUS );
+		$result  = $context['handler']->dispatch( 'POST', $this->valid_request() );
+
+		self::assertSame( ManualRetryHandler::RESULT_UNRESOLVED, $result );
+		self::assertSame( 1, $context['provider']->send_count );
+		$target = $context['manager']->target_state( 10, 7 );
+		self::assertNotNull( $target );
+		self::assertCount( 2, $target['executions'] );
+		self::assertSame( AttemptStatus::AMBIGUOUS, $target['executions'][1]['attempts'][0]['status'] );
+		self::assertTrue( $target['attention_required'] );
+		self::assertCount( 1, $target['retry_history'] );
+		self::assertFalse( $target['retry_history'][0]['resolved'] );
+	}
+
 	/** T-WU05-10: missing capability fails closed. */
 	public function test_missing_capability_fails_closed_with_zero_send_and_mutation(): void {
 		$context = $this->context();
@@ -135,11 +187,12 @@ final class ManualRetryHandlerTest extends TestCase {
 	}
 
 	/**
-	 * Build a valid unresolved state plus a success-capable current processor.
+	 * Build a valid unresolved state plus a configured current processor.
 	 *
-	 * @return array{handler:ManualRetryHandler,runtime:FakeManualRetryRuntime,provider:FakeSmsProvider,store:InMemoryDeliveryStateStore,manager:DeliveryStateManager}
+	 * @param string $provider_status Provider transport status for the Retry attempt.
+	 * @return array{handler:ManualRetryHandler,runtime:FakeManualRetryRuntime,provider:FakeSmsProvider,store:InMemoryDeliveryStateStore,manager:DeliveryStateManager,add_on:NotificationFeedAddOn}
 	 */
-	private function context(): array {
+	private function context( string $provider_status = AttemptStatus::SUCCESS ): array {
 		$store   = new InMemoryDeliveryStateStore();
 		$manager = new DeliveryStateManager( $store, static fn(): string => '2026-09-09T00:00:00+00:00' );
 		$manager->record_execution(
@@ -155,7 +208,7 @@ final class ManualRetryHandlerTest extends TestCase {
 			)
 		);
 
-		$provider = new FakeSmsProvider( AttemptStatus::SUCCESS, 'current' );
+		$provider = new FakeSmsProvider( $provider_status, 'current' );
 		$add_on   = NotificationFeedAddOn::get_instance();
 		$add_on->configure_delivery_state_manager( $manager );
 		$add_on->configure_processor( $this->processor( $provider ) );
@@ -174,6 +227,7 @@ final class ManualRetryHandlerTest extends TestCase {
 			'provider' => $provider,
 			'store'    => $store,
 			'manager'  => $manager,
+			'add_on'   => $add_on,
 		);
 	}
 
