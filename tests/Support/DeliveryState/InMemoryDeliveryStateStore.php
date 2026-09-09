@@ -30,7 +30,14 @@ final class InMemoryDeliveryStateStore implements DeliveryStateStoreInterface {
 	public array $malformed = array();
 
 	/**
-	 * Number of successful write attempts.
+	 * Whether writes should fail without mutating stored state.
+	 *
+	 * @var bool
+	 */
+	public bool $fail_writes = false;
+
+	/**
+	 * Number of write attempts.
 	 *
 	 * @var int
 	 */
@@ -65,6 +72,10 @@ final class InMemoryDeliveryStateStore implements DeliveryStateStoreInterface {
 	public function write( int $entry_id, int $form_id, array $state ): bool {
 		unset( $form_id );
 		++$this->write_count;
+		if ( $this->fail_writes ) {
+			return false;
+		}
+
 		$this->states[ $entry_id ] = $state;
 		unset( $this->malformed[ $entry_id ] );
 		return true;
