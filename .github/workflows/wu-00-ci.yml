@@ -71,6 +71,9 @@ jobs:
       - name: Run WU-06 focused admin targets
         run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Admin
 
+      - name: Run WU-07 focused presentation targets
+        run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Presentation
+
       - name: Lint WU-00 PHP surfaces
         run: composer lint:wu00
 
