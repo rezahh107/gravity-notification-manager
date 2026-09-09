@@ -248,12 +248,14 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	 *
 	 * Retry requires an existing valid target with Attention Required and bypasses
 	 * only ordinary duplicate suppression. Recipient resolution and transport
-	 * routing remain exactly the current WU-03/WU-02 synchronous chain.
+	 * routing remain exactly the current WU-03/WU-02 synchronous chain. A Retry
+	 * whose authoritative state transition cannot be persisted returns null while
+	 * retaining the truthful transport result in last_execution_result().
 	 *
 	 * @param array $feed  Validated Feed object.
 	 * @param array $entry Validated Entry object.
 	 * @param array $form  Validated Form object.
-	 * @return NotificationExecutionResult|null Null when persisted state is not eligible for Retry.
+	 * @return NotificationExecutionResult|null Null when persisted state is ineligible or cannot record the Retry outcome.
 	 */
 	public function retry_feed( array $feed, array $entry, array $form ): ?NotificationExecutionResult {
 		$manager  = $this->delivery_state_manager();
@@ -268,7 +270,8 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 			return null;
 		}
 
-		return $this->execute_feed( $feed, $entry, $form, true );
+		$result = $this->execute_feed( $feed, $entry, $form, true );
+		return $this->has_state_persistence_failure( $result ) ? null : $result;
 	}
 
 	/**
@@ -362,6 +365,22 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		}
 
 		return $this->delivery_state_manager;
+	}
+
+	/**
+	 * Whether the request-local execution result reports failed state persistence.
+	 *
+	 * @param NotificationExecutionResult $result Current result.
+	 * @return bool
+	 */
+	private function has_state_persistence_failure( NotificationExecutionResult $result ): bool {
+		foreach ( $result->skips() as $skip ) {
+			if ( 'delivery_state' === ( $skip['subject'] ?? null ) && 'persistence_failed' === ( $skip['reason'] ?? null ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
