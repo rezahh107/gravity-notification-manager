@@ -72,11 +72,11 @@ final class WordPressConfigurationSource implements ConfigurationSourceInterface
 	}
 
 	/**
-	 * Read GNM Feed selections from current Gravity Flow Steps.
+	 * Read GNM Feed selections and active state from current Gravity Flow Steps.
 	 *
 	 * @param int             $form_id  Gravity Forms form ID.
 	 * @param array<int, int> $feed_ids Current GNM Feed IDs.
-	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}>|null
+	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>,active:bool}>|null
 	 */
 	public function workflow_placements( int $form_id, array $feed_ids ): ?array {
 		if ( $form_id < 1 || ! class_exists( '\\Gravity_Flow_API' ) ) {
@@ -112,10 +112,12 @@ final class WordPressConfigurationSource implements ConfigurationSourceInterface
 
 			$step_id = method_exists( $step, 'get_id' ) ? self::positive_id( $step->get_id() ) : null;
 			$name    = method_exists( $step, 'get_name' ) ? $step->get_name() : '';
+			$active  = method_exists( $step, 'is_active' ) && (bool) $step->is_active();
 			$placements[] = array(
 				'step_id'   => null === $step_id ? 0 : $step_id,
 				'step_name' => is_scalar( $name ) && '' !== trim( (string) $name ) ? trim( (string) $name ) : 'GNM Feed Step',
 				'feed_ids'  => $selected,
+				'active'    => $active,
 			);
 		}
 

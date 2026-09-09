@@ -106,7 +106,7 @@ final class PointInspector {
 			$point = $this->base_point( $form_id, $form_title, $feed_id, $rule );
 
 			if ( ! self::is_active( $feed['is_active'] ?? true ) ) {
-				$point['state']       = PointStatus::DISABLED;
+				$point['state']       = PointStatus::DISABL@�;
 				$point['detail']      = 'This notification Feed is disabled.';
 				$point['next_action'] = 'Enable the Feed in Gravity Forms when this notification should run.';
 				$points[]             = $point;
@@ -136,6 +136,16 @@ final class PointInspector {
 				$point['detail']      = 'This Feed is selected by multiple GNM workflow Steps.';
 				$point['next_action'] = 'Open Forms → ' . $form_title . ' → Settings → Workflow and keep this Feed selected only at the intended notification position. GNM will not change Steps automatically.';
 				$points[]             = $point;
+				continue;
+			}
+
+			if ( 1 === count( $matches ) && ! $matches[0]['active'] ) {
+				$point['state']          = PointStatus::NEEDS_SETUP;
+				$point['flow_step_id']   = $matches[0]['step_id'];
+				$point['flow_step_name'] = $matches[0]['step_name'];
+				$point['detail']         = 'The matching Gravity Flow Step “' . $matches[0]['step_name'] . '” is inactive.';
+				$point['next_action']    = 'Open Forms → ' . $form_title . ' → Settings → Workflow and activate this Step or correct the intended placement, then use Check Again. GNM will not activate or change Steps automatically.';
+				$points[]                = $point;
 				continue;
 			}
 
@@ -223,7 +233,7 @@ final class PointInspector {
 	 *
 	 * @param array $placements Current placements.
 	 * @param int   $feed_id    GNM Feed ID.
-	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}>
+	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>,active:bool}>
 	 */
 	private function placements_for_feed( array $placements, int $feed_id ): array {
 		return array_values(

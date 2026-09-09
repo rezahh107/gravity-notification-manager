@@ -25,7 +25,7 @@ final class MutableAdminSource implements ConfigurationSourceInterface {
 	/**
 	 * Current Flow placement fixtures, or null for unavailable Flow.
 	 *
-	 * @var array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}>|null
+	 * @var array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>,active:bool}>|null
 	 */
 	public ?array $placements = array();
 
@@ -94,7 +94,7 @@ final class MutableAdminSource implements ConfigurationSourceInterface {
 	 *
 	 * @param int             $form_id  Gravity Forms form ID.
 	 * @param array<int, int> $feed_ids GNM Feed IDs being inspected.
-	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}>|null
+	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>,active:bool}>|null
 	 */
 	public function workflow_placements( int $form_id, array $feed_ids ): ?array {
 		unset( $feed_ids );

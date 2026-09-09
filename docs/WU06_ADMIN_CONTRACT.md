@@ -1,6 +1,6 @@
 # WU-06 Admin Contract Snapshot
 
-Status: implemented and qualified through the WU-06 focused greenfield gate; bounded legacy differential completed.
+Status: implemented and qualified through the WU-06 focused greenfield gate; bounded legacy differential completed; PRI-FND-001 inactive-Step truth repaired on PR #9.
 
 ## Current contract snapshot — 2026-09-09
 
@@ -8,10 +8,10 @@ Status: implemented and qualified through the WU-06 focused greenfield gate; bou
 - WordPress test/runtime baseline: WordPress 7.1 (`.wp-env.json`), PHP 8.3; Composer requires PHP >=8.2.
 - WordPress official contracts re-checked: `add_menu_page()` / `add_submenu_page()`, `register_setting()` with `sanitize_callback`, Settings API form handling, `admin_enqueue_scripts`, capability checks, `check_admin_referer()`, contextual escaping, and the registered `wp-theme` design-token stylesheet.
 - WordPress admin implementation is native PHP; no React runtime and no experimental customizable Widget Dashboard API are used.
-- Gravity Flow official contracts re-checked: local `Gravity_Flow_API::get_steps()` read access and public Step helpers `get_type()`, `get_setting()`, `get_id()`, and `get_name()`. The documented Feed-Step contract uses the `feed_<id>` selection setting shape inspected by Point Manager.
+- Gravity Flow official contracts re-checked: local `Gravity_Flow_API::get_steps()` read access and public Step helpers `get_type()`, `get_setting()`, `get_id()`, `get_name()`, and `is_active()`. `Gravity_Flow_Step::is_active()` is the authoritative current Step active-state read; the documented Feed-Step contract uses the `feed_<id>` selection setting shape inspected by Point Manager.
 - Gravity Flow operator navigation targets the documented Form Settings → Workflow location. A direct admin path is rendered only when the supported local Flow API is present; otherwise existing bounded setup guidance remains visible.
 
-Official references inspected include current WordPress Developer Resources for administration menus, Settings API, `register_setting()`, `check_admin_referer()`, `admin_enqueue_scripts`, and `@wordpress/theme`, plus current Gravity Flow documentation for the Workflow Orchestration API, Step class, permissions, and Form Settings → Workflow configuration.
+Official references inspected include current WordPress Developer Resources for administration menus, Settings API, `register_setting()`, `check_admin_referer()`, `admin_enqueue_scripts`, and `@wordpress/theme`, plus current Gravity Flow documentation for the Workflow Orchestration API, Step class, Workflow Step object, permissions, and Form Settings → Workflow configuration.
 
 ## Information architecture and capability
 
@@ -28,7 +28,7 @@ The legacy runtime remains present until separately owned cutover/retirement Wor
 
 ## Point Manager authority and status vocabulary
 
-Point Manager is read/verify/guidance only. Its source interface contains only `forms()`, `feeds()`, and `workflow_placements()` reads. It has no create/insert/reorder/delete/update Flow API.
+Point Manager is read/verify/guidance only. Its source interface contains only `forms()`, `feeds()`, and `workflow_placements()` reads. It has no create/insert/reorder/delete/update/activate Flow API.
 
 Status vocabulary implemented here is:
 
@@ -37,9 +37,9 @@ Status vocabulary implemented here is:
 - `DISABLED`
 - `NOT_APPLICABLE`
 
-Feed metadata comes from the canonical greenfield Feed schema; Flow placement comes from current Gravity Flow Step configuration. Missing Flow dependency is reported as unavailable rather than guessed.
+Feed metadata comes from the canonical greenfield Feed schema; Flow placement comes from current Gravity Flow Step configuration. Each matching GNM placement preserves the Step ID/name, selected Feed IDs, and current boolean active-state truth read from `Gravity_Flow_Step::is_active()`. Inactive matching placements remain visible to the operator; they are not filtered out or collapsed into a missing-placement state. Missing Flow dependency is reported as unavailable rather than guessed.
 
-A Flow-assignee recipient Feed without a GNM Flow Feed Step is `NEEDS_SETUP`. A non-Flow recipient Feed without a Flow placement remains a valid normal Gravity Forms submission Feed. Multiple GNM Flow placements selecting the same Feed are reported as inconsistent and require operator correction; GNM never repairs topology automatically.
+A single active matching GNM Flow Feed Step may be `CONFIGURED`. A single inactive matching Step is `NEEDS_SETUP` with guidance to activate or correct that existing Step in Gravity Flow; it is never `CONFIGURED`. A Flow-assignee recipient Feed without any matching GNM Flow Feed Step remains `NEEDS_SETUP` with missing-Step guidance. A non-Flow recipient Feed without any Flow placement remains a valid normal Gravity Forms submission Feed. Multiple matching GNM Flow placements remain inconsistent and `NEEDS_SETUP` regardless of their active/inactive mixture; GNM never repairs topology automatically.
 
 ## Check Again
 

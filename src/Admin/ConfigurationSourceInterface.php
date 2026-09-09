@@ -32,7 +32,7 @@ interface ConfigurationSourceInterface {
 	 *
 	 * @param int             $form_id  Form ID.
 	 * @param array<int, int> $feed_ids Feed IDs to inspect.
-	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}>|null
+	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>,active:bool}>|null
 	 */
 	public function workflow_placements( int $form_id, array $feed_ids ): ?array;
 }
