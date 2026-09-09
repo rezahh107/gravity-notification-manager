@@ -185,6 +185,183 @@ final class DeliveryStateManagerTest extends TestCase {
 	}
 
 	/**
+	 * T-STATE-01: every required target-level field is mandatory at the trust boundary.
+	 *
+	 * @dataProvider required_target_field_provider
+	 *
+	 * @param string $field Required field to remove.
+	 * @return void
+	 */
+	public function test_incomplete_target_state_is_rejected( string $field ): void {
+		$store   = new InMemoryDeliveryStateStore();
+		$manager = $this->manager( $store );
+		self::assertTrue(
+			$manager->record_execution(
+				10,
+				5,
+				7,
+				'Case update',
+				'sms',
+				new NotificationExecutionResult( array( $this->attempt( AttemptStatus::SUCCESS, 'primary' ) ), array(), true )
+			)
+		);
+
+		unset( $store->states[10]['notifications']['feed:7'][ $field ] );
+
+		self::assertSame( DeliveryStateManager::RETRY_STATE_MALFORMED, $manager->retry_eligibility( 10, 7 ) );
+		self::assertFalse( $manager->is_confirmed_complete( 10, 7 ) );
+		self::assertNull( $manager->target_state( 10, 7 ) );
+	}
+
+	/**
+	 * Required target-level fields.
+	 *
+	 * @return array<string, array{string}>
+	 */
+	public static function required_target_field_provider(): array {
+		return array(
+			'entry identity'              => array( 'entry_id' ),
+			'form identity'               => array( 'form_id' ),
+			'feed identity'               => array( 'feed_id' ),
+			'feed name'                   => array( 'feed_name' ),
+			'channel identity'            => array( 'channel' ),
+			'final status'                => array( 'final_status' ),
+			'attention state'             => array( 'attention_required' ),
+			'execution sequence metadata' => array( 'last_execution_sequence' ),
+			'retry resolution metadata'   => array( 'resolved_by_retry' ),
+			'execution history'           => array( 'executions' ),
+			'retry history'               => array( 'retry_history' ),
+		);
+	}
+
+	/**
+	 * T-STATE-01: required target fields also enforce their bounded types/identities.
+	 *
+	 * @dataProvider malformed_target_value_provider
+	 *
+	 * @param string $field Target field.
+	 * @param mixed  $value Invalid value.
+	 * @return void
+	 */
+	public function test_malformed_target_field_values_are_rejected( string $field, $value ): void {
+		$store   = new InMemoryDeliveryStateStore();
+		$manager = $this->manager( $store );
+		self::assertTrue(
+			$manager->record_execution(
+				10,
+				5,
+				7,
+				'Case update',
+				'sms',
+				new NotificationExecutionResult( array( $this->attempt( AttemptStatus::SUCCESS, 'primary' ) ), array(), true )
+			)
+		);
+		$store->states[10]['notifications']['feed:7'][ $field ] = $value;
+
+		self::assertSame( DeliveryStateManager::RETRY_STATE_MALFORMED, $manager->retry_eligibility( 10, 7 ) );
+		self::assertFalse( $manager->is_confirmed_complete( 10, 7 ) );
+	}
+
+	/**
+	 * Invalid target field values.
+	 *
+	 * @return array<string, array{string,mixed}>
+	 */
+	public static function malformed_target_value_provider(): array {
+		return array(
+			'form identity not positive'    => array( 'form_id', 0 ),
+			'form identity wrong type'      => array( 'form_id', '5' ),
+			'feed name wrong type'          => array( 'feed_name', array() ),
+			'channel wrong type'            => array( 'channel', null ),
+			'attention wrong type'          => array( 'attention_required', 1 ),
+			'last sequence not positive'    => array( 'last_execution_sequence', 0 ),
+			'last sequence wrong type'      => array( 'last_execution_sequence', '1' ),
+			'retry resolution wrong type'   => array( 'resolved_by_retry', 0 ),
+			'execution history wrong type'  => array( 'executions', 'invalid' ),
+			'execution history empty'       => array( 'executions', array() ),
+			'retry history wrong type'      => array( 'retry_history', 'invalid' ),
+		);
+	}
+
+	/**
+	 * T-STATE-02: final state and Attention Required must remain coherent.
+	 *
+	 * @dataProvider contradictory_state_provider
+	 *
+	 * @param bool   $delivery_succeeded Initial transport truth.
+	 * @param string $final_status Contradictory final status.
+	 * @param bool   $attention_required Contradictory attention state.
+	 * @return void
+	 */
+	public function test_contradictory_final_and_attention_state_is_rejected( bool $delivery_succeeded, string $final_status, bool $attention_required ): void {
+		$store   = new InMemoryDeliveryStateStore();
+		$manager = $this->manager( $store );
+		$status  = $delivery_succeeded ? AttemptStatus::SUCCESS : AttemptStatus::FAILED;
+		self::assertTrue(
+			$manager->record_execution(
+				10,
+				5,
+				7,
+				'Case update',
+				'sms',
+				new NotificationExecutionResult( array( $this->attempt( $status, 'primary' ) ), array(), $delivery_succeeded )
+			)
+		);
+		$store->states[10]['notifications']['feed:7']['final_status']       = $final_status;
+		$store->states[10]['notifications']['feed:7']['attention_required'] = $attention_required;
+
+		self::assertSame( DeliveryStateManager::RETRY_STATE_MALFORMED, $manager->retry_eligibility( 10, 7 ) );
+		self::assertFalse( $manager->is_confirmed_complete( 10, 7 ) );
+	}
+
+	/**
+	 * Contradictory final/attention states.
+	 *
+	 * @return array<string, array{bool,string,bool}>
+	 */
+	public static function contradictory_state_provider(): array {
+		return array(
+			'resolved requires no attention' => array( true, DeliveryStateManager::FINAL_RESOLVED, true ),
+			'unresolved requires attention'   => array( false, DeliveryStateManager::FINAL_UNRESOLVED, false ),
+		);
+	}
+
+	/**
+	 * T-STATE-04: valid unresolved and resolved controls retain their decisions.
+	 *
+	 * @return void
+	 */
+	public function test_valid_target_states_retain_retry_and_suppression_decisions(): void {
+		$store   = new InMemoryDeliveryStateStore();
+		$manager = $this->manager( $store );
+		self::assertTrue(
+			$manager->record_execution(
+				10,
+				5,
+				7,
+				'Case update',
+				'sms',
+				new NotificationExecutionResult( array( $this->attempt( AttemptStatus::FAILED, 'primary' ) ), array(), false )
+			)
+		);
+		self::assertSame( DeliveryStateManager::RETRY_ALLOWED, $manager->retry_eligibility( 10, 7 ) );
+		self::assertFalse( $manager->is_confirmed_complete( 10, 7 ) );
+
+		self::assertTrue(
+			$manager->record_execution(
+				10,
+				5,
+				7,
+				'Case update',
+				'sms',
+				new NotificationExecutionResult( array( $this->attempt( AttemptStatus::SUCCESS, 'primary' ) ), array(), true )
+			)
+		);
+		self::assertSame( DeliveryStateManager::RETRY_NOT_REQUIRED, $manager->retry_eligibility( 10, 7 ) );
+		self::assertTrue( $manager->is_confirmed_complete( 10, 7 ) );
+	}
+
+	/**
 	 * Build deterministic manager.
 	 *
 	 * @param InMemoryDeliveryStateStore $store Store.
