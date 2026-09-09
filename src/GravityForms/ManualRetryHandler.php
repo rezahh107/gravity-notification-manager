@@ -47,13 +47,25 @@ final class ManualRetryHandler {
 	/** Persisted state eligibility/persistence error. */
 	public const ERROR_STATE = 'invalid_state';
 
-	/** Add-On execution seam. */
+	/**
+	 * Add-On execution seam.
+	 *
+	 * @var NotificationFeedAddOn
+	 */
 	private NotificationFeedAddOn $add_on;
 
-	/** WordPress / Gravity Forms runtime adapter. */
+	/**
+	 * WordPress / Gravity Forms runtime adapter.
+	 *
+	 * @var ManualRetryRuntimeInterface
+	 */
 	private ManualRetryRuntimeInterface $runtime;
 
-	/** Whether the production action hook has already been registered this request. */
+	/**
+	 * Whether the production action hook has already been registered this request.
+	 *
+	 * @var bool
+	 */
 	private static bool $booted = false;
 
 	/**
@@ -194,13 +206,13 @@ final class ManualRetryHandler {
 	 * Shared exact Feed applicability validation for WU-05 execution and WU-07 UI.
 	 *
 	 * @param NotificationFeedAddOn $add_on Add-On owning the target.
-	 * @param array|null             $feed Feed object.
-	 * @param int                    $feed_id Expected Feed ID.
-	 * @param int                    $form_id Entry Form ID.
+	 * @param array|null            $feed Feed object.
+	 * @param int                   $feed_id Expected Feed ID.
+	 * @param int                   $form_id Entry Form ID.
 	 * @return bool
 	 */
 	public static function is_feed_target_valid( NotificationFeedAddOn $add_on, ?array $feed, int $feed_id, int $form_id ): bool {
-		if ( null === $feed || $feed_id !== self::canonical_positive_identifier( $feed['id'] ?? null ) ) {
+		if ( null === $feed || self::canonical_positive_identifier( $feed['id'] ?? null ) !== $feed_id ) {
 			return false;
 		}
 
