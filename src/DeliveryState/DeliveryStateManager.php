@@ -67,7 +67,7 @@ final class DeliveryStateManager {
 	 * Constructor.
 	 *
 	 * @param DeliveryStateStoreInterface $store State store.
-	 * @param callable|null $clock Optional timestamp provider for tests.
+	 * @param callable|null               $clock Optional timestamp provider for tests.
 	 */
 	public function __construct( DeliveryStateStoreInterface $store, ?callable $clock = null ) {
 		$this->store = $store;
