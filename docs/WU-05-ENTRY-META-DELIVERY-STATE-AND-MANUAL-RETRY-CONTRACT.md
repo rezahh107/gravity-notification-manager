@@ -3,7 +3,7 @@
 > **Document ID:** `GNM-WU-05-ENTRY-META-DELIVERY-STATE-RETRY-1.0.0`  
 > **Status:** `IMPLEMENTED / PR QUALIFICATION`  
 > **Work Unit:** `WU-05`  
-> **Code implementation Head reviewed for this contract:** `b06b91466cedcf710c268405cc65f8548bd94287`
+> **Code implementation Head reviewed for this contract:** `7e57f724014ceae4a78509fb95ea659777c9a2a9`
 
 ## 1. Authority and boundary
 
@@ -40,6 +40,13 @@ Each logical Feed target is stored under `feed:<feed_id>` and contains the bound
 - whether a successful manual Retry resolved the target;
 - append-only execution history for the retained valid state;
 - manual Retry history.
+
+A target is trusted only when the complete target-level contract is present with valid bounded types/identities and coherent final state. In particular:
+
+```text
+RESOLVED   => attention_required === false
+UNRESOLVED => attention_required === true
+```
 
 Malformed or partially missing state is never trusted for duplicate suppression or manual Retry authorization. Ordinary processing may recover into a fresh valid bounded state document and records the safe `prior_state_malformed` reason; manual Retry fails closed when eligible state cannot be established.
 
@@ -131,6 +138,8 @@ Missing capability, missing/invalid nonce, malformed identifiers, missing Entry/
 A valid Retry calls the same current `NotificationFeedAddOn` / `NotificationFeedProcessor` synchronous notification chain used by ordinary processing; it does not duplicate provider/routing logic. The new execution is appended to history and earlier valid history is preserved.
 
 Confirmed Retry success sets the target to `RESOLVED`, clears `attention_required`, and records the Retry as resolved. A Retry with no confirmed success appends truthful attempt history and leaves `attention_required = true`.
+
+A manual Retry is reported as `retry_success` or `retry_unresolved` only when the authoritative Entry Meta transition for that Retry was persisted successfully. If transport executes but the state write fails, the request-local `NotificationExecutionResult` keeps the truthful transport result and the existing safe `delivery_state / persistence_failed` marker, while the Retry seam returns the existing state-error path instead of claiming a persisted Retry outcome. This rule does not redefine ordinary `process_feed()` transport success: ordinary delivery semantics remain transport-truthful even when its state write fails.
 
 Handler registration, GET/render-only requests and read-only inspection do not perform delivery. Retry schedules no future work.
 
