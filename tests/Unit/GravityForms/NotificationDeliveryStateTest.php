@@ -179,6 +179,66 @@ final class NotificationDeliveryStateTest extends TestCase {
 	}
 
 	/**
+	 * T-STATE-03: malformed resolved-looking state cannot authorize duplicate suppression.
+	 *
+	 * @return void
+	 */
+	public function test_malformed_resolved_target_is_not_trusted_for_duplicate_suppression_and_recovers(): void {
+		$provider = new FakeSmsProvider( AttemptStatus::SUCCESS, 'primary' );
+		$store    = new InMemoryDeliveryStateStore();
+		$add_on   = $this->configured_add_on( $store, array( $provider ) );
+		$feed     = $this->feed();
+
+		self::assertTrue( $add_on->process_feed( $feed, $this->entry(), $this->form() ) );
+		self::assertSame( 1, $provider->send_count );
+		unset( $store->states[10]['notifications']['feed:7']['form_id'] );
+
+		self::assertTrue( $add_on->process_feed( $feed, $this->entry(), $this->form() ) );
+		self::assertSame( 2, $provider->send_count );
+
+		$target = $this->manager( $store )->target_state( 10, 7 );
+		self::assertNotNull( $target );
+		self::assertCount( 1, $target['executions'] );
+		self::assertSame( DeliveryStateManager::EXECUTION_ORDINARY, $target['executions'][0]['type'] );
+		self::assertContains(
+			array(
+				'subject' => 'delivery_state',
+				'reason'  => 'prior_state_malformed',
+			),
+			$target['executions'][0]['skips']
+		);
+		self::assertFalse( $target['attention_required'] );
+	}
+
+	/**
+	 * T-RETRY-03: ordinary process_feed transport truth is unchanged when state persistence fails.
+	 *
+	 * @return void
+	 */
+	public function test_ordinary_transport_success_remains_success_when_state_write_fails(): void {
+		$provider = new FakeSmsProvider( AttemptStatus::SUCCESS, 'primary' );
+		$store    = new InMemoryDeliveryStateStore();
+		$store->fail_writes = true;
+		$add_on = $this->configured_add_on( $store, array( $provider ) );
+
+		self::assertTrue( $add_on->process_feed( $this->feed(), $this->entry(), $this->form() ) );
+		self::assertSame( 1, $provider->send_count );
+		self::assertSame( 1, $store->write_count );
+		self::assertArrayNotHasKey( 10, $store->states );
+
+		$result = $add_on->last_execution_result();
+		self::assertNotNull( $result );
+		self::assertTrue( $result->delivery_succeeded() );
+		self::assertContains(
+			array(
+				'subject' => 'delivery_state',
+				'reason'  => 'persistence_failed',
+			),
+			$result->skips()
+		);
+	}
+
+	/**
 	 * Configure the singleton with deterministic WU-05 state and current WU-02/03/04 processor.
 	 *
 	 * @param InMemoryDeliveryStateStore       $store State store.
