@@ -181,7 +181,7 @@ final class NotificationDeliveryStateTest extends TestCase {
 	/**
 	 * Configure the singleton with deterministic WU-05 state and current WU-02/03/04 processor.
 	 *
-	 * @param InMemoryDeliveryStateStore $store State store.
+	 * @param InMemoryDeliveryStateStore       $store State store.
 	 * @param array<int, SmsProviderInterface> $providers Providers.
 	 * @return NotificationFeedAddOn
 	 */
