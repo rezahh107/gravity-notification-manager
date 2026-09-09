@@ -67,7 +67,7 @@ final class DeliveryStateManager {
 	 * Constructor.
 	 *
 	 * @param DeliveryStateStoreInterface $store State store.
-	 * @param callable|null                $clock Optional timestamp provider for tests.
+	 * @param callable|null $clock Optional timestamp provider for tests.
 	 */
 	public function __construct( DeliveryStateStoreInterface $store, ?callable $clock = null ) {
 		$this->store = $store;
@@ -302,7 +302,7 @@ final class DeliveryStateManager {
 	private function is_valid_root( array $state, int $entry_id ): bool {
 		return self::SCHEMA_NAMESPACE === ( $state['namespace'] ?? null )
 			&& self::SCHEMA_VERSION === ( $state['schema_version'] ?? null )
-			&& $entry_id === ( $state['entry_id'] ?? null )
+			&& ( $state['entry_id'] ?? null ) === $entry_id
 			&& isset( $state['notifications'] )
 			&& is_array( $state['notifications'] );
 	}
@@ -316,7 +316,7 @@ final class DeliveryStateManager {
 	 * @return bool
 	 */
 	private function is_valid_target( array $target, int $entry_id, int $feed_id ): bool {
-		if ( $entry_id !== ( $target['entry_id'] ?? null ) || $feed_id !== ( $target['feed_id'] ?? null ) ) {
+		if ( ( $target['entry_id'] ?? null ) !== $entry_id || ( $target['feed_id'] ?? null ) !== $feed_id ) {
 			return false;
 		}
 
