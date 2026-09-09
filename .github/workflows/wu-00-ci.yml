@@ -68,6 +68,9 @@ jobs:
           php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/GravityForms/ManualRetryHandlerTest.php
           php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/GravityForms/ManualRetryMissingNonceTest.php
 
+      - name: Run WU-06 focused admin targets
+        run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Admin
+
       - name: Lint WU-00 PHP surfaces
         run: composer lint:wu00
 
