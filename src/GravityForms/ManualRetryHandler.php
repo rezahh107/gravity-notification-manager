@@ -116,9 +116,9 @@ final class ManualRetryHandler {
 				? esc_html__( 'Gravity Notification Manager Retry', 'gravity-notification-manager' )
 				: 'Gravity Notification Manager Retry';
 			wp_die(
-				function_exists( 'esc_html' ) ? esc_html( $result ) : $result,
-				$title,
-				array( 'response' => $code )
+				esc_html( $result ),
+				esc_html( $title ),
+				array( 'response' => absint( $code ) )
 			);
 		}
 	}
