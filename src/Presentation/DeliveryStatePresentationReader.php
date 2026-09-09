@@ -16,10 +16,18 @@ use GravityNotify\DeliveryState\DeliveryStateStoreInterface;
  */
 final class DeliveryStatePresentationReader {
 
-	/** State store. */
+	/**
+	 * State store.
+	 *
+	 * @var DeliveryStateStoreInterface
+	 */
 	private DeliveryStateStoreInterface $store;
 
-	/** Existing WU-05 validator/decision authority. */
+	/**
+	 * Existing WU-05 validator/decision authority.
+	 *
+	 * @var DeliveryStateManager
+	 */
 	private DeliveryStateManager $manager;
 
 	/**
@@ -168,7 +176,7 @@ final class DeliveryStatePresentationReader {
 	private function is_valid_root_identity( array $state, int $entry_id ): bool {
 		return DeliveryStateManager::SCHEMA_NAMESPACE === ( $state['namespace'] ?? null )
 			&& DeliveryStateManager::SCHEMA_VERSION === ( $state['schema_version'] ?? null )
-			&& $entry_id === ( $state['entry_id'] ?? null )
+			&& ( $state['entry_id'] ?? null ) === $entry_id
 			&& isset( $state['notifications'] )
 			&& is_array( $state['notifications'] );
 	}
