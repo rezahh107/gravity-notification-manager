@@ -173,8 +173,11 @@ final class OperationalPresentationTest extends TestCase {
 		$runtime = new FakeManualRetryRuntime();
 		$add_on  = NotificationFeedAddOn::get_instance();
 
-		$runtime->entries[10] = array( 'id' => 10, 'form_id' => 5 );
-		$runtime->forms[5]    = array( 'id' => 5 );
+		$runtime->entries[10] = array(
+			'id'      => 10,
+			'form_id' => 5,
+		);
+		$runtime->forms[5] = array( 'id' => 5 );
 
 		return array(
 			'store'        => $store,
