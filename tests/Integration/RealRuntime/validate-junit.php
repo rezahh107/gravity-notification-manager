@@ -8,20 +8,22 @@
 declare(strict_types=1);
 
 const GRAVITY_NOTIFY_REQUIRED_REAL_TESTS = array(
-	'ENV-REAL-01'   => 'test_env_real_01_real_runtime_identity',
-	'GF-REAL-01'    => 'test_gf_real_01_registration',
-	'GF-REAL-02'    => 'test_gf_real_02_settings_contract',
-	'GF-REAL-03'    => 'test_gf_real_03_feed_round_trip',
-	'GF-REAL-04'    => 'test_gf_real_04_native_condition_lifecycle',
-	'GF-REAL-05'    => 'test_gf_real_05_native_merge_tag_rendering',
-	'GF-REAL-06'    => 'test_gf_real_06_result_semantics',
-	'GFLOW-REAL-01' => 'test_gflow_real_01_step_discovery',
-	'GFLOW-REAL-02' => 'test_gflow_real_02_submission_and_workflow_position',
-	'GFLOW-REAL-03' => 'test_gflow_real_03_native_condition_inside_flow',
-	'GFLOW-REAL-04' => 'test_gflow_real_04_failure_does_not_strand_workflow',
-	'SAFE-REAL-01'  => 'test_safe_real_01_http_is_blocked',
-	'SAFE-REAL-02'  => 'test_safe_real_02_fake_attempt_evidence',
-	'SAFE-REAL-03'  => 'test_safe_real_03_wordpress_http_interception',
+	'ENV-REAL-01'        => 'test_env_real_01_real_runtime_identity',
+	'GF-REAL-01'         => 'test_gf_real_01_registration',
+	'GF-REAL-02'         => 'test_gf_real_02_settings_contract',
+	'GF-REAL-03'         => 'test_gf_real_03_feed_round_trip',
+	'GF-REAL-04'         => 'test_gf_real_04_native_condition_lifecycle',
+	'GF-REAL-05'         => 'test_gf_real_05_native_merge_tag_rendering',
+	'GF-REAL-06'         => 'test_gf_real_06_result_semantics',
+	'GFLOW-REAL-01'      => 'test_gflow_real_01_step_discovery',
+	'GFLOW-REAL-02'      => 'test_gflow_real_02_submission_and_workflow_position',
+	'GFLOW-REAL-03'      => 'test_gflow_real_03_native_condition_inside_flow',
+	'GFLOW-REAL-04'      => 'test_gflow_real_04_failure_does_not_strand_workflow',
+	'SAFE-REAL-01'       => 'test_safe_real_01_http_is_blocked',
+	'SAFE-REAL-02'       => 'test_safe_real_02_fake_attempt_evidence',
+	'SAFE-REAL-03'       => 'test_safe_real_03_wordpress_http_interception',
+	'WU07-KSES-REAL-01'  => 'test_wu07_kses_real_01_entry_detail_retry_form_survives_local_kses',
+	'WU07-KSES-REAL-02'  => 'test_wu07_kses_real_02_local_allowlist_rejects_unapproved_markup',
 );
 
 /**
