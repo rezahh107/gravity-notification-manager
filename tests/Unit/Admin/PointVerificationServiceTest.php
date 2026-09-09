@@ -38,6 +38,7 @@ final class PointVerificationServiceTest extends TestCase {
 				'step_id'   => 22,
 				'step_name' => 'Notify',
 				'feed_ids'  => array( 11 ),
+				'active'    => true,
 			),
 		);
 		$before_second = $source->read_count;
