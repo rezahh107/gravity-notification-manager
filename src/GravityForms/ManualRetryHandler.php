@@ -7,14 +7,14 @@
 
 namespace GravityNotify\GravityForms;
 
+use GravityNotify\Presentation\OperationalPresentation;
+
 /**
- * Handles only explicit authenticated POST Retry requests; it renders no WU-07 UI.
+ * Handles only explicit authenticated POST Retry requests.
  */
 final class ManualRetryHandler {
 
-	/**
-	 * Authenticated WordPress admin-post action.
-	 */
+	/** Authenticated WordPress admin-post action. */
 	public const ACTION = 'gravity_notify_retry_notification';
 
 	/** Successful Retry result. */
@@ -44,7 +44,7 @@ final class ManualRetryHandler {
 	/** Feed lookup/identity error. */
 	public const ERROR_FEED = 'invalid_feed';
 
-	/** Persisted state eligibility error. */
+	/** Persisted state eligibility/persistence error. */
 	public const ERROR_STATE = 'invalid_state';
 
 	/**
@@ -62,7 +62,7 @@ final class ManualRetryHandler {
 	private ManualRetryRuntimeInterface $runtime;
 
 	/**
-	 * Whether the production hook has already been registered this request.
+	 * Whether the production action hook has already been registered this request.
 	 *
 	 * @var bool
 	 */
@@ -80,7 +80,7 @@ final class ManualRetryHandler {
 	}
 
 	/**
-	 * Register only the authenticated admin-post action.
+	 * Register authenticated Retry and WU-07 read-only presentation hooks.
 	 *
 	 * No nopriv hook is registered and registration itself performs no delivery.
 	 *
@@ -88,6 +88,8 @@ final class ManualRetryHandler {
 	 * @return void
 	 */
 	public static function boot( NotificationFeedAddOn $add_on ): void {
+		OperationalPresentation::boot( $add_on );
+
 		if ( self::$booted || ! function_exists( 'add_action' ) ) {
 			return;
 		}
@@ -100,6 +102,10 @@ final class ManualRetryHandler {
 	/**
 	 * WordPress admin-post callback.
 	 *
+	 * Successful/unresolved Retry, and only a proven post-send persistence failure,
+	 * redirect back to the server-built Entry Detail URL so the UI re-reads
+	 * authoritative Entry Meta. Validation/state-eligibility failures remain errors.
+	 *
 	 * @return void
 	 */
 	public function handle(): void {
@@ -109,8 +115,22 @@ final class ManualRetryHandler {
 			: '';
 		$request = $this->sanitized_post_request();
 		$result  = $this->dispatch( $method, $request );
-		$code    = $this->response_code( $result );
 
+		if ( $this->should_redirect_to_entry_detail( $result ) ) {
+			$entry_id = $this->positive_identifier( $request['entry_id'] ?? null );
+			$feed_id  = $this->positive_identifier( $request['feed_id'] ?? null );
+			$entry    = null !== $entry_id ? $this->runtime->get_entry( $entry_id ) : null;
+			$form_id  = is_array( $entry ) ? $this->positive_identifier( $entry['form_id'] ?? null ) : null;
+
+			if ( null !== $entry_id && null !== $feed_id && null !== $form_id ) {
+				$url = OperationalPresentation::retry_result_url( $entry_id, $form_id, $feed_id, $result );
+				if ( '' !== $url && function_exists( 'wp_safe_redirect' ) && wp_safe_redirect( $url, 303, 'Gravity Notification Manager' ) ) {
+					exit;
+				}
+			}
+		}
+
+		$code = $this->response_code( $result );
 		if ( function_exists( 'wp_die' ) ) {
 			$title = function_exists( 'esc_html__' )
 				? esc_html__( 'Gravity Notification Manager Retry', 'gravity-notification-manager' )
@@ -170,7 +190,7 @@ final class ManualRetryHandler {
 		}
 
 		$feed = $this->runtime->get_feed( $feed_id );
-		if ( ! $this->is_valid_feed_target( $feed, $feed_id, $form_id ) ) {
+		if ( ! self::is_feed_target_valid( $this->add_on, $feed, $feed_id, $form_id ) ) {
 			return self::ERROR_FEED;
 		}
 
@@ -183,11 +203,41 @@ final class ManualRetryHandler {
 	}
 
 	/**
-	 * Read and sanitize only the WU-05 request fields.
+	 * Shared exact Feed applicability validation for WU-05 execution and WU-07 UI.
 	 *
-	 * Reading occurs before nonce verification because the Entry/Feed identifiers
-	 * are inputs to the nonce action. No mutation or send occurs until dispatch()
-	 * validates the nonce and capability.
+	 * @param NotificationFeedAddOn $add_on Add-On owning the target.
+	 * @param array|null            $feed Feed object.
+	 * @param int                   $feed_id Expected Feed ID.
+	 * @param int                   $form_id Entry Form ID.
+	 * @return bool
+	 */
+	public static function is_feed_target_valid( NotificationFeedAddOn $add_on, ?array $feed, int $feed_id, int $form_id ): bool {
+		if ( null === $feed || self::canonical_positive_identifier( $feed['id'] ?? null ) !== $feed_id ) {
+			return false;
+		}
+
+		$feed_form_id = isset( $feed['form_id'] ) && ( 0 === $feed['form_id'] || '0' === $feed['form_id'] )
+			? 0
+			: self::canonical_positive_identifier( $feed['form_id'] ?? null );
+		if ( null === $feed_form_id || ( 0 !== $feed_form_id && $form_id !== $feed_form_id ) ) {
+			return false;
+		}
+
+		if ( isset( $feed['is_active'] ) && false === (bool) $feed['is_active'] ) {
+			return false;
+		}
+
+		if ( ! isset( $feed['meta'] ) || ! is_array( $feed['meta'] ) ) {
+			return false;
+		}
+
+		return isset( $feed['addon_slug'] )
+			&& is_string( $feed['addon_slug'] )
+			&& $add_on->get_slug() === $feed['addon_slug'];
+	}
+
+	/**
+	 * Read and sanitize only the WU-05 request fields.
 	 *
 	 * @return array<string, string>
 	 */
@@ -215,6 +265,16 @@ final class ManualRetryHandler {
 	 * @return int|null
 	 */
 	private function positive_identifier( $value ): ?int {
+		return self::canonical_positive_identifier( $value );
+	}
+
+	/**
+	 * Static canonical identifier validator shared with Feed validation.
+	 *
+	 * @param mixed $value Raw identifier.
+	 * @return int|null
+	 */
+	private static function canonical_positive_identifier( $value ): ?int {
 		if ( is_int( $value ) ) {
 			return $value > 0 ? $value : null;
 		}
@@ -228,36 +288,36 @@ final class ManualRetryHandler {
 	}
 
 	/**
-	 * Confirm Feed identity, form scope, active state and owning Add-On.
+	 * Redirect only after an explicit Retry outcome that should be re-read in UI.
 	 *
-	 * @param array|null $feed    Feed object.
-	 * @param int        $feed_id Expected Feed ID.
-	 * @param int        $form_id Entry Form ID.
+	 * ERROR_STATE redirects only when the request-local execution proves transport
+	 * ran and the authoritative state write failed. Stale/ineligible state stays a
+	 * fail-closed error and is not presented as an executed Retry.
+	 *
+	 * @param string $result Bounded dispatch result.
 	 * @return bool
 	 */
-	private function is_valid_feed_target( ?array $feed, int $feed_id, int $form_id ): bool {
-		if ( null === $feed || $feed_id !== $this->positive_identifier( $feed['id'] ?? null ) ) {
+	private function should_redirect_to_entry_detail( string $result ): bool {
+		if ( self::RESULT_SUCCESS === $result || self::RESULT_UNRESOLVED === $result ) {
+			return true;
+		}
+
+		if ( self::ERROR_STATE !== $result ) {
 			return false;
 		}
 
-		$feed_form_id = isset( $feed['form_id'] ) && ( 0 === $feed['form_id'] || '0' === $feed['form_id'] )
-			? 0
-			: $this->positive_identifier( $feed['form_id'] ?? null );
-		if ( null === $feed_form_id || ( 0 !== $feed_form_id && $form_id !== $feed_form_id ) ) {
+		$execution = $this->add_on->last_execution_result();
+		if ( null === $execution ) {
 			return false;
 		}
 
-		if ( isset( $feed['is_active'] ) && false === (bool) $feed['is_active'] ) {
-			return false;
+		foreach ( $execution->skips() as $skip ) {
+			if ( 'delivery_state' === ( $skip['subject'] ?? null ) && 'persistence_failed' === ( $skip['reason'] ?? null ) ) {
+				return true;
+			}
 		}
 
-		if ( ! isset( $feed['meta'] ) || ! is_array( $feed['meta'] ) ) {
-			return false;
-		}
-
-		return isset( $feed['addon_slug'] )
-			&& is_string( $feed['addon_slug'] )
-			&& $this->add_on->get_slug() === $feed['addon_slug'];
+		return false;
 	}
 
 	/**
