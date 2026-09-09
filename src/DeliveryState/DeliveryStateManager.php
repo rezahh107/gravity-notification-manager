@@ -308,7 +308,7 @@ final class DeliveryStateManager {
 	}
 
 	/**
-	 * Validate the bounded target fields required for suppression/Retry decisions.
+	 * Validate the complete bounded target contract trusted by suppression/Retry decisions.
 	 *
 	 * @param array<string, mixed> $target Target state.
 	 * @param int                  $entry_id Entry ID.
@@ -316,19 +316,57 @@ final class DeliveryStateManager {
 	 * @return bool
 	 */
 	private function is_valid_target( array $target, int $entry_id, int $feed_id ): bool {
-		if ( ( $target['entry_id'] ?? null ) !== $entry_id || ( $target['feed_id'] ?? null ) !== $feed_id ) {
+		$required_fields = array(
+			'entry_id',
+			'form_id',
+			'feed_id',
+			'feed_name',
+			'channel',
+			'final_status',
+			'attention_required',
+			'last_execution_sequence',
+			'resolved_by_retry',
+			'executions',
+			'retry_history',
+		);
+
+		foreach ( $required_fields as $field ) {
+			if ( ! array_key_exists( $field, $target ) ) {
+				return false;
+			}
+		}
+
+		if ( 0 >= $entry_id || 0 >= $feed_id || $entry_id !== $target['entry_id'] || $feed_id !== $target['feed_id'] ) {
 			return false;
 		}
 
-		if ( ! isset( $target['executions'], $target['retry_history'] ) || ! is_array( $target['executions'] ) || ! is_array( $target['retry_history'] ) ) {
+		if ( ! is_int( $target['form_id'] ) || 0 >= $target['form_id'] ) {
 			return false;
 		}
 
-		if ( ! is_bool( $target['attention_required'] ?? null ) ) {
+		if ( ! is_string( $target['feed_name'] ) || 255 < strlen( $target['feed_name'] ) || ! is_string( $target['channel'] ) || 255 < strlen( $target['channel'] ) ) {
 			return false;
 		}
 
-		return in_array( $target['final_status'] ?? null, array( self::FINAL_RESOLVED, self::FINAL_UNRESOLVED ), true );
+		if ( ! is_bool( $target['attention_required'] ) || ! is_bool( $target['resolved_by_retry'] ) ) {
+			return false;
+		}
+
+		if ( ! is_int( $target['last_execution_sequence'] ) || 1 > $target['last_execution_sequence'] ) {
+			return false;
+		}
+
+		if ( ! is_array( $target['executions'] ) || array() === $target['executions'] || ! is_array( $target['retry_history'] ) ) {
+			return false;
+		}
+
+		$final_status = $target['final_status'];
+		if ( ! in_array( $final_status, array( self::FINAL_RESOLVED, self::FINAL_UNRESOLVED ), true ) ) {
+			return false;
+		}
+
+		return ( self::FINAL_RESOLVED === $final_status && false === $target['attention_required'] )
+			|| ( self::FINAL_UNRESOLVED === $final_status && true === $target['attention_required'] );
 	}
 
 	/**
