@@ -35,24 +35,40 @@ final class OperationalPresentation {
 	/** Capability required to expose operator-facing case detail. */
 	public const VIEW_CAPABILITY = 'gravityforms_view_entries';
 
-	/** Add-On instance. */
+	/**
+	 * Add-On instance.
+	 *
+	 * @var NotificationFeedAddOn
+	 */
 	private NotificationFeedAddOn $add_on;
 
-	/** Read-only delivery-state projection. */
+	/**
+	 * Read-only delivery-state projection.
+	 *
+	 * @var DeliveryStatePresentationReader
+	 */
 	private DeliveryStatePresentationReader $reader;
 
-	/** Runtime reader/security seam. */
+	/**
+	 * Runtime reader/security seam.
+	 *
+	 * @var ManualRetryRuntimeInterface
+	 */
 	private ManualRetryRuntimeInterface $runtime;
 
-	/** Production hook boot guard. */
+	/**
+	 * Production hook boot guard.
+	 *
+	 * @var bool
+	 */
 	private static bool $booted = false;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param NotificationFeedAddOn          $add_on Add-On instance.
+	 * @param NotificationFeedAddOn           $add_on Add-On instance.
 	 * @param DeliveryStatePresentationReader $reader Presentation reader.
-	 * @param ManualRetryRuntimeInterface    $runtime Runtime seam.
+	 * @param ManualRetryRuntimeInterface     $runtime Runtime seam.
 	 */
 	public function __construct(
 		NotificationFeedAddOn $add_on,
