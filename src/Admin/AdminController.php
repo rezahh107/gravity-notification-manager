@@ -15,10 +15,18 @@ use RuntimeException;
  */
 final class AdminController {
 
-	/** Whether hooks have already been registered this request. */
+	/**
+	 * Whether hooks have already been registered this request.
+	 *
+	 * @var bool
+	 */
 	private static bool $booted = false;
 
-	/** @var array<int, string> Captured GNM page hook suffixes for asset scoping. */
+	/**
+	 * Captured GNM page hook suffixes for asset scoping.
+	 *
+	 * @var array<int, string>
+	 */
 	private static array $screen_hooks = array();
 
 	/**
@@ -72,7 +80,7 @@ final class AdminController {
 				$surface['title'] . ' — Gravity Notification Manager',
 				$surface['title'],
 				AdminDefinition::CAPABILITY,
-				$surface['slug'],
+				AdminDefinition::ROOT_SLUG === $surface['slug'] ? AdminDefinition::ROOT_SLUG : $surface['slug'],
 				array( self::class, $callback )
 			);
 			self::remember_hook( $hook );
@@ -290,23 +298,44 @@ final class AdminController {
 		echo '<button class="button button-primary" type="submit">' . esc_html__( 'Check Again', 'gravity-notification-manager' ) . '</button></form></div></article>';
 	}
 
-	/** Render text + visual semantic status cue. */
+	/**
+	 * Render text plus a visual semantic status cue.
+	 *
+	 * @param string $state Current status label.
+	 * @return void
+	 */
 	private static function status_badge( string $state ): void {
 		$class = strtolower( str_replace( '_', '-', $state ) );
 		echo '<span class="gnm-status gnm-status--' . esc_attr( $class ) . '"><span aria-hidden="true">●</span> ' . esc_html( $state ) . '</span>';
 	}
 
-	/** Render page shell header. */
+	/**
+	 * Render the native page shell header.
+	 *
+	 * @param string $title       Page title.
+	 * @param string $description Page description.
+	 * @return void
+	 */
 	private static function header( string $title, string $description ): void {
 		echo '<div class="wrap gnm-admin"><header class="gnm-page-header"><h1>' . esc_html( $title ) . '</h1><p>' . esc_html( $description ) . '</p></header>';
 	}
 
-	/** Close page shell. */
+	/**
+	 * Close the native page shell.
+	 *
+	 * @return void
+	 */
 	private static function footer(): void {
 		echo '</div>';
 	}
 
-	/** Render one summary stat. */
+	/**
+	 * Render one summary statistic.
+	 *
+	 * @param string $label Statistic label.
+	 * @param int    $value Statistic value.
+	 * @return void
+	 */
 	private static function stat( string $label, int $value ): void {
 		echo '<div class="gnm-stat"><strong class="gnm-stat__value gnm-ltr" dir="ltr">' . esc_html( (string) $value ) . '</strong><span>' . esc_html( $label ) . '</span></div>';
 	}
@@ -314,6 +343,7 @@ final class AdminController {
 	/**
 	 * Render privacy-safe structured facts.
 	 *
+	 * @param string                $title Panel title.
 	 * @param array<string, string> $facts Safe label/value facts.
 	 * @return void
 	 */
@@ -325,18 +355,35 @@ final class AdminController {
 		echo '</dl></section>';
 	}
 
-	/** Render a write-only credential field. */
+	/**
+	 * Render one write-only credential field.
+	 *
+	 * @param string $key    Settings key.
+	 * @param string $label  Human-readable label.
+	 * @param bool   $stored Whether a stored value exists.
+	 * @return void
+	 */
 	private static function secret_field( string $key, string $label, bool $stored ): void {
 		$placeholder = $stored ? 'Stored — Enter a new value to replace' : 'Not configured';
 		echo '<label class="gnm-field"><span>' . esc_html( $label ) . '</span><input type="password" class="regular-text gnm-ltr" dir="ltr" name="' . esc_attr( Settings::OPTION ) . '[' . esc_attr( $key ) . ']" value="" placeholder="' . esc_attr( $placeholder ) . '" autocomplete="new-password"></label>';
 	}
 
-	/** Build one GNM page URL. */
+	/**
+	 * Build one GNM admin page URL.
+	 *
+	 * @param string $slug GNM page slug.
+	 * @return string
+	 */
 	private static function admin_page_url( string $slug ): string {
 		return add_query_arg( array( 'page' => $slug ), admin_url( 'admin.php' ) );
 	}
 
-	/** Enforce the capability on every render/action callback. */
+	/**
+	 * Enforce the capability on every render/action callback.
+	 *
+	 * @return void
+	 * @throws RuntimeException When WordPress authorization is unavailable in a test context.
+	 */
 	private static function guard_capability(): void {
 		if ( ! function_exists( 'current_user_can' ) || ! current_user_can( AdminDefinition::CAPABILITY ) ) {
 			if ( function_exists( 'wp_die' ) ) {
@@ -346,7 +393,12 @@ final class AdminController {
 		}
 	}
 
-	/** Strictly parse one positive identifier. */
+	/**
+	 * Strictly parse one positive identifier.
+	 *
+	 * @param mixed $value Raw identifier.
+	 * @return int|null
+	 */
 	private static function request_id( $value ): ?int {
 		if ( is_int( $value ) ) {
 			return $value > 0 ? $value : null;
@@ -358,20 +410,37 @@ final class AdminController {
 		return $value > 0 ? $value : null;
 	}
 
-	/** Build a target-bound Check Again nonce action. */
+	/**
+	 * Build a target-bound Check Again nonce action.
+	 *
+	 * @param int $form_id Gravity Forms form ID.
+	 * @param int $feed_id GNM Feed ID.
+	 * @return string
+	 */
 	private static function nonce_action( int $form_id, int $feed_id ): string {
 		return AdminDefinition::CHECK_ACTION . '_' . $form_id . '_' . $feed_id;
 	}
 
-	/** Fail a malformed privileged request without side effects. */
+	/**
+	 * Fail a malformed privileged request without side effects.
+	 *
+	 * @param string $message Escaped-user-facing request failure message.
+	 * @return void
+	 * @throws InvalidArgumentException When WordPress wp_die() is unavailable in a test context.
+	 */
 	private static function fail_request( string $message ): void {
 		if ( function_exists( 'wp_die' ) ) {
 			wp_die( esc_html( $message ), '', array( 'response' => 400 ) );
 		}
-		throw new InvalidArgumentException( $message );
+		throw new InvalidArgumentException( 'Invalid GNM admin request.' );
 	}
 
-	/** Remember only successful GNM menu hook registrations. */
+	/**
+	 * Remember one successful GNM menu hook registration.
+	 *
+	 * @param mixed $hook Menu page hook suffix.
+	 * @return void
+	 */
 	private static function remember_hook( $hook ): void {
 		if ( is_string( $hook ) && '' !== $hook ) {
 			self::$screen_hooks[] = $hook;

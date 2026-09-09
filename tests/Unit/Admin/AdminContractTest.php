@@ -87,7 +87,7 @@ final class AdminContractTest extends TestCase {
 		$css        = file_get_contents( dirname( __DIR__, 3 ) . '/assets/admin/gnm-admin.css' );
 		self::assertIsString( $controller );
 		self::assertIsString( $css );
-		self::assertStringContainsString( "in_array( \$hook_suffix, self::\$screen_hooks, true )", $controller );
+		self::assertStringContainsString( 'in_array( $hook_suffix, self::$screen_hooks, true )', $controller );
 		self::assertStringContainsString( "wp_style_is( 'wp-theme', 'registered' )", $controller );
 		self::assertStringContainsString( '--wpds-', $css );
 		self::assertStringContainsString( '.gnm-ltr', $css );

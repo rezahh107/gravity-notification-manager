@@ -26,10 +26,22 @@ final class AdminDefinition {
 	 */
 	public static function surfaces(): array {
 		return array(
-			array( 'slug' => self::ROOT_SLUG, 'title' => 'Overview' ),
-			array( 'slug' => self::POINTS_SLUG, 'title' => 'Notification Points' ),
-			array( 'slug' => self::SETTINGS_SLUG, 'title' => 'Settings' ),
-			array( 'slug' => self::DIAGNOSTICS_SLUG, 'title' => 'Help & Diagnostics' ),
+			array(
+				'slug'  => self::ROOT_SLUG,
+				'title' => 'Overview',
+			),
+			array(
+				'slug'  => self::POINTS_SLUG,
+				'title' => 'Notification Points',
+			),
+			array(
+				'slug'  => self::SETTINGS_SLUG,
+				'title' => 'Settings',
+			),
+			array(
+				'slug'  => self::DIAGNOSTICS_SLUG,
+				'title' => 'Help & Diagnostics',
+			),
 		);
 	}
 }

@@ -13,13 +13,28 @@ use GravityNotify\GravityForms\FeedRuleSchema;
  * Derives operator status from authoritative Feed/Flow reads only.
  */
 final class PointInspector {
+
+	/**
+	 * Read-only authoritative configuration source.
+	 *
+	 * @var ConfigurationSourceInterface
+	 */
 	private ConfigurationSourceInterface $source;
 
+	/**
+	 * Create the Point inspector.
+	 *
+	 * @param ConfigurationSourceInterface $source Read-only authoritative source.
+	 */
 	public function __construct( ConfigurationSourceInterface $source ) {
 		$this->source = $source;
 	}
 
-	/** @return array<int, array<string,mixed>> */
+	/**
+	 * Inspect every current GNM notification Feed across detected Forms.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
 	public function all(): array {
 		$points = array();
 		foreach ( $this->source->forms() as $form ) {
@@ -32,18 +47,26 @@ final class PointInspector {
 		return $points;
 	}
 
-	/** @return array<string,mixed>|null */
+	/**
+	 * Inspect one current GNM Notification Point by Form and Feed identity.
+	 *
+	 * @param int $form_id Gravity Forms form ID.
+	 * @param int $feed_id GNM Feed ID.
+	 * @return array<string, mixed>|null
+	 */
 	public function find( int $form_id, int $feed_id ): ?array {
 		if ( $form_id < 1 || $feed_id < 1 ) {
 			return null;
 		}
+
 		$form_title = 'Form ' . $form_id;
 		foreach ( $this->source->forms() as $form ) {
-			if ( $form_id === (int) ( $form['id'] ?? 0 ) ) {
+			if ( (int) ( $form['id'] ?? 0 ) === $form_id ) {
 				$form_title = (string) ( $form['title'] ?? $form_title );
 				break;
 			}
 		}
+
 		foreach ( $this->for_form( $form_id, $form_title ) as $point ) {
 			if ( $feed_id === (int) $point['feed_id'] ) {
 				return $point;
@@ -52,7 +75,13 @@ final class PointInspector {
 		return null;
 	}
 
-	/** @return array<int, array<string,mixed>> */
+	/**
+	 * Inspect every GNM Feed for one Form against current Flow placement truth.
+	 *
+	 * @param int    $form_id    Gravity Forms form ID.
+	 * @param string $form_title Human-readable Form title.
+	 * @return array<int, array<string, mixed>>
+	 */
 	private function for_form( int $form_id, string $form_title ): array {
 		$feeds = $this->source->feeds( $form_id );
 		$ids   = array();
@@ -134,7 +163,15 @@ final class PointInspector {
 		return $points;
 	}
 
-	/** @param array<string,int|string> $rule */
+	/**
+	 * Build one normalized Point view model before status evaluation.
+	 *
+	 * @param int                       $form_id    Gravity Forms form ID.
+	 * @param string                    $form_title Human-readable Form title.
+	 * @param int                       $feed_id    GNM Feed ID.
+	 * @param array<string, int|string> $rule       Normalized Feed rule.
+	 * @return array<string, mixed>
+	 */
 	private function base_point( int $form_id, string $form_title, int $feed_id, array $rule ): array {
 		$name = trim( (string) ( $rule['feedName'] ?? '' ) );
 		return array(
@@ -152,7 +189,12 @@ final class PointInspector {
 		);
 	}
 
-	/** @param array<string,int|string> $rule @return array<int,string> */
+	/**
+	 * Return incomplete or invalid canonical Feed fields.
+	 *
+	 * @param array<string, int|string> $rule Normalized Feed rule.
+	 * @return array<int, string>
+	 */
 	private function missing_rule_fields( array $rule ): array {
 		$missing = array();
 		if ( '' === trim( (string) ( $rule['feedName'] ?? '' ) ) ) {
@@ -176,7 +218,13 @@ final class PointInspector {
 		return $missing;
 	}
 
-	/** @param array<int,array{step_id:int,step_name:string,feed_ids:array<int,int>}> $placements */
+	/**
+	 * Return Flow placements that select one Feed ID.
+	 *
+	 * @param array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}> $placements Current placements.
+	 * @param int                                                                       $feed_id    GNM Feed ID.
+	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}>
+	 */
 	private function placements_for_feed( array $placements, int $feed_id ): array {
 		return array_values(
 			array_filter(
@@ -186,10 +234,22 @@ final class PointInspector {
 		);
 	}
 
+	/**
+	 * Interpret the Gravity Forms Feed active flag strictly.
+	 *
+	 * @param mixed $value Raw active value.
+	 * @return bool
+	 */
 	private static function is_active( $value ): bool {
 		return true === $value || 1 === $value || '1' === $value;
 	}
 
+	/**
+	 * Parse a positive integer identity without malformed coercion.
+	 *
+	 * @param mixed $value Raw identity value.
+	 * @return int|null
+	 */
 	private static function positive_id( $value ): ?int {
 		if ( is_int( $value ) ) {
 			return $value > 0 ? $value : null;

@@ -11,16 +11,26 @@ namespace GravityNotify\Admin;
  * Exposes only read operations; topology mutation is intentionally absent.
  */
 interface ConfigurationSourceInterface {
-	/** @return array<int, array{id:int,title:string}> */
+
+	/**
+	 * Return forms visible to the Point Manager inspection boundary.
+	 *
+	 * @return array<int, array{id:int,title:string}>
+	 */
 	public function forms(): array;
 
-	/** @return array<int, array<string,mixed>> */
+	/**
+	 * Return current GNM Feed configuration for one Form.
+	 *
+	 * @param int $form_id Gravity Forms form ID.
+	 * @return array<int, array<string, mixed>>
+	 */
 	public function feeds( int $form_id ): array;
 
 	/**
 	 * Return GNM Feed-Step placements, or null when Gravity Flow is unavailable.
 	 *
-	 * @param int             $form_id Form ID.
+	 * @param int             $form_id  Form ID.
 	 * @param array<int, int> $feed_ids Feed IDs to inspect.
 	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}>|null
 	 */

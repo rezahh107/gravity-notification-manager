@@ -15,6 +15,11 @@ use Throwable;
  */
 final class WordPressConfigurationSource implements ConfigurationSourceInterface {
 
+	/**
+	 * Return current Gravity Forms identities visible to Point Manager.
+	 *
+	 * @return array<int, array{id:int,title:string}>
+	 */
 	public function forms(): array {
 		if ( ! class_exists( '\\GFAPI' ) || ! method_exists( '\\GFAPI', 'get_forms' ) ) {
 			return array();
@@ -45,6 +50,12 @@ final class WordPressConfigurationSource implements ConfigurationSourceInterface
 		return $result;
 	}
 
+	/**
+	 * Return current greenfield GNM Feeds for one Form.
+	 *
+	 * @param int $form_id Gravity Forms form ID.
+	 * @return array<int, array<string, mixed>>
+	 */
 	public function feeds( int $form_id ): array {
 		if ( $form_id < 1 || ! class_exists( '\\GFFeedAddOn' ) ) {
 			return array();
@@ -60,6 +71,13 @@ final class WordPressConfigurationSource implements ConfigurationSourceInterface
 		return is_array( $feeds ) ? $feeds : array();
 	}
 
+	/**
+	 * Read GNM Feed selections from current Gravity Flow Steps.
+	 *
+	 * @param int             $form_id  Gravity Forms form ID.
+	 * @param array<int, int> $feed_ids Current GNM Feed IDs.
+	 * @return array<int, array{step_id:int,step_name:string,feed_ids:array<int,int>}>|null
+	 */
 	public function workflow_placements( int $form_id, array $feed_ids ): ?array {
 		if ( $form_id < 1 || ! class_exists( '\\Gravity_Flow_API' ) ) {
 			return null;
@@ -104,6 +122,12 @@ final class WordPressConfigurationSource implements ConfigurationSourceInterface
 		return $placements;
 	}
 
+	/**
+	 * Parse a positive integer identity without malformed coercion.
+	 *
+	 * @param mixed $value Raw identity value.
+	 * @return int|null
+	 */
 	private static function positive_id( $value ): ?int {
 		if ( is_int( $value ) ) {
 			return $value > 0 ? $value : null;

@@ -1,65 +1,94 @@
 # WU-06 Admin Contract Snapshot
 
-Status: initial greenfield implementation, pending post-test legacy differential review.
+Status: implemented and qualified through the WU-06 focused greenfield gate; bounded legacy differential completed.
 
 ## Current contract snapshot — 2026-09-09
 
 - Repository base: `main@60ebb19433ebb40d24d9d8ee20067afafb9d36eb`.
 - WordPress test/runtime baseline: WordPress 7.1 (`.wp-env.json`), PHP 8.3; Composer requires PHP >=8.2.
-- WordPress official contracts re-checked: `add_menu_page()` / `add_submenu_page()`, `register_setting()` with `sanitize_callback`, `admin_enqueue_scripts`, capability checks, `check_admin_referer()`, contextual escaping, and the WordPress 7.1 `wp-theme` design-token stylesheet.
-- WordPress 7.1 design-system contract: the registered `wp-theme` stylesheet exposes public semantic `--wpds-*` CSS custom properties. WU-06 uses those tokens directly and does not introduce React or the experimental customizable Widget Dashboard API.
-- Accessibility baseline: semantic native controls/labels, visible focus, status text independent of color, logical CSS layout, LTR isolation for technical values, and no animation/transition introduced.
-- Gravity Forms authority: one `GFFeedAddOn` Feed remains one logical notification Rule.
-- Gravity Flow authority: the supported Feed Step remains workflow-position authority. WU-06 reads `Gravity_Flow_API::get_steps()` and the public Step `get_type()`, `get_setting()`, `get_id()`, and `get_name()` helpers only. No topology-write API is present in the WU-06 inspection interface.
+- WordPress official contracts re-checked: `add_menu_page()` / `add_submenu_page()`, `register_setting()` with `sanitize_callback`, Settings API form handling, `admin_enqueue_scripts`, capability checks, `check_admin_referer()`, contextual escaping, and the registered `wp-theme` design-token stylesheet.
+- WordPress admin implementation is native PHP; no React runtime and no experimental customizable Widget Dashboard API are used.
+- Gravity Flow official contracts re-checked: local `Gravity_Flow_API::get_steps()` read access and public Step helpers `get_type()`, `get_setting()`, `get_id()`, and `get_name()`. The documented Feed-Step contract uses the `feed_<id>` selection setting shape inspected by Point Manager.
+- Gravity Flow operator navigation targets the documented Form Settings → Workflow location. A direct admin path is rendered only when the supported local Flow API is present; otherwise existing bounded setup guidance remains visible.
 
-Official references inspected:
-
-- https://developer.wordpress.org/reference/functions/add_menu_page/
-- https://developer.wordpress.org/reference/functions/add_submenu_page/
-- https://developer.wordpress.org/reference/functions/register_setting/
-- https://developer.wordpress.org/reference/hooks/admin_enqueue_scripts/
-- https://developer.wordpress.org/reference/functions/check_admin_referer/
-- https://developer.wordpress.org/apis/security/escaping/
-- https://make.wordpress.org/core/2026/07/31/design-system-theming-in-wordpress-7-1/
-- https://developer.wordpress.org/block-editor/reference-guides/packages/packages-theme/
-- Gravity Flow developer documentation for the local Orchestration API / `Gravity_Flow_API` and Feed Add-On Step settings.
+Official references inspected include current WordPress Developer Resources for administration menus, Settings API, `register_setting()`, `check_admin_referer()`, `admin_enqueue_scripts`, and `@wordpress/theme`, plus current Gravity Flow documentation for the Workflow Orchestration API, Step class, permissions, and Form Settings → Workflow configuration.
 
 ## Information architecture and capability
 
-GNM owns exactly four new product surfaces under one native WordPress admin parent: Overview, Notification Points, Settings, and Help & Diagnostics. All four and the privileged `Check Again` action use `manage_options` and render/action callbacks re-check that capability.
+GNM exposes exactly four new product surfaces under one native WordPress admin parent:
 
-The existing legacy runtime remains present until its separately owned cutover/retirement Work Units. WU-06 does not migrate legacy settings, retire legacy runtime, or enable a second greenfield production sender.
+1. Overview
+2. Notification Points
+3. Settings
+4. Help & Diagnostics
 
-## Point Manager authority and statuses
+All surfaces and `Check Again` use `manage_options`; render/action callbacks re-check capability. WU-06 admin registration occurs after Composer autoload but before the legacy Gravity Forms / Gravity Flow runtime dependency gate so Help & Diagnostics can render understandable missing-dependency states.
 
-Point Manager is read/verify/guidance only. Its source interface contains only `forms()`, `feeds()`, and `workflow_placements()` reads. It does not create, insert, reorder, delete, update, or silently repair Gravity Flow Steps or approval routing.
+The legacy runtime remains present until separately owned cutover/retirement Work Units. WU-06 does not migrate legacy settings, retire legacy runtime, or enable a second greenfield production sender.
 
-Deterministic statuses are `CONFIGURED`, `NEEDS_SETUP`, `DISABLED`, and `NOT_APPLICABLE`. Feed metadata comes from the canonical greenfield Feed schema; Flow placement comes from current Gravity Flow Step configuration. Missing Flow dependency is reported as unavailable rather than guessed.
+## Point Manager authority and status vocabulary
 
-Flow-assignee recipient rules require a GNM Flow Feed Step so the assignee context is truthful. A non-Flow recipient Feed with no selected Flow Step remains a valid normal Gravity Forms submission Feed. Multiple GNM Flow placements for one Feed are reported as inconsistent and require human correction.
+Point Manager is read/verify/guidance only. Its source interface contains only `forms()`, `feeds()`, and `workflow_placements()` reads. It has no create/insert/reorder/delete/update Flow API.
+
+Status vocabulary implemented here is:
+
+- `CONFIGURED`
+- `NEEDS_SETUP`
+- `DISABLED`
+- `NOT_APPLICABLE`
+
+Feed metadata comes from the canonical greenfield Feed schema; Flow placement comes from current Gravity Flow Step configuration. Missing Flow dependency is reported as unavailable rather than guessed.
+
+A Flow-assignee recipient Feed without a GNM Flow Feed Step is `NEEDS_SETUP`. A non-Flow recipient Feed without a Flow placement remains a valid normal Gravity Forms submission Feed. Multiple GNM Flow placements selecting the same Feed are reported as inconsistent and require operator correction; GNM never repairs topology automatically.
 
 ## Check Again
 
-`Check Again` is an explicit POST to `admin-post.php`. It requires `manage_options`, strictly positive form/feed identifiers, and a target-bound WordPress nonce. It constructs a fresh inspector and re-reads current Feed/Flow truth before redirecting to the Point Manager. No notification provider, HTTP transport, delivery-state writer, or Gravity Flow topology-write API is called.
+`Check Again` is an explicit POST to `admin-post.php`. It requires `manage_options`, strictly positive form/feed identifiers, and a target-bound WordPress nonce. It creates a fresh inspector and re-reads current Feed/Flow truth before returning to Point Manager.
 
-## Settings and privacy
+No notification provider, HTTP transport, delivery-state writer, or Gravity Flow topology-write API is called by Check Again.
 
-WU-06 owns one bounded namespaced option: `gravity_notify_settings`. It currently prepares the already-approved greenfield runtime inputs `ippanel_api_key`, `sms_from_number`, and `bale_bot_token`. It does not migrate any legacy option value in WU-06.
+## Settings ownership and privacy
 
-Secret inputs are write-only in the UI: stored API keys/tokens are never rendered back into HTML. Diagnostics expose readiness booleans/status text only. Saving or rendering settings performs no connection test and no SMS/Bale send.
+WU-06 owns one bounded namespaced option: `gravity_notify_settings`.
+
+Current fields prepare only already-approved greenfield runtime inputs:
+
+- `ippanel_api_key`
+- `sms_from_number`
+- `bale_bot_token`
+
+WU-06 performs no legacy migration. Secret inputs are write-only in HTML: stored API keys/tokens are never echoed back. Diagnostics expose readiness status only. Saving/rendering settings performs no connection test and no SMS/Bale send.
 
 ## Help & Diagnostics
 
-Diagnostics show only product/runtime availability, PHP/WordPress version, provider readiness, and Point counts. They exclude credentials, recipient values, Entry contents, raw provider bodies, and provider requests. Missing dependencies degrade to explicit availability states rather than fatals.
+Diagnostics show only privacy-safe product/runtime availability, PHP/WordPress version, provider readiness, Feed/Flow integration availability, and Point counts. They exclude credentials, recipient values, Entry contents, raw provider bodies, and provider requests. Missing optional dependencies degrade to explicit availability states rather than fatals.
 
 ## Assets, RTL/LTR, accessibility
 
-The single WU-06 stylesheet is enqueued only for the captured GNM screen hooks. It uses WordPress 7.1 `wp-theme` semantic tokens when the registered handle is available, with conservative CSS fallbacks so the page remains readable while the repository's older plugin-header compatibility claim awaits its WU-10 reconciliation.
+The single WU-06 stylesheet is enqueued only for captured GNM admin screen hooks. Where available it consumes WordPress `wp-theme` semantic `--wpds-*` tokens with conservative CSS fallbacks.
 
-Layout uses logical properties and responsive grids. Technical values use explicit `dir="ltr"` plus `unicode-bidi: isolate`; WordPress/admin direction remains inherited for Persian RTL. Important states always render their textual status in addition to visual treatment. Native links, buttons, forms, and labels preserve keyboard behavior; `:focus-visible` is explicit. WU-06 introduces no animation or transition, so there is no motion to suppress.
+Layout uses logical properties and responsive grids. Technical values use explicit `dir="ltr"` plus `unicode-bidi: isolate`; surrounding WordPress direction is inherited for Persian RTL. Important states render textual status in addition to visual treatment. Native links/buttons/forms/labels preserve keyboard semantics and explicit `:focus-visible` styling is provided. WU-06 introduces no animation or transition, so no reduced-motion override is required.
 
-Automated tests prove these markup/style hooks and semantic contracts; they do not claim pixel-level or assistive-technology browser validation.
+Automated tests prove these code/style contracts and deterministic state derivation; they do not claim pixel-level, contrast-in-browser, screen-reader, or assistive-technology validation.
 
-## Legacy differential
+## Bounded legacy differential
 
-Not yet performed. Per the migration contract, equivalent legacy admin UI is intentionally not inspected until the initial WU-06 focused implementation tests pass.
+Work Unit: `WU-06`
+
+Initial greenfield Head: `04f3af0691ed2c7d6ea4ddd5dbe978d89ac90ec6`
+
+Initial focused validation: GitHub Actions `WU-00 Qualification` run `34351454696`, WU-06 focused admin target completed successfully before legacy inspection.
+
+Legacy source inspected only after that pass:
+
+- immutable tag/commit `legacy-source-pre-greenfield-2026-09-02@7556f86ecc65f37d34d9563ce2087f16235bbca5`;
+- bounded `includes/Admin/Settings_Page.php` setting meaning only;
+- bounded `includes/Admin/Settings_Schema.php` labels/schema only.
+
+Material current WU-06 behavior missing: **NO**.
+
+Decision: `NO_MATERIAL_FINDING`.
+
+Migration obligation recorded for later WU-08 only: legacy settings include `ippanel_api_key` and `default_sender_number`; any future migration must map values deliberately and secret-safely rather than treating the legacy settings architecture as authoritative. WU-06 does not migrate those values.
+
+Intentionally not incorporated: legacy queue/retry controls, log dashboard, custom Rule/triggers, secondary-provider assumptions, AJAX connection/fetch-sender side effects, legacy page topology, and legacy styling.

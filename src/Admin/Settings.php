@@ -11,27 +11,37 @@ namespace GravityNotify\Admin;
  * Sanitizes only WU-06 settings; it performs no migration or external send.
  */
 final class Settings {
-	public const OPTION = 'gravity_notify_settings';
-	public const GROUP = 'gravity_notify_settings';
 
-	/** @return array<string,string> */
+	public const OPTION = 'gravity_notify_settings';
+	public const GROUP  = 'gravity_notify_settings';
+
+	/**
+	 * Read the current namespaced GNM settings option.
+	 *
+	 * @return array<string, string>
+	 */
 	public static function read(): array {
 		$value = function_exists( 'get_option' ) ? get_option( self::OPTION, array() ) : array();
 		return self::sanitize_input( is_array( $value ) ? $value : array(), array() );
 	}
 
-	/** @param mixed $input @return array<string,string> */
+	/**
+	 * Sanitize one WordPress Settings API submission.
+	 *
+	 * @param mixed $input Raw submitted option value.
+	 * @return array<string, string>
+	 */
 	public static function sanitize_option( $input ): array {
 		$existing = function_exists( 'get_option' ) ? get_option( self::OPTION, array() ) : array();
 		return self::sanitize_input( is_array( $input ) ? $input : array(), is_array( $existing ) ? $existing : array() );
 	}
 
 	/**
-	 * Pure sanitizer used by tests and the Settings API callback.
+	 * Sanitize bounded provider inputs without migrating legacy state.
 	 *
-	 * @param array<string,mixed> $input Raw submitted input.
-	 * @param array<string,mixed> $existing Existing option state.
-	 * @return array<string,string>
+	 * @param array<string, mixed> $input    Raw submitted input.
+	 * @param array<string, mixed> $existing Existing option state.
+	 * @return array<string, string>
 	 */
 	public static function sanitize_input( array $input, array $existing = array() ): array {
 		$result = array(
@@ -44,6 +54,7 @@ final class Settings {
 		if ( '' !== $api_key ) {
 			$result['ippanel_api_key'] = $api_key;
 		}
+
 		$bale_token = self::secret( $input['bale_bot_token'] ?? '' );
 		if ( '' !== $bale_token ) {
 			$result['bale_bot_token'] = $bale_token;
@@ -52,7 +63,12 @@ final class Settings {
 		return $result;
 	}
 
-	/** @param array<string,string>|null $settings @return array<string,bool> */
+	/**
+	 * Derive provider/channel readiness without exposing secrets.
+	 *
+	 * @param array<string, string>|null $settings Optional sanitized settings override.
+	 * @return array<string, bool>
+	 */
 	public static function readiness( ?array $settings = null ): array {
 		$settings = null === $settings ? self::read() : $settings;
 		return array(
@@ -61,7 +77,12 @@ final class Settings {
 		);
 	}
 
-	/** @param array<string,string>|null $settings @return array<string,string> */
+	/**
+	 * Return privacy-safe diagnostic status labels only.
+	 *
+	 * @param array<string, string>|null $settings Optional sanitized settings override.
+	 * @return array<string, string>
+	 */
 	public static function diagnostic_facts( ?array $settings = null ): array {
 		$ready = self::readiness( $settings );
 		return array(
@@ -70,22 +91,37 @@ final class Settings {
 		);
 	}
 
+	/**
+	 * Sanitize a bounded write-only secret value.
+	 *
+	 * @param mixed $value Raw secret value.
+	 * @return string
+	 */
 	private static function secret( $value ): string {
 		if ( ! is_string( $value ) ) {
 			return '';
 		}
+
 		$value = trim( $value );
 		$value = preg_replace( '/[\x00-\x1F\x7F]/', '', $value );
 		if ( ! is_string( $value ) ) {
 			return '';
 		}
+
 		return substr( $value, 0, 512 );
 	}
 
+	/**
+	 * Accept only a syntactically valid E.164 sender number.
+	 *
+	 * @param mixed $value Raw sender value.
+	 * @return string
+	 */
 	private static function e164( $value ): string {
 		if ( ! is_string( $value ) ) {
 			return '';
 		}
+
 		$value = trim( $value );
 		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value ) ? $value : '';
 	}

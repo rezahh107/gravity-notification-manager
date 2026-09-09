@@ -11,7 +11,12 @@ namespace GravityNotify\Admin;
  * Detects product availability without network calls or sensitive payloads.
  */
 final class Environment {
-	/** @return array<string,string> */
+
+	/**
+	 * Return bounded environment and integration availability facts.
+	 *
+	 * @return array<string, string>
+	 */
 	public static function facts(): array {
 		return array(
 			'WordPress'     => function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'version' ) : 'Unavailable',
@@ -23,6 +28,12 @@ final class Environment {
 		);
 	}
 
+	/**
+	 * Convert one class-availability check to operator-safe text.
+	 *
+	 * @param string $class_name Class name to inspect.
+	 * @return string
+	 */
 	private static function availability( string $class_name ): string {
 		return class_exists( $class_name ) ? 'Available' : 'Unavailable';
 	}
