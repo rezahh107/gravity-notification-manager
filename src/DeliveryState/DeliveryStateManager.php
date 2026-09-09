@@ -8,8 +8,9 @@
 namespace GravityNotify\DeliveryState;
 
 use Closure;
-use GravityNotify\GravityForms\NotificationExecutionResult;
 use GravityNotify\Delivery\AttemptResult;
+use GravityNotify\Delivery\AttemptStatus;
+use GravityNotify\GravityForms\NotificationExecutionResult;
 
 /**
  * Owns the lightweight versioned Entry Meta state document.
@@ -344,7 +345,7 @@ final class DeliveryStateManager {
 			return false;
 		}
 
-		if ( ! is_string( $target['feed_name'] ) || 255 < strlen( $target['feed_name'] ) || ! is_string( $target['channel'] ) || 255 < strlen( $target['channel'] ) ) {
+		if ( ! $this->is_bounded_string( $target['feed_name'] ) || ! $this->is_bounded_string( $target['channel'] ) ) {
 			return false;
 		}
 
@@ -356,17 +357,332 @@ final class DeliveryStateManager {
 			return false;
 		}
 
-		if ( ! is_array( $target['executions'] ) || array() === $target['executions'] || ! is_array( $target['retry_history'] ) ) {
+		if ( ! is_array( $target['executions'] ) || ! is_array( $target['retry_history'] ) ) {
 			return false;
 		}
 
 		$final_status = $target['final_status'];
-		if ( ! in_array( $final_status, array( self::FINAL_RESOLVED, self::FINAL_UNRESOLVED ), true ) ) {
+		if ( ! $this->is_valid_final_state( $final_status, $target['attention_required'] ) ) {
 			return false;
 		}
 
-		return ( self::FINAL_RESOLVED === $final_status && false === $target['attention_required'] )
-			|| ( self::FINAL_UNRESOLVED === $final_status && true === $target['attention_required'] );
+		$history = $this->validated_execution_history( $target['executions'] );
+		if ( null === $history ) {
+			return false;
+		}
+
+		$last_execution = $history['last_execution'];
+		if ( $target['last_execution_sequence'] !== $last_execution['execution_sequence']
+			|| $final_status !== $last_execution['final_status']
+			|| $target['attention_required'] !== $last_execution['attention_required'] ) {
+			return false;
+		}
+
+		return $this->is_valid_retry_history(
+			$target['retry_history'],
+			$history['executions_by_sequence'],
+			$history['manual_retry_sequences'],
+			$target['resolved_by_retry']
+		);
+	}
+
+	/**
+	 * Validate retained execution history and return relationships needed by Retry validation.
+	 *
+	 * @param array<int, mixed> $executions Retained executions.
+	 * @return array{last_execution:array<string,mixed>,executions_by_sequence:array<int,array<string,mixed>>,manual_retry_sequences:array<int,int>}|null
+	 */
+	private function validated_execution_history( array $executions ): ?array {
+		if ( array() === $executions || ! array_is_list( $executions ) ) {
+			return null;
+		}
+
+		$previous_sequence      = 0;
+		$executions_by_sequence = array();
+		$manual_retry_sequences = array();
+		$last_execution         = null;
+
+		foreach ( $executions as $execution ) {
+			if ( ! is_array( $execution ) || ! $this->is_valid_execution( $execution, $previous_sequence ) ) {
+				return null;
+			}
+
+			$sequence                            = $execution['execution_sequence'];
+			$executions_by_sequence[ $sequence ] = $execution;
+			if ( self::EXECUTION_MANUAL_RETRY === $execution['type'] ) {
+				$manual_retry_sequences[] = $sequence;
+			}
+
+			$previous_sequence = $sequence;
+			$last_execution    = $execution;
+		}
+
+		if ( null === $last_execution ) {
+			return null;
+		}
+
+		return array(
+			'last_execution'         => $last_execution,
+			'executions_by_sequence' => $executions_by_sequence,
+			'manual_retry_sequences' => $manual_retry_sequences,
+		);
+	}
+
+	/**
+	 * Validate one retained execution and its nested attempt/skip records.
+	 *
+	 * @param array<string, mixed> $execution Execution record.
+	 * @param int                  $previous_sequence Previous retained sequence.
+	 * @return bool
+	 */
+	private function is_valid_execution( array $execution, int $previous_sequence ): bool {
+		$required_fields = array(
+			'execution_sequence',
+			'type',
+			'timestamp',
+			'channel',
+			'attempts',
+			'skips',
+			'delivery_succeeded',
+			'final_status',
+			'attention_required',
+		);
+
+		if ( ! $this->has_exact_keys( $execution, $required_fields ) ) {
+			return false;
+		}
+
+		$sequence = $execution['execution_sequence'];
+		if ( ! is_int( $sequence ) || 1 > $sequence || $previous_sequence >= $sequence ) {
+			return false;
+		}
+
+		if ( ! in_array(
+			$execution['type'],
+			array( self::EXECUTION_ORDINARY, self::EXECUTION_MANUAL_RETRY, self::EXECUTION_DUPLICATE_SUPPRESSED ),
+			true
+		) ) {
+			return false;
+		}
+
+		if ( ! $this->is_bounded_string( $execution['timestamp'] ) || ! $this->is_bounded_string( $execution['channel'] ) ) {
+			return false;
+		}
+
+		if ( ! is_array( $execution['attempts'] ) || ! is_array( $execution['skips'] ) || ! is_bool( $execution['delivery_succeeded'] ) || ! is_bool( $execution['attention_required'] ) ) {
+			return false;
+		}
+
+		if ( ! $this->is_valid_final_state( $execution['final_status'], $execution['attention_required'] ) ) {
+			return false;
+		}
+
+		if ( true === $execution['delivery_succeeded'] && self::FINAL_RESOLVED !== $execution['final_status'] ) {
+			return false;
+		}
+
+		if ( false === $execution['delivery_succeeded'] && self::FINAL_UNRESOLVED !== $execution['final_status'] ) {
+			return false;
+		}
+
+		return $this->are_valid_attempts( $execution['attempts'], $sequence ) && $this->are_valid_skips( $execution['skips'] );
+	}
+
+	/**
+	 * Validate one execution's retained transport attempts.
+	 *
+	 * @param array<int, mixed> $attempts Attempts.
+	 * @param int               $execution_sequence Parent execution sequence.
+	 * @return bool
+	 */
+	private function are_valid_attempts( array $attempts, int $execution_sequence ): bool {
+		if ( ! array_is_list( $attempts ) ) {
+			return false;
+		}
+
+		$previous_sequence = 0;
+		$required_fields   = array(
+			'execution_sequence',
+			'attempt_sequence',
+			'timestamp',
+			'status',
+			'channel',
+			'provider',
+			'capability',
+			'provider_references',
+		);
+
+		foreach ( $attempts as $attempt ) {
+			if ( ! is_array( $attempt ) || ! $this->has_exact_keys( $attempt, $required_fields ) ) {
+				return false;
+			}
+
+			if ( $execution_sequence !== $attempt['execution_sequence'] || ! is_int( $attempt['attempt_sequence'] ) || 1 > $attempt['attempt_sequence'] || $previous_sequence >= $attempt['attempt_sequence'] ) {
+				return false;
+			}
+
+			if ( ! is_string( $attempt['status'] ) || ! AttemptStatus::is_valid( $attempt['status'] ) ) {
+				return false;
+			}
+
+			if ( ! $this->is_bounded_string( $attempt['timestamp'] ) || ! $this->is_bounded_string( $attempt['channel'] ) ) {
+				return false;
+			}
+
+			if ( ! $this->is_nullable_bounded_string( $attempt['provider'] ) || ! $this->is_nullable_bounded_string( $attempt['capability'] ) ) {
+				return false;
+			}
+
+			if ( ! is_array( $attempt['provider_references'] ) || ! array_is_list( $attempt['provider_references'] ) ) {
+				return false;
+			}
+
+			foreach ( $attempt['provider_references'] as $reference ) {
+				if ( ! $this->is_bounded_string( $reference ) ) {
+					return false;
+				}
+			}
+
+			$previous_sequence = $attempt['attempt_sequence'];
+		}
+
+		return true;
+	}
+
+	/**
+	 * Validate one execution's retained safe skip records.
+	 *
+	 * @param array<int, mixed> $skips Skips.
+	 * @return bool
+	 */
+	private function are_valid_skips( array $skips ): bool {
+		if ( ! array_is_list( $skips ) ) {
+			return false;
+		}
+
+		foreach ( $skips as $skip ) {
+			if ( ! is_array( $skip ) || ! $this->has_exact_keys( $skip, array( 'subject', 'reason' ) ) ) {
+				return false;
+			}
+
+			if ( ! $this->is_bounded_string( $skip['subject'] ) || ! $this->is_bounded_string( $skip['reason'] ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Validate retained manual-Retry history against retained execution truth.
+	 *
+	 * @param array<int, mixed>                $retry_history Retry records.
+	 * @param array<int, array<string, mixed>> $executions_by_sequence Executions indexed by sequence.
+	 * @param array<int, int>                  $manual_retry_sequences Manual-Retry execution sequences.
+	 * @param bool                             $resolved_by_retry Target Retry-resolution flag.
+	 * @return bool
+	 */
+	private function is_valid_retry_history( array $retry_history, array $executions_by_sequence, array $manual_retry_sequences, bool $resolved_by_retry ): bool {
+		if ( ! array_is_list( $retry_history ) ) {
+			return false;
+		}
+
+		$previous_sequence  = 0;
+		$seen_sequences     = array();
+		$has_resolved_retry = false;
+
+		foreach ( $retry_history as $retry ) {
+			if ( ! is_array( $retry ) || ! $this->has_exact_keys( $retry, array( 'execution_sequence', 'timestamp', 'resolved' ) ) ) {
+				return false;
+			}
+
+			$sequence = $retry['execution_sequence'];
+			if ( ! is_int( $sequence ) || 1 > $sequence || $previous_sequence >= $sequence || isset( $seen_sequences[ $sequence ] ) ) {
+				return false;
+			}
+
+			if ( ! $this->is_bounded_string( $retry['timestamp'] ) || ! is_bool( $retry['resolved'] ) ) {
+				return false;
+			}
+
+			$execution = $executions_by_sequence[ $sequence ] ?? null;
+			if ( ! is_array( $execution ) || self::EXECUTION_MANUAL_RETRY !== $execution['type'] || $retry['resolved'] !== $execution['delivery_succeeded'] ) {
+				return false;
+			}
+
+			$seen_sequences[ $sequence ] = true;
+			$previous_sequence           = $sequence;
+			$has_resolved_retry          = $has_resolved_retry || true === $retry['resolved'];
+		}
+
+		if ( count( $seen_sequences ) !== count( $manual_retry_sequences ) ) {
+			return false;
+		}
+
+		foreach ( $manual_retry_sequences as $sequence ) {
+			if ( ! isset( $seen_sequences[ $sequence ] ) ) {
+				return false;
+			}
+		}
+
+		return $resolved_by_retry === $has_resolved_retry;
+	}
+
+	/**
+	 * Validate final status and Attention Required coherence.
+	 *
+	 * @param mixed $final_status Final status.
+	 * @param mixed $attention_required Attention state.
+	 * @return bool
+	 */
+	private function is_valid_final_state( $final_status, $attention_required ): bool {
+		if ( ! is_bool( $attention_required ) || ! in_array( $final_status, array( self::FINAL_RESOLVED, self::FINAL_UNRESOLVED ), true ) ) {
+			return false;
+		}
+
+		return ( self::FINAL_RESOLVED === $final_status && false === $attention_required )
+			|| ( self::FINAL_UNRESOLVED === $final_status && true === $attention_required );
+	}
+
+	/**
+	 * Whether a retained record contains exactly the existing persisted fields.
+	 *
+	 * @param array<string, mixed> $record Record.
+	 * @param array<int, string>   $required_fields Required fields.
+	 * @return bool
+	 */
+	private function has_exact_keys( array $record, array $required_fields ): bool {
+		if ( count( $record ) !== count( $required_fields ) ) {
+			return false;
+		}
+
+		foreach ( $required_fields as $field ) {
+			if ( ! array_key_exists( $field, $record ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Whether a persisted safe string matches the current bounded writer representation.
+	 *
+	 * @param mixed $value Value.
+	 * @return bool
+	 */
+	private function is_bounded_string( $value ): bool {
+		return is_string( $value ) && 255 >= strlen( $value );
+	}
+
+	/**
+	 * Whether a persisted optional string matches the current bounded writer representation.
+	 *
+	 * @param mixed $value Value.
+	 * @return bool
+	 */
+	private function is_nullable_bounded_string( $value ): bool {
+		return null === $value || $this->is_bounded_string( $value );
 	}
 
 	/**
