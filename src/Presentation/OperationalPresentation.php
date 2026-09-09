@@ -137,7 +137,7 @@ final class OperationalPresentation {
 	}
 
 	/**
-	 * Echo the bounded Entry Detail box through WordPress HTML allow-list escaping.
+	 * Echo the bounded Entry Detail box through a local WU-07 KSES allow-list.
 	 *
 	 * @param array<string, mixed> $args Gravity Forms callback args.
 	 * @return void
@@ -147,13 +147,55 @@ final class OperationalPresentation {
 		$form  = isset( $args['form'] ) && is_array( $args['form'] ) ? $args['form'] : array();
 		$html  = $this->entry_detail_html( $entry, $form );
 
-		if ( function_exists( 'wp_kses_post' ) ) {
-			echo wp_kses_post( $html );
+		if ( ! function_exists( 'wp_kses' ) ) {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Deterministic test fallback; production WordPress path uses wp_kses_post().
-		echo $html;
+		echo wp_kses( $html, self::entry_detail_allowed_html() );
+	}
+
+	/**
+	 * Return only the tags and attributes emitted by the Entry Detail call graph.
+	 *
+	 * This allow-list is intentionally local to this renderer. It does not alter
+	 * WordPress global post HTML and does not broaden GravityView/Elementor output.
+	 *
+	 * @return array<string, array<string, bool>>
+	 */
+	private static function entry_detail_allowed_html(): array {
+		return array(
+			'div'     => array(
+				'class'     => true,
+				'aria-live' => true,
+			),
+			'p'       => array(
+				'class' => true,
+			),
+			'strong'  => array(),
+			'section' => array(
+				'class' => true,
+			),
+			'h4'      => array(),
+			'bdi'     => array(
+				'dir' => true,
+			),
+			'dl'      => array(),
+			'dt'      => array(),
+			'dd'      => array(),
+			'form'    => array(
+				'method' => true,
+				'action' => true,
+			),
+			'input'   => array(
+				'type'  => true,
+				'name'  => true,
+				'value' => true,
+			),
+			'button'  => array(
+				'type'  => true,
+				'class' => true,
+			),
+		);
 	}
 
 	/**
