@@ -35,13 +35,25 @@ use WP_UnitTestCase;
  */
 final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 
-	/** @var int Real fixture Form ID. */
+	/**
+	 * Real fixture Form ID.
+	 *
+	 * @var int
+	 */
 	private int $form_id = 0;
 
-	/** @var int Real fixture Entry ID. */
+	/**
+	 * Real fixture Entry ID.
+	 *
+	 * @var int
+	 */
 	private int $entry_id = 0;
 
-	/** @var mixed Pre-test cutover option value. */
+	/**
+	 * Pre-test cutover option value.
+	 *
+	 * @var mixed
+	 */
 	private $cutover_before;
 
 	/** Prepare isolated real-runtime fixtures. */
@@ -293,7 +305,11 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		return $feed_id;
 	}
 
-	/** Persist the one greenfield target GNM Feed-Step first in workflow order. */
+	/**
+	 * Persist the greenfield target GNM Feed-Step first in workflow order.
+	 *
+	 * @param int $feed_id Selected target Feed ID.
+	 */
 	private function add_target_step( int $feed_id ): int {
 		$step_id = ( new \Gravity_Flow_API( $this->form_id ) )->add_step(
 			array(
@@ -318,14 +334,22 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		return $step_id;
 	}
 
-	/** Read the target Feed active flag. */
+	/**
+	 * Read the target Feed active flag.
+	 *
+	 * @param int $feed_id Target Feed ID.
+	 */
 	private function feed_active( int $feed_id ): bool {
 		$feeds = GFAPI::get_feeds( $feed_id, null, NotificationFeedAddOn::get_instance()->get_slug(), null );
 		$feed  = is_array( $feeds ) ? reset( $feeds ) : false;
 		return is_array( $feed ) && (bool) ( $feed['is_active'] ?? false );
 	}
 
-	/** Assert one exact canonical legacy callback registration. */
+	/**
+	 * Assert one exact canonical legacy callback registration.
+	 *
+	 * @param array<int, mixed> $callback Callback identity.
+	 */
 	private function assert_one_legacy_callback( array $callback ): void {
 		global $wp_filter;
 		self::assertArrayHasKey( 'gravityflow_step_complete', $wp_filter );
