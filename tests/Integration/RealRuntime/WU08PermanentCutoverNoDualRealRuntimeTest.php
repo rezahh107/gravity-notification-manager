@@ -35,13 +35,25 @@ use WP_UnitTestCase;
  */
 final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 
-	/** @var int Real fixture Form ID. */
+	/**
+	 * Real fixture Form ID.
+	 *
+	 * @var int
+	 */
 	private int $form_id = 0;
 
-	/** @var int Real fixture Entry ID. */
+	/**
+	 * Real fixture Entry ID.
+	 *
+	 * @var int
+	 */
 	private int $entry_id = 0;
 
-	/** @var mixed Pre-test cutover option value. */
+	/**
+	 * Pre-test cutover option value.
+	 *
+	 * @var mixed
+	 */
 	private $cutover_before;
 
 	/** Prepare isolated real-runtime fixtures. */
@@ -89,6 +101,8 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Prove controlled cutover and rollback preserve one effective sender authority.
+	 *
 	 * @testdox WU08-CUTOVER-NODUAL-REAL-18 Flow cutover and rollback preserve one effective sender authority
 	 */
 	public function test_wu08_cutover_nodual_real_18_flow_cutover_and_rollback_preserve_one_effective_sender_authority(): void {
@@ -116,17 +130,17 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		self::assertSame( array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::GREENFIELD_ENABLED ), array_column( $enable_trace, 'state' ) );
 		self::assertSame(
 			array(
-				'legacy_allowed' => false,
+				'legacy_allowed'         => false,
 				'greenfield_authorized' => false,
-				'feed_active' => false,
+				'feed_active'            => false,
 			),
 			array_diff_key( $enable_trace[0], array( 'state' => true ) )
 		);
 		self::assertSame(
 			array(
-				'legacy_allowed' => false,
+				'legacy_allowed'         => false,
 				'greenfield_authorized' => true,
-				'feed_active' => true,
+				'feed_active'            => true,
 			),
 			array_diff_key( $enable_trace[1], array( 'state' => true ) )
 		);
@@ -152,17 +166,17 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		self::assertSame( array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::PREPARED ), array_column( $rollback_trace, 'state' ) );
 		self::assertSame(
 			array(
-				'legacy_allowed' => false,
+				'legacy_allowed'         => false,
 				'greenfield_authorized' => false,
-				'feed_active' => true,
+				'feed_active'            => true,
 			),
 			array_diff_key( $rollback_trace[0], array( 'state' => true ) )
 		);
 		self::assertSame(
 			array(
-				'legacy_allowed' => true,
+				'legacy_allowed'         => true,
 				'greenfield_authorized' => false,
-				'feed_active' => false,
+				'feed_active'            => false,
 			),
 			array_diff_key( $rollback_trace[1], array( 'state' => true ) )
 		);
@@ -188,7 +202,7 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 	 * @return array<int, array{state:string,legacy_allowed:bool,greenfield_authorized:bool,feed_active:bool}>
 	 */
 	private function trace_cutover_option( string $scope_id, int $source_step_id, int $feed_id, callable $operation ): array {
-		$trace = array();
+		$trace    = array();
 		$observer = function ( string $option ) use ( &$trace, $scope_id, $source_step_id, $feed_id ): void {
 			if ( CutoverRegistry::OPTION !== $option ) {
 				return;
@@ -198,10 +212,10 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 				return;
 			}
 			$trace[] = array(
-				'state' => (string) $record['state'],
-				'legacy_allowed' => CutoverRegistry::legacy_flow_step_allowed( $this->form_id, $source_step_id ),
+				'state'                 => (string) $record['state'],
+				'legacy_allowed'        => CutoverRegistry::legacy_flow_step_allowed( $this->form_id, $source_step_id ),
 				'greenfield_authorized' => CutoverRegistry::feed_authorized( $feed_id ),
-				'feed_active' => $this->feed_active( $feed_id ),
+				'feed_active'           => $this->feed_active( $feed_id ),
 			);
 		};
 		add_action( 'updated_option', $observer, 10, 1 );
@@ -227,9 +241,9 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 	 */
 	private function assert_guarded_source_event( int $source_step_id ): void {
 		$observations = 0;
-		$listener = array( LegacyListener::class, 'on_step_complete' );
-		$dispatcher = array( LegacyDispatcher::instance(), 'handle_step_complete' );
-		$observer = function ( $step_id ) use ( &$observations, $source_step_id, $listener, $dispatcher ): void {
+		$listener     = array( LegacyListener::class, 'on_step_complete' );
+		$dispatcher   = array( LegacyDispatcher::instance(), 'handle_step_complete' );
+		$observer     = function ( $step_id ) use ( &$observations, $source_step_id, $listener, $dispatcher ): void {
 			if ( $source_step_id !== (int) $step_id ) {
 				return;
 			}
@@ -241,6 +255,7 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		try {
 			$step = ( new \Gravity_Flow_API( $this->form_id ) )->get_step( $source_step_id );
 			self::assertIsObject( $step );
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Exercising the documented Gravity Flow hook.
 			do_action( 'gravityflow_step_complete', $source_step_id, 0, $this->form_id, 'approved', $step );
 			self::assertSame( 1, $observations );
 		} finally {
@@ -254,7 +269,13 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		$resolver = new RecipientResolver(
 			new FakeEntryFieldReader( array() ),
 			new FakeUserDirectory( array(), array(), array() ),
-			new FakeFlowAssigneeReader( array( 'available' => false, 'reason' => 'not_used', 'assignees' => array() ) )
+			new FakeFlowAssigneeReader(
+				array(
+					'available' => false,
+					'reason'    => 'not_used',
+					'assignees' => array(),
+				)
+			)
 		);
 		NotificationFeedAddOn::get_instance()->configure_processor(
 			new NotificationFeedProcessor(
@@ -277,12 +298,12 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		$feed_id = GFAPI::add_feed(
 			$this->form_id,
 			array(
-				'feedName' => $name,
-				'message' => $message,
-				'recipient_source_type' => FeedRuleSchema::RECIPIENT_FIXED,
+				'feedName'               => $name,
+				'message'                => $message,
+				'recipient_source_type'  => FeedRuleSchema::RECIPIENT_FIXED,
 				'recipient_source_value' => '+15550000003',
-				'channel' => FeedRuleSchema::CHANNEL_SMS,
-				'fallback_policy' => FeedRuleSchema::FALLBACK_NONE,
+				'channel'                => FeedRuleSchema::CHANNEL_SMS,
+				'fallback_policy'        => FeedRuleSchema::FALLBACK_NONE,
 			),
 			NotificationFeedAddOn::get_instance()->get_slug()
 		);
@@ -299,12 +320,12 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 	 * @return int Step ID.
 	 */
 	private function add_flow_step( string $name, int $feed_id ): int {
-		$api = new \Gravity_Flow_API( $this->form_id );
+		$api     = new \Gravity_Flow_API( $this->form_id );
 		$step_id = $api->add_step(
 			array(
-				'step_name' => $name,
-				'step_type' => 'gravity_notification_manager',
-				'feed_' . $feed_id => '1',
+				'step_name'           => $name,
+				'step_type'           => 'gravity_notification_manager',
+				'feed_' . $feed_id    => '1',
 			)
 		);
 		self::assertGreaterThan( 0, $step_id );
@@ -330,7 +351,7 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 	 */
 	private function feed_active( int $feed_id ): bool {
 		$feeds = GFAPI::get_feeds( $feed_id, null, NotificationFeedAddOn::get_instance()->get_slug(), null );
-		$feed = is_array( $feeds ) ? reset( $feeds ) : false;
+		$feed  = is_array( $feeds ) ? reset( $feeds ) : false;
 		return is_array( $feed ) && (bool) ( $feed['is_active'] ?? false );
 	}
 
