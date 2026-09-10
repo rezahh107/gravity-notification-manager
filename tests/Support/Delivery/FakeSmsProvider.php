@@ -46,6 +46,13 @@ final class FakeSmsProvider implements SmsProviderInterface {
 	public ?SmsRequest $last_request = null;
 
 	/**
+	 * All requests in send order for deterministic test diagnostics.
+	 *
+	 * @var array<int, SmsRequest>
+	 */
+	public array $requests = array();
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $status     Attempt status.
@@ -86,6 +93,7 @@ final class FakeSmsProvider implements SmsProviderInterface {
 	public function send( SmsRequest $request ): AttemptResult {
 		++$this->send_count;
 		$this->last_request = $request;
+		$this->requests[]   = $request;
 
 		return new AttemptResult(
 			$this->status,
