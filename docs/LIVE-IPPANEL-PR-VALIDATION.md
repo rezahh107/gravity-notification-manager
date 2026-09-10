@@ -20,9 +20,9 @@ Missing secrets on an eligible same-repository PR are a configuration/evidence f
 
 ## Runtime and evidence
 
-The live harness uses WordPress 7.1, PHP 8.3, and the same owner-authorized Gravity Forms/Gravity Flow packages and hashes as the repository's Real GF Flow Integration workflow. It creates a real Gravity Forms form, a representative Gravity Flow Feed Step, performs the existing WU-08 controlled cutover, configures the existing `ProductionRuntime`, and exercises the current synchronous `GravityNotify` production delivery chain.
+The live harness uses WordPress 7.1, PHP 8.3, and the same owner-authorized Gravity Forms/Gravity Flow packages and hashes as the repository's Real GF Flow Integration workflow. It creates a real Gravity Forms form, one greenfield GNM target Feed Step, and a separate non-GNM Gravity Flow Step that supplies the representative legacy event scope. It performs the existing WU-08 controlled cutover, configures the existing `ProductionRuntime`, and exercises the current synchronous `GravityNotify` production delivery chain.
 
-The SMS body contains only a non-sensitive correlation marker derived from the GitHub Actions run ID and the first 12 hexadecimal characters of the exact PR Head. The job emits only bounded evidence fields: correlation marker, provider outbox reference, provider-attempt count, delivery outcome, and delivery poll number. It does not emit destination, sender, API key, provider response bodies, or persisted secret-bearing configuration.
+The SMS body contains only a non-sensitive correlation marker derived from the GitHub Actions run ID and the first 12 hexadecimal characters of the exact PR Head. On success, the job emits only bounded evidence fields: correlation marker, provider outbox reference, provider-attempt count, delivery outcome, and delivery poll number. On provider-attempt failure, it emits only provider-neutral attempt status, provider/capability identifiers, the existing safe diagnostic classification, numeric HTTP status, a transport-error flag, and provider-reference count. It does not emit destination, sender, API key, Authorization headers, provider response bodies, or persisted secret-bearing configuration.
 
 ## IPPanel contract snapshot
 
