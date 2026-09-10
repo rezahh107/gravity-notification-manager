@@ -408,8 +408,11 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		$source_step_id = $this->add_flow_step_fixture( 'Synthetic source step', $source_feed_id );
 		$feed_id        = $this->add_flow_feed_fixture( 'Synthetic target feed' );
 		$target_step_id = $this->add_flow_step_fixture( 'Synthetic target step', $feed_id );
-		$service        = new CutoverService();
-		$scope_id       = $service->prepare_flow( 'flow_step', $this->form_id, $source_step_id, $feed_id, $target_step_id );
+		$this->set_feed_active_fixture( $feed_id, false );
+		$verification = ( new FlowStepVerifier( new WordPressConfigurationSource() ) )->verify( $this->form_id, $feed_id, $target_step_id );
+		self::assertTrue( $verification['ready'], $verification['reason'] );
+		$service  = new CutoverService();
+		$scope_id = $service->prepare_flow( 'flow_step', $this->form_id, $source_step_id, $feed_id, $target_step_id );
 		self::assertIsString( $scope_id );
 		self::assertNotSame( '', $scope_id );
 		self::assertTrue( $service->enable( $scope_id ) );
@@ -507,7 +510,6 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		self::assertNotWPError( $feed_id );
 		self::assertIsInt( $feed_id );
 		self::assertGreaterThan( 0, $feed_id );
-		$this->set_feed_active_fixture( $feed_id, false );
 		return $feed_id;
 	}
 
