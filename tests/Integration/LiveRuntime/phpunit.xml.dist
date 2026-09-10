@@ -2,7 +2,7 @@
 <phpunit bootstrap="bootstrap.php" colors="true" failOnWarning="true" failOnRisky="true" failOnIncomplete="true" failOnSkipped="true">
     <testsuites>
         <testsuite name="Live IPPanel PR validation">
-            <file>LiveIPPanelFlowStepTest.php</file>
+            <file>LiveIPPanelFlowStepValidationTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
