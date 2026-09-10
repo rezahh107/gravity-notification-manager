@@ -74,6 +74,9 @@ jobs:
       - name: Run WU-07 focused presentation targets
         run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Presentation
 
+      - name: Run WU-08 migration and cutover targets
+        run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Migration
+
       - name: Lint WU-00 PHP surfaces
         run: composer lint:wu00
 
