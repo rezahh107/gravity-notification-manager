@@ -181,16 +181,15 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		self::assertCount( 1, $result->attempts() );
 		$attempt = $result->attempts()[0];
 		if ( AttemptStatus::SUCCESS !== $attempt->status() ) {
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Bounded provider-neutral diagnostics only.
 			printf(
 				'GNM_LIVE_ATTEMPT status=%s provider=%s capability=%s diagnostic=%s http_status=%d transport_error=%s refs=%d' . PHP_EOL,
-				$this->safe_token( $attempt->status() ),
-				$this->safe_token( (string) $attempt->provider_id() ),
-				$this->safe_token( (string) $attempt->capability() ),
-				$this->safe_token( $attempt->diagnostic() ),
-				$http_status,
-				$transport_error ? 'yes' : 'no',
-				count( $attempt->provider_references() )
+				esc_html( $this->safe_token( $attempt->status() ) ),
+				esc_html( $this->safe_token( (string) $attempt->provider_id() ) ),
+				esc_html( $this->safe_token( (string) $attempt->capability() ) ),
+				esc_html( $this->safe_token( $attempt->diagnostic() ) ),
+				absint( $http_status ),
+				esc_html( $transport_error ? 'yes' : 'no' ),
+				absint( count( $attempt->provider_references() ) )
 			);
 		}
 		self::assertSame( AttemptStatus::SUCCESS, $attempt->status() );
@@ -313,7 +312,11 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		LegacyRuntimeGuard::boot();
 	}
 
-	/** Persist the one live greenfield target Feed. */
+	/**
+	 * Persist the one live greenfield target Feed.
+	 *
+	 * @param string $message Correlation-safe message body.
+	 */
 	private function add_target_feed( string $message ): int {
 		$feed_id = GFAPI::add_feed(
 			$this->form_id,
@@ -332,7 +335,11 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		return $feed_id;
 	}
 
-	/** Persist the live target GNM Feed-Step first in workflow order. */
+	/**
+	 * Persist the live target GNM Feed-Step first in workflow order.
+	 *
+	 * @param int $feed_id Selected target Feed ID.
+	 */
 	private function add_target_step( int $feed_id ): int {
 		$step_id = ( new \Gravity_Flow_API( $this->form_id ) )->add_step(
 			array(
@@ -357,13 +364,21 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		return $step_id;
 	}
 
-	/** Reduce a provider reference to a bounded log-safe identifier. */
+	/**
+	 * Reduce a provider reference to a bounded log-safe identifier.
+	 *
+	 * @param string $reference Provider reference.
+	 */
 	private function safe_reference( string $reference ): string {
 		$reference = preg_replace( '/[^A-Za-z0-9_-]/', '', $reference ) ?? '';
 		return substr( $reference, 0, 128 );
 	}
 
-	/** Reduce provider-neutral diagnostic text to a bounded safe token. */
+	/**
+	 * Reduce provider-neutral diagnostic text to a bounded safe token.
+	 *
+	 * @param string $value Diagnostic value.
+	 */
 	private function safe_token( string $value ): string {
 		$value = preg_replace( '/[^A-Za-z0-9_.:-]/', '_', $value ) ?? '';
 		return substr( $value, 0, 64 );
@@ -392,7 +407,12 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		remove_action( 'gfsms_retry_payload', array( LegacyRuntimeGuard::class, 'restore_retry_payload' ), 11 );
 	}
 
-	/** Restore one WordPress option exactly. */
+	/**
+	 * Restore one WordPress option exactly.
+	 *
+	 * @param string $name  Option name.
+	 * @param mixed  $value Original option value.
+	 */
 	private function restore_option( string $name, $value ): void {
 		if ( null === $value ) {
 			delete_option( $name );
