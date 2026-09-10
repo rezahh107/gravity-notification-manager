@@ -36,6 +36,10 @@ final class WU08LegacyListenerCallbackIdentityRealRuntimeTest extends WP_UnitTes
 	 */
 	public function set_up(): void {
 		parent::set_up();
+		if ( ! defined( 'GFSMS_SETTINGS_OPTION' ) ) {
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Exact immutable legacy bootstrap prerequisite.
+			define( 'GFSMS_SETTINGS_OPTION', 'gfsms_settings' );
+		}
 		$this->cutover_before = get_option( CutoverRegistry::OPTION, null );
 		delete_option( CutoverRegistry::OPTION );
 		$this->remove_legacy_flow_callbacks();
