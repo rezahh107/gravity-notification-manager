@@ -1,0 +1,78 @@
+name: Live IPPanel PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  live-ippanel:
+    name: Same-repository live IPPanel delivery
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+      GNM_GF_SHA256: 542f56ae0747f3661d1474996527298027db3fb8ed3e6469a6391aaabf61069b
+      GNM_GFLOW_SHA256: ac0573b75831380417a21a455176e25eb746d718bbbd0bb70d6da6f48cba5404
+      GF_URL: 'https://drive.usercontent.google.com/download?id=1r1HRP7Qsh9SAg_Ym4-pK3G5y7gmVrgJa&export=download&confirm=t'
+      GFLOW_URL: 'https://drive.usercontent.google.com/download?id=1F5p8XvXdfrKSpm-_cozxIAX_eJLZRuOV&export=download&confirm=t'
+
+    steps:
+      - name: Checkout exact PR Head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Verify exact target identity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          observed="$(git rev-parse HEAD)"
+          printf 'repository=%s expected_sha=%s observed_sha=%s run=%s job=%s\n' \
+            "$GITHUB_REPOSITORY" "$EXPECTED_HEAD" "$observed" "$GITHUB_RUN_ID" "$GITHUB_JOB"
+          test "$observed" = "$EXPECTED_HEAD"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked harness dependencies
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci
+
+      - name: Download and verify owner-authorized public packages
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$RUNNER_TEMP/gnm-premium"
+          gf_zip="$RUNNER_TEMP/gnm-premium/gravityforms.zip"
+          gflow_zip="$RUNNER_TEMP/gnm-premium/gravityflow.zip"
+          curl --fail --show-error --location --retry 3 --retry-all-errors "$GF_URL" --output "$gf_zip"
+          curl --fail --show-error --location --retry 3 --retry-all-errors "$GFLOW_URL" --output "$gflow_zip"
+          printf '%s  %s\n' "$GNM_GF_SHA256" "$gf_zip" | sha256sum -c -
+          printf '%s  %s\n' "$GNM_GFLOW_SHA256" "$gflow_zip" | sha256sum -c -
+          unzip -tq "$gf_zip" >/dev/null
+          unzip -tq "$gflow_zip" >/dev/null
+          echo "GNM_GF_ZIP=$gf_zip" >> "$GITHUB_ENV"
+          echo "GNM_GFLOW_ZIP=$gflow_zip" >> "$GITHUB_ENV"
+
+      - name: Execute one authorized live IPPanel Flow delivery
+        env:
+          GNM_LIVE_IPPANEL_API_KEY: ${{ secrets.GNM_LIVE_IPPANEL_API_KEY }}
+          GNM_LIVE_SMS_FROM: ${{ secrets.GNM_LIVE_SMS_FROM }}
+          GNM_LIVE_SMS_TO: ${{ secrets.GNM_LIVE_SMS_TO }}
+        run: bash tests/Integration/LiveRuntime/run.sh
