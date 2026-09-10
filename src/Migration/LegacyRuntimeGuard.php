@@ -270,7 +270,7 @@ final class LegacyRuntimeGuard {
 	private static function remove_flow_step_callbacks(): bool {
 		$removed = false;
 		if ( class_exists( '\\GFSMS\\Integration\\Listener' ) ) {
-			$removed = remove_action( 'gravityflow_step_complete', array( '\\GFSMS\\Integration\\Listener', 'on_step_complete' ), 10 ) || $removed;
+			$removed = remove_action( 'gravityflow_step_complete', array( \GFSMS\Integration\Listener::class, 'on_step_complete' ), 10 ) || $removed;
 		}
 		if ( class_exists( '\\GFSMS\\Integration\\Dispatcher' ) ) {
 			$removed = remove_action( 'gravityflow_step_complete', array( \GFSMS\Integration\Dispatcher::instance(), 'handle_step_complete' ), 10 ) || $removed;
@@ -285,7 +285,7 @@ final class LegacyRuntimeGuard {
 	 */
 	private static function add_flow_step_callbacks(): void {
 		if ( class_exists( '\\GFSMS\\Integration\\Listener' ) ) {
-			add_action( 'gravityflow_step_complete', array( '\\GFSMS\\Integration\\Listener', 'on_step_complete' ), 10, 5 );
+			add_action( 'gravityflow_step_complete', array( \GFSMS\Integration\Listener::class, 'on_step_complete' ), 10, 5 );
 		}
 		if ( class_exists( '\\GFSMS\\Integration\\Dispatcher' ) ) {
 			add_action( 'gravityflow_step_complete', array( \GFSMS\Integration\Dispatcher::instance(), 'handle_step_complete' ), 10, 5 );
@@ -300,7 +300,7 @@ final class LegacyRuntimeGuard {
 	private static function remove_workflow_callbacks(): bool {
 		$removed = false;
 		if ( class_exists( '\\GFSMS\\Integration\\Listener' ) ) {
-			$removed = remove_action( 'gravityflow_workflow_complete', array( '\\GFSMS\\Integration\\Listener', 'on_workflow_complete' ), 10 ) || $removed;
+			$removed = remove_action( 'gravityflow_workflow_complete', array( \GFSMS\Integration\Listener::class, 'on_workflow_complete' ), 10 ) || $removed;
 		}
 		if ( class_exists( '\\GFSMS\\Integration\\Dispatcher' ) ) {
 			$removed = remove_action( 'gravityflow_workflow_complete', array( \GFSMS\Integration\Dispatcher::instance(), 'handle_workflow_complete' ), 10 ) || $removed;
@@ -315,7 +315,7 @@ final class LegacyRuntimeGuard {
 	 */
 	private static function add_workflow_callbacks(): void {
 		if ( class_exists( '\\GFSMS\\Integration\\Listener' ) ) {
-			add_action( 'gravityflow_workflow_complete', array( '\\GFSMS\\Integration\\Listener', 'on_workflow_complete' ), 10, 3 );
+			add_action( 'gravityflow_workflow_complete', array( \GFSMS\Integration\Listener::class, 'on_workflow_complete' ), 10, 3 );
 		}
 		if ( class_exists( '\\GFSMS\\Integration\\Dispatcher' ) ) {
 			add_action( 'gravityflow_workflow_complete', array( \GFSMS\Integration\Dispatcher::instance(), 'handle_workflow_complete' ), 10, 3 );
