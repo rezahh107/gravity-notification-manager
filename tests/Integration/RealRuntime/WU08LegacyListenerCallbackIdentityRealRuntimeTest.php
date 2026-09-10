@@ -193,9 +193,9 @@ final class WU08LegacyListenerCallbackIdentityRealRuntimeTest extends WP_UnitTes
 	/**
 	 * Assert WordPress stores exactly one canonical callback with the expected arity.
 	 *
-	 * @param string              $hook          Hook name.
-	 * @param array<int, mixed>   $callback      Exact callback.
-	 * @param int                 $accepted_args Accepted argument count.
+	 * @param string            $hook          Hook name.
+	 * @param array<int, mixed> $callback      Exact callback.
+	 * @param int               $accepted_args Accepted argument count.
 	 * @return void
 	 */
 	private function assert_exactly_one_callback( string $hook, array $callback, int $accepted_args ): void {
