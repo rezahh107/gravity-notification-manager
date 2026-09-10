@@ -158,6 +158,13 @@ final class CutoverService {
 		if ( 1 > $feed_id || ! class_exists( '\\GFAPI' ) ) {
 			return false;
 		}
+		$feed = $this->feed( $feed_id );
+		if ( null === $feed ) {
+			return false;
+		}
+		if ( (bool) ( $feed['is_active'] ?? false ) === $active ) {
+			return true;
+		}
 		$result = \GFAPI::update_feed_property( $feed_id, 'is_active', $active ? 1 : 0 );
 		if ( true !== $result ) {
 			return false;
