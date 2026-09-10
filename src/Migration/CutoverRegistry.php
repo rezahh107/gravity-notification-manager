@@ -7,6 +7,9 @@
 
 namespace GravityNotify\Migration;
 
+use GravityNotify\Admin\WordPressConfigurationSource;
+use Throwable;
+
 /**
  * Stores only bounded cutover authority facts; never delivery state or secrets.
  */
@@ -38,10 +41,10 @@ final class CutoverRegistry {
 	/**
 	 * Persist a prepared direct-GF scope without regressing existing authority.
 	 *
-	 * @param int    $form_id     Form ID.
+	 * @param int    $form_id      Form ID.
 	 * @param int    $legacy_index Stable legacy Rule index.
-	 * @param string $fingerprint Legacy Rule fingerprint.
-	 * @param int    $feed_id     Target Feed ID.
+	 * @param string $fingerprint  Legacy Rule fingerprint.
+	 * @param int    $feed_id      Target Feed ID.
 	 * @return bool
 	 */
 	public static function prepare_direct( int $form_id, int $legacy_index, string $fingerprint, int $feed_id ): bool {
@@ -74,21 +77,21 @@ final class CutoverRegistry {
 	/**
 	 * Check immutable direct-scope identity and target Feed binding.
 	 *
-	 * @param array<string, mixed> $record       Existing cutover record.
-	 * @param int                  $form_id      Form ID.
-	 * @param int                  $legacy_index Stable legacy Rule index.
-	 * @param string               $fingerprint  Legacy Rule fingerprint.
-	 * @param int                  $feed_id      Target Feed ID.
+	 * @param array<string, mixed> $record        Existing cutover record.
+	 * @param int                  $form_id       Form ID.
+	 * @param int                  $legacy_index  Stable legacy Rule index.
+	 * @param string               $fingerprint   Legacy Rule fingerprint.
+	 * @param int                  $feed_id       Target Feed ID.
 	 * @return bool
 	 */
 	public static function direct_record_matches( array $record, int $form_id, int $legacy_index, string $fingerprint, int $feed_id ): bool {
 		return 1 === (int) ( $record['version'] ?? 0 )
 			&& 'direct_gf' === (string) ( $record['source_type'] ?? '' )
-			&& $form_id === (int) ( $record['form_id'] ?? 0 )
-			&& $legacy_index === (int) ( $record['legacy_rule_index'] ?? -1 )
-			&& $fingerprint === (string) ( $record['legacy_fingerprint'] ?? '' )
+			&& (int) ( $record['form_id'] ?? 0 ) === $form_id
+			&& (int) ( $record['legacy_rule_index'] ?? -1 ) === $legacy_index
+			&& (string) ( $record['legacy_fingerprint'] ?? '' ) === $fingerprint
 			&& 0 === (int) ( $record['legacy_step_id'] ?? 0 )
-			&& $feed_id === (int) ( $record['feed_id'] ?? 0 )
+			&& (int) ( $record['feed_id'] ?? 0 ) === $feed_id
 			&& 0 === (int) ( $record['target_flow_step_id'] ?? 0 );
 	}
 
@@ -145,6 +148,26 @@ final class CutoverRegistry {
 		}
 		$record['state'] = $state;
 		return self::put( $scope_id, $record );
+	}
+
+	/**
+	 * Positively prove the current source identity for one stored cutover scope.
+	 *
+	 * @param array<string, mixed> $record Cutover record.
+	 * @return bool
+	 */
+	public static function current_scope_identity_valid( array $record ): bool {
+		$source_type = (string) ( $record['source_type'] ?? '' );
+		if ( 'direct_gf' === $source_type ) {
+			return self::direct_scope_identity_valid( $record );
+		}
+		if ( 'flow_step' === $source_type ) {
+			return self::flow_scope_identity_valid( $record, true );
+		}
+		if ( 'flow_workflow' === $source_type ) {
+			return self::flow_scope_identity_valid( $record, false );
+		}
+		return false;
 	}
 
 	/**
@@ -208,31 +231,124 @@ final class CutoverRegistry {
 	public static function feed_authorized( int $feed_id ): bool {
 		foreach ( self::records() as $record ) {
 			if ( is_array( $record ) && (int) ( $record['feed_id'] ?? 0 ) === $feed_id && CutoverSequence::GREENFIELD_ENABLED === ( $record['state'] ?? '' ) ) {
-				return self::legacy_identity_still_safe( $record );
+				return self::current_scope_identity_valid( $record );
 			}
 		}
 		return false;
 	}
 
 	/**
-	 * Re-check the legacy identity so source drift disables greenfield authority.
+	 * Positively prove one direct-GF scope against the current raw legacy option.
 	 *
 	 * @param array<string, mixed> $record Cutover record.
 	 * @return bool
 	 */
-	private static function legacy_identity_still_safe( array $record ): bool {
-		$source_type = (string) ( $record['source_type'] ?? '' );
-		if ( 'direct_gf' !== $source_type ) {
-			return true;
+	private static function direct_scope_identity_valid( array $record ): bool {
+		if ( ! function_exists( 'get_option' ) ) {
+			return false;
 		}
-		$legacy = function_exists( 'get_option' ) ? get_option( 'gfsms_settings', array() ) : array();
-		$rules  = is_array( $legacy ) && isset( $legacy['gf_rules'] ) && is_array( $legacy['gf_rules'] ) ? $legacy['gf_rules'] : array();
-		$index  = (int) ( $record['legacy_rule_index'] ?? -1 );
-		if ( ! array_key_exists( $index, $rules ) ) {
-			return true;
+		$legacy = get_option( 'gfsms_settings', null );
+		if ( ! is_array( $legacy ) || ! isset( $legacy['gf_rules'] ) || ! is_array( $legacy['gf_rules'] ) ) {
+			return false;
 		}
-		$rule = $rules[ $index ];
-		return is_array( $rule ) && (string) ( $record['legacy_fingerprint'] ?? '' ) === LegacyRuleMapper::fingerprint( $rule );
+		$index = (int) ( $record['legacy_rule_index'] ?? -1 );
+		if ( 0 > $index || ! array_key_exists( $index, $legacy['gf_rules'] ) || ! is_array( $legacy['gf_rules'][ $index ] ) ) {
+			return false;
+		}
+		$rule        = $legacy['gf_rules'][ $index ];
+		$form_id     = self::positive_id( $rule['form_id'] ?? null );
+		$fingerprint = LegacyRuleMapper::fingerprint( $rule );
+		if ( null === $form_id ) {
+			return false;
+		}
+		return self::direct_record_matches(
+			$record,
+			$form_id,
+			$index,
+			$fingerprint,
+			(int) ( $record['feed_id'] ?? 0 )
+		);
+	}
+
+	/**
+	 * Positively prove one Flow scope using current read-only Gravity Flow APIs.
+	 *
+	 * @param array<string, mixed> $record              Cutover record.
+	 * @param bool                 $requires_source_step Whether a legacy source Step must still exist.
+	 * @return bool
+	 */
+	private static function flow_scope_identity_valid( array $record, bool $requires_source_step ): bool {
+		if ( 1 !== (int) ( $record['version'] ?? 0 ) || -1 !== (int) ( $record['legacy_rule_index'] ?? -2 ) || '' !== (string) ( $record['legacy_fingerprint'] ?? '' ) ) {
+			return false;
+		}
+		$form_id        = (int) ( $record['form_id'] ?? 0 );
+		$feed_id        = (int) ( $record['feed_id'] ?? 0 );
+		$target_step_id = (int) ( $record['target_flow_step_id'] ?? 0 );
+		$legacy_step_id = (int) ( $record['legacy_step_id'] ?? -1 );
+		if ( 1 > $form_id || 1 > $feed_id || 1 > $target_step_id || ! class_exists( '\\Gravity_Flow_API' ) ) {
+			return false;
+		}
+		if ( $requires_source_step ? 1 > $legacy_step_id : 0 !== $legacy_step_id ) {
+			return false;
+		}
+
+		try {
+			$api   = new \Gravity_Flow_API( $form_id );
+			$steps = $api->get_steps();
+			if ( ! is_array( $steps ) ) {
+				return false;
+			}
+			if ( $requires_source_step && ! self::flow_step_exists( $steps, $legacy_step_id ) ) {
+				return false;
+			}
+		} catch ( Throwable $exception ) {
+			unset( $exception );
+			return false;
+		}
+
+		$verification = ( new FlowStepVerifier( new WordPressConfigurationSource() ) )->verify( $form_id, $feed_id, $target_step_id );
+		return true === $verification['ready'];
+	}
+
+	/**
+	 * Determine whether one exact Step ID remains in a current workflow.
+	 *
+	 * @param array<int, mixed> $steps   Current Gravity Flow Steps.
+	 * @param int               $step_id Required Step ID.
+	 * @return bool
+	 */
+	private static function flow_step_exists( array $steps, int $step_id ): bool {
+		try {
+			foreach ( $steps as $step ) {
+				if ( ! is_object( $step ) || ! method_exists( $step, 'get_id' ) ) {
+					continue;
+				}
+				if ( self::positive_id( $step->get_id() ) === $step_id ) {
+					return true;
+				}
+			}
+		} catch ( Throwable $exception ) {
+			unset( $exception );
+			return false;
+		}
+		return false;
+	}
+
+	/**
+	 * Parse a positive identity without malformed coercion.
+	 *
+	 * @param mixed $value Raw identity value.
+	 * @return int|null
+	 */
+	private static function positive_id( $value ): ?int {
+		if ( is_int( $value ) ) {
+			return 0 < $value ? $value : null;
+		}
+		if ( ! is_string( $value ) || 1 !== preg_match( '/^[1-9][0-9]*$/D', $value ) ) {
+			return null;
+		}
+		$value = (int) $value;
+		return 0 < $value ? $value : null;
 	}
 
 	/**
@@ -249,11 +365,11 @@ final class CutoverRegistry {
 		$records              = self::records();
 		$existing             = $records[ $scope_id ] ?? null;
 		$records[ $scope_id ] = $record;
-		if ( $existing === $record ) {
+		if ( $record === $existing ) {
 			return true;
 		}
 		update_option( self::OPTION, $records, false );
 		$read_back = self::records();
-		return isset( $read_back[ $scope_id ] ) && $read_back[ $scope_id ] === $record;
+		return isset( $read_back[ $scope_id ] ) && $record === $read_back[ $scope_id ];
 	}
 }

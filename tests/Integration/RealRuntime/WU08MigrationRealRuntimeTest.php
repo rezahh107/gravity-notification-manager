@@ -12,6 +12,7 @@ namespace GravityNotify\Tests\Integration\RealRuntime;
 use GFAPI;
 use GravityNotify\Admin\Settings;
 use GravityNotify\Admin\WordPressConfigurationSource;
+use GravityNotify\GravityForms\FeedRuleSchema;
 use GravityNotify\GravityForms\NotificationFeedAddOn;
 use GravityNotify\Migration\CutoverRegistry;
 use GravityNotify\Migration\CutoverSequence;
@@ -20,7 +21,9 @@ use GravityNotify\Migration\FlowStepVerifier;
 use GravityNotify\Migration\LegacyRuleMapper;
 use GravityNotify\Migration\LegacyRuntimeGuard;
 use GravityNotify\Migration\MigrationService;
+use GravityNotify\Migration\ProductionRuntime;
 use ReflectionMethod;
+use ReflectionProperty;
 use WP_Error;
 use WP_UnitTestCase;
 
@@ -29,16 +32,32 @@ use WP_UnitTestCase;
  */
 final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 
-	/** Real synthetic Form ID. */
+	/**
+	 * Real synthetic Form ID.
+	 *
+	 * @var int
+	 */
 	private int $form_id = 0;
 
-	/** Legacy option value before the current test. @var mixed */
+	/**
+	 * Legacy option value before the current test.
+	 *
+	 * @var mixed
+	 */
 	private $legacy_before;
 
-	/** Target option value before the current test. @var mixed */
+	/**
+	 * Target option value before the current test.
+	 *
+	 * @var mixed
+	 */
 	private $target_before;
 
-	/** Cutover option value before the current test. @var mixed */
+	/**
+	 * Cutover option value before the current test.
+	 *
+	 * @var mixed
+	 */
 	private $cutover_before;
 
 	/**
@@ -70,6 +89,7 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function tear_down(): void {
+		NotificationFeedAddOn::get_instance()->configure_processor( null );
 		if ( 0 < $this->form_id ) {
 			NotificationFeedAddOn::get_instance()->delete_feeds( $this->form_id );
 			GFAPI::delete_form( $this->form_id );
@@ -300,7 +320,8 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		$feed     = $this->only_feed();
 		$meta     = (array) $feed['meta'];
 		$meta['gnm_migration_source'] = 'synthetic-mismatch';
-		self::assertTrue( GFAPI::update_feed( $feed_id, $meta, $this->form_id ) );
+		self::assertTrue( GFAPI::update_feed_property( $feed_id, 'meta', $meta ) );
+		self::assertSame( 'synthetic-mismatch', $this->only_feed()['meta']['gnm_migration_source'] );
 		$record_before = CutoverRegistry::record( $scope_id );
 
 		$second = ( new MigrationService() )->execute();
@@ -322,7 +343,8 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		$feed     = $this->only_feed();
 		$meta     = (array) $feed['meta'];
 		$meta['message'] = 'Synthetic changed message';
-		self::assertTrue( GFAPI::update_feed( $feed_id, $meta, $this->form_id ) );
+		self::assertTrue( GFAPI::update_feed_property( $feed_id, 'meta', $meta ) );
+		self::assertSame( 'Synthetic changed message', $this->only_feed()['meta']['message'] );
 		$record_before = CutoverRegistry::record( $scope_id );
 
 		$second = ( new MigrationService() )->execute();
@@ -330,6 +352,89 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		self::assertSame( 'target_metadata_mismatch', $second['rules'][0]['mutation_reason'] );
 		self::assertSame( 'Synthetic changed message', $this->only_feed()['meta']['message'] );
 		self::assertSame( $record_before, CutoverRegistry::record( $scope_id ) );
+	}
+
+	/**
+	 * Prove completed direct cutover loses runtime authorization on source identity drift.
+	 *
+	 * @testdox WU08-AUTHORITY-REAL-13 direct identity drift disables runtime authorization
+	 */
+	public function test_wu08_authority_real_13_direct_identity_drift_disables_runtime_authorization(): void {
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		self::assertTrue( ( new CutoverService() )->enable( $scope_id ) );
+		self::assertTrue( CutoverRegistry::feed_authorized( $feed_id ) );
+		$record_before = CutoverRegistry::record( $scope_id );
+
+		$this->remove_primary_legacy_rule_fixture();
+		self::assertFalse( CutoverRegistry::feed_authorized( $feed_id ) );
+		self::assertTrue( $this->feed_active( $feed_id ) );
+		self::assertSame( $record_before, CutoverRegistry::record( $scope_id ) );
+
+		NotificationFeedAddOn::get_instance()->configure_processor( null );
+		ProductionRuntime::register();
+		$property = new ReflectionProperty( NotificationFeedAddOn::class, 'processor' );
+		self::assertNull( $property->getValue( NotificationFeedAddOn::get_instance() ) );
+		self::assertTrue( $this->feed_active( $feed_id ) );
+		self::assertSame( $record_before, CutoverRegistry::record( $scope_id ) );
+	}
+
+	/**
+	 * Prove stale direct identity cannot begin controlled cutover.
+	 *
+	 * @testdox WU08-AUTHORITY-REAL-14 stale direct identity cannot start cutover
+	 */
+	public function test_wu08_authority_real_14_stale_direct_identity_cannot_start_cutover(): void {
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		$record_before = CutoverRegistry::record( $scope_id );
+		$this->remove_primary_legacy_rule_fixture();
+
+		self::assertFalse( ( new CutoverService() )->enable( $scope_id ) );
+		self::assertFalse( $this->feed_active( $feed_id ) );
+		self::assertSame( $record_before, CutoverRegistry::record( $scope_id ) );
+		self::assertSame( CutoverSequence::PREPARED, CutoverRegistry::record( $scope_id )['state'] );
+	}
+
+	/**
+	 * Prove Flow source and target identity are revalidated from real current topology.
+	 *
+	 * @testdox WU08-FLOW-AUTHORITY-REAL-15 Flow source and target drift disables authorization
+	 */
+	public function test_wu08_flow_authority_real_15_flow_source_and_target_drift_disables_authorization(): void {
+		$source_feed_id = $this->add_flow_feed_fixture( 'Synthetic source feed' );
+		$source_step_id = $this->add_flow_step_fixture( 'Synthetic source step', $source_feed_id );
+		$feed_id        = $this->add_flow_feed_fixture( 'Synthetic target feed' );
+		$target_step_id = $this->add_flow_step_fixture( 'Synthetic target step', $feed_id );
+		$service        = new CutoverService();
+		$scope_id       = $service->prepare_flow( 'flow_step', $this->form_id, $source_step_id, $feed_id, $target_step_id );
+		self::assertIsString( $scope_id );
+		self::assertNotSame( '', $scope_id );
+		self::assertTrue( $service->enable( $scope_id ) );
+		self::assertTrue( CutoverRegistry::feed_authorized( $feed_id ) );
+
+		$missing_source_feed = $this->add_flow_feed_fixture( 'Missing source target' );
+		$missing_source_step = $this->add_flow_step_fixture( 'Missing source target step', $missing_source_feed );
+		$missing_scope       = CutoverRegistry::prepare_flow( 'flow_step', $this->form_id, $source_step_id + 100000, $missing_source_feed, $missing_source_step );
+		self::assertIsString( $missing_scope );
+		$this->set_feed_active_fixture( $missing_source_feed, true );
+		self::assertTrue( CutoverRegistry::set_state( $missing_scope, CutoverSequence::GREENFIELD_ENABLED ) );
+		$missing_record = CutoverRegistry::record( $missing_scope );
+		self::assertFalse( CutoverRegistry::feed_authorized( $missing_source_feed ) );
+		self::assertTrue( $this->feed_active( $missing_source_feed ) );
+		self::assertSame( $missing_record, CutoverRegistry::record( $missing_scope ) );
+
+		$mismatched_feed = $this->add_flow_feed_fixture( 'Mismatched workflow target' );
+		$mismatch_scope  = CutoverRegistry::prepare_flow( 'flow_workflow', $this->form_id, 0, $mismatched_feed, $target_step_id + 100000 );
+		self::assertIsString( $mismatch_scope );
+		$this->set_feed_active_fixture( $mismatched_feed, true );
+		self::assertTrue( CutoverRegistry::set_state( $mismatch_scope, CutoverSequence::GREENFIELD_ENABLED ) );
+		$mismatch_record = CutoverRegistry::record( $mismatch_scope );
+		self::assertFalse( CutoverRegistry::feed_authorized( $mismatched_feed ) );
+		self::assertTrue( $this->feed_active( $mismatched_feed ) );
+		self::assertSame( $mismatch_record, CutoverRegistry::record( $mismatch_scope ) );
 	}
 
 	/**
@@ -361,6 +466,70 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 				),
 			),
 		);
+	}
+
+	/**
+	 * Remove the exact primary direct Rule from the current legacy identity fixture.
+	 *
+	 * @return void
+	 */
+	private function remove_primary_legacy_rule_fixture(): void {
+		$legacy = get_option( 'gfsms_settings', array() );
+		self::assertIsArray( $legacy );
+		self::assertIsArray( $legacy['gf_rules'] ?? null );
+		self::assertArrayHasKey( 0, $legacy['gf_rules'] );
+		unset( $legacy['gf_rules'][0] );
+		update_option( 'gfsms_settings', $legacy, false );
+		$read_back = get_option( 'gfsms_settings', array() );
+		self::assertIsArray( $read_back );
+		self::assertArrayNotHasKey( 0, $read_back['gf_rules'] );
+	}
+
+	/**
+	 * Add one synthetic no-send GNM Feed for a Flow identity fixture.
+	 *
+	 * @param string $name Fixture label.
+	 * @return int
+	 */
+	private function add_flow_feed_fixture( string $name ): int {
+		$feed_id = GFAPI::add_feed(
+			$this->form_id,
+			array(
+				'feedName'               => $name,
+				'message'                => 'Synthetic no-send Flow message',
+				'recipient_source_type'  => FeedRuleSchema::RECIPIENT_FIXED,
+				'recipient_source_value' => '+15550000003',
+				'channel'                => FeedRuleSchema::CHANNEL_SMS,
+				'fallback_policy'        => FeedRuleSchema::FALLBACK_NONE,
+			),
+			NotificationFeedAddOn::get_instance()->get_slug()
+		);
+		self::assertNotWPError( $feed_id );
+		self::assertIsInt( $feed_id );
+		self::assertGreaterThan( 0, $feed_id );
+		$this->set_feed_active_fixture( $feed_id, false );
+		return $feed_id;
+	}
+
+	/**
+	 * Add one real Gravity Flow GNM Step for a read-only identity fixture.
+	 *
+	 * @param string $name    Fixture label.
+	 * @param int    $feed_id Selected Feed ID.
+	 * @return int
+	 */
+	private function add_flow_step_fixture( string $name, int $feed_id ): int {
+		$api     = new \Gravity_Flow_API( $this->form_id );
+		$step_id = $api->add_step(
+			array(
+				'step_name'        => $name,
+				'step_type'        => 'gravity_notification_manager',
+				'feed_' . $feed_id => '1',
+			)
+		);
+		self::assertGreaterThan( 0, $step_id );
+		self::assertNotNull( $api->get_step( $step_id ) );
+		return $step_id;
 	}
 
 	/**

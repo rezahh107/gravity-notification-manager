@@ -23,14 +23,21 @@ final class CutoverService {
 	 */
 	public function enable( string $scope_id ): bool {
 		$record = CutoverRegistry::record( $scope_id );
-		if ( null === $record || CutoverSequence::PREPARED !== ( $record['state'] ?? '' ) || ! $this->target_ready( $record ) ) {
+		if (
+			null === $record
+			|| CutoverSequence::PREPARED !== ( $record['state'] ?? '' )
+			|| ! CutoverRegistry::current_scope_identity_valid( $record )
+			|| ! $this->target_ready( $record )
+		) {
 			return false;
 		}
 		if ( CutoverSequence::LEGACY_DISABLED !== CutoverSequence::enable_next( CutoverSequence::PREPARED, true, false ) ) {
 			return false;
 		}
-		if ( ! CutoverRegistry::set_state( $scope_id, CutoverSequence::LEGACY_DISABLED ) || ! $this->legacy_inactive( $record ) ) {
-			CutoverRegistry::set_state( $scope_id, CutoverSequence::PREPARED );
+		if ( ! CutoverRegistry::set_state( $scope_id, CutoverSequence::LEGACY_DISABLED ) ) {
+			return false;
+		}
+		if ( ! $this->legacy_inactive( $record ) ) {
 			return false;
 		}
 		if ( CutoverSequence::GREENFIELD_ENABLED !== CutoverSequence::enable_next( CutoverSequence::LEGACY_DISABLED, true, true ) ) {
@@ -110,21 +117,26 @@ final class CutoverService {
 	}
 
 	/**
-	 * Verify the exact legacy sender scope is suppressed by current registry state.
+	 * Verify the exact legacy sender scope is suppressed and still matches current identity.
 	 *
 	 * @param array<string, mixed> $record Cutover record.
 	 * @return bool
 	 */
 	private function legacy_inactive( array $record ): bool {
+		if ( ! CutoverRegistry::current_scope_identity_valid( $record ) ) {
+			return false;
+		}
 		$source_type = (string) ( $record['source_type'] ?? '' );
 		if ( 'direct_gf' === $source_type ) {
-			$legacy = function_exists( 'get_option' ) ? get_option( 'gfsms_settings', array() ) : array();
-			$rules  = is_array( $legacy ) && is_array( $legacy['gf_rules'] ?? null ) ? $legacy['gf_rules'] : array();
-			$index  = (int) ( $record['legacy_rule_index'] ?? -1 );
-			if ( ! isset( $rules[ $index ] ) || ! is_array( $rules[ $index ] ) ) {
-				return true;
+			$legacy = function_exists( 'get_option' ) ? get_option( 'gfsms_settings', null ) : null;
+			if ( ! is_array( $legacy ) || ! is_array( $legacy['gf_rules'] ?? null ) ) {
+				return false;
 			}
-			return ! CutoverRegistry::legacy_direct_rule_allowed( (int) $record['form_id'], $index, $rules[ $index ] );
+			$index = (int) ( $record['legacy_rule_index'] ?? -1 );
+			if ( 0 > $index || ! array_key_exists( $index, $legacy['gf_rules'] ) || ! is_array( $legacy['gf_rules'][ $index ] ) ) {
+				return false;
+			}
+			return ! CutoverRegistry::legacy_direct_rule_allowed( (int) $record['form_id'], $index, $legacy['gf_rules'][ $index ] );
 		}
 		if ( 'flow_step' === $source_type ) {
 			return ! CutoverRegistry::legacy_flow_step_allowed( (int) $record['form_id'], (int) $record['legacy_step_id'] );

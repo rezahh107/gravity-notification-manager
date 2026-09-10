@@ -12,19 +12,39 @@ namespace GravityNotify\Migration;
  */
 final class LegacyRuntimeGuard {
 
-	/** Current direct-Gravity-Forms Form identity during the submission hook. */
+	/**
+	 * Current direct-Gravity-Forms Form identity during the submission hook.
+	 *
+	 * @var int
+	 */
 	private static int $direct_form_id = 0;
 
-	/** Whether legacy Flow Step callbacks must be restored after the guarded event. */
+	/**
+	 * Whether legacy Flow Step callbacks must be restored after the guarded event.
+	 *
+	 * @var bool
+	 */
 	private static bool $restore_flow_step = false;
 
-	/** Whether legacy workflow callbacks must be restored after the guarded event. */
+	/**
+	 * Whether legacy workflow callbacks must be restored after the guarded event.
+	 *
+	 * @var bool
+	 */
 	private static bool $restore_workflow = false;
 
-	/** Whether the legacy process-queue callback must be restored. */
+	/**
+	 * Whether the legacy process-queue callback must be restored.
+	 *
+	 * @var bool
+	 */
 	private static bool $restore_process_queue = false;
 
-	/** Whether the legacy retry-queue callback must be restored. */
+	/**
+	 * Whether the legacy retry-queue callback must be restored.
+	 *
+	 * @var bool
+	 */
 	private static bool $restore_retry_queue = false;
 
 	/**

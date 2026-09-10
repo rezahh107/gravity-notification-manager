@@ -171,7 +171,7 @@ final class MigrationService {
 
 		$matching = array();
 		foreach ( $feeds as $feed ) {
-			if ( is_array( $feed ) && $scope_id === (string) ( $feed['meta']['gnm_migration_source'] ?? '' ) ) {
+			if ( is_array( $feed ) && (string) ( $feed['meta']['gnm_migration_source'] ?? '' ) === $scope_id ) {
 				$matching[] = $feed;
 			}
 		}
@@ -258,7 +258,7 @@ final class MigrationService {
 
 		$feed = null;
 		foreach ( $feeds as $candidate ) {
-			if ( is_array( $candidate ) && $feed_id === (int) ( $candidate['id'] ?? 0 ) ) {
+			if ( is_array( $candidate ) && (int) ( $candidate['id'] ?? 0 ) === $feed_id ) {
 				$feed = $candidate;
 				break;
 			}
