@@ -24,6 +24,9 @@ const GRAVITY_NOTIFY_REQUIRED_REAL_TESTS = array(
 	'SAFE-REAL-03'       => 'test_safe_real_03_wordpress_http_interception',
 	'WU07-KSES-REAL-01'  => 'test_wu07_kses_real_01_entry_detail_retry_form_survives_local_kses',
 	'WU07-KSES-REAL-02'  => 'test_wu07_kses_real_02_local_allowlist_rejects_unapproved_markup',
+	'WU08-MIGRATION-REAL-01' => 'test_wu08_migration_real_01_preview_is_secret_safe_and_execution_is_idempotent',
+	'WU08-CUTOVER-REAL-02'   => 'test_wu08_cutover_real_02_cutover_disables_legacy_before_greenfield_and_rollback_reverses_safely',
+	'WU08-FLOW-REAL-03'      => 'test_wu08_flow_real_03_flow_verification_is_read_only_when_target_placement_is_missing',
 );
 
 /**
