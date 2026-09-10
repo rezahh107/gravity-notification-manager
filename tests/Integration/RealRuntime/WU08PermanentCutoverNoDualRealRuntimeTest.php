@@ -158,6 +158,28 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		self::assertTrue( (bool) rgar( $submission, 'is_valid' ) );
 		$this->entry_id = (int) rgar( $submission, 'entry_id' );
 		self::assertGreaterThan( 0, $this->entry_id );
+
+		$attempt_sources = array_map(
+			static function ( $request ): string {
+				if ( 'Source is inactive' === $request->message() ) {
+					return 'source_fixture';
+				}
+				if ( 'RUN-033 Alice' === $request->message() ) {
+					return 'target_fixture';
+				}
+				return 'other_fixture';
+			},
+			$provider->requests
+		);
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Synthetic IDs and fixed fixture labels only.
+		printf(
+			'GNM_CUTOVER_DIAGNOSTIC source_feed=%d source_step=%d target_feed=%d target_step=%d attempts=%s' . PHP_EOL,
+			$source_feed_id,
+			$source_step_id,
+			$target_feed_id,
+			$target_step_id,
+			implode( ',', $attempt_sources )
+		);
 		self::assertSame( 1, $provider->send_count, 'Greenfield Flow Feed must execute exactly once after cutover.' );
 		self::assertFalse( CutoverRegistry::legacy_flow_step_allowed( $this->form_id, $source_step_id ) );
 		self::assertTrue( CutoverRegistry::feed_authorized( $target_feed_id ) );
@@ -323,9 +345,9 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		$api     = new \Gravity_Flow_API( $this->form_id );
 		$step_id = $api->add_step(
 			array(
-				'step_name'           => $name,
-				'step_type'           => 'gravity_notification_manager',
-				'feed_' . $feed_id    => '1',
+				'step_name'        => $name,
+				'step_type'        => 'gravity_notification_manager',
+				'feed_' . $feed_id => '1',
 			)
 		);
 		self::assertGreaterThan( 0, $step_id );
