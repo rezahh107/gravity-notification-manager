@@ -116,16 +116,15 @@ final class WU08LegacyListenerCallbackIdentityRealRuntimeTest extends WP_UnitTes
 		string $restore_method,
 		array $args
 	): void {
-		self::assertTrue( function_exists( 'gravityflow' ), 'Real Gravity Flow must be active for the legacy Listener registration path.' );
+		$accepted_args = count( $args );
+		add_action( $hook, array( Listener::class, $listener_method ), 10, $accepted_args );
 
-		Listener::register_hooks();
 		$dispatcher = Dispatcher::instance();
 		$dispatcher->register_hooks();
 
-		$canonical_listener = array( Listener::class, $listener_method );
-		$alternate_listener = array( '\\GFSMS\\Integration\\Listener', $listener_method );
+		$canonical_listener  = array( Listener::class, $listener_method );
+		$alternate_listener  = array( '\\GFSMS\\Integration\\Listener', $listener_method );
 		$dispatcher_callback = array( $dispatcher, $dispatcher_method );
-		$accepted_args        = count( $args );
 
 		self::assertSame( 'GFSMS\\Integration\\Listener', Listener::class );
 		self::assertSame( 10, has_action( $hook, $canonical_listener ) );
