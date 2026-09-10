@@ -408,13 +408,26 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		$source_step_id = $this->add_flow_step_fixture( 'Synthetic source step', $source_feed_id );
 		$feed_id        = $this->add_flow_feed_fixture( 'Synthetic target feed' );
 		$target_step_id = $this->add_flow_step_fixture( 'Synthetic target step', $feed_id );
+		self::assertGreaterThan( 0, $source_step_id );
+		self::assertGreaterThan( 0, $target_step_id );
+		$api         = new \Gravity_Flow_API( $this->form_id );
+		$source_step = $api->get_step( $source_step_id );
+		$target_step = $api->get_step( $target_step_id );
+		self::assertIsObject( $source_step, 'Source Flow Step was not persisted/read back.' );
+		self::assertIsObject( $target_step, 'Target Flow Step was not persisted/read back.' );
+		self::assertTrue( method_exists( $target_step, 'is_active' ), 'Target Flow Step does not expose active state.' );
+		self::assertTrue( (bool) $target_step->is_active(), 'Target Flow Step is inactive.' );
+		self::assertTrue( method_exists( $target_step, 'get_setting' ), 'Target Flow Step does not expose persisted settings.' );
+		self::assertTrue( (bool) $target_step->get_setting( 'feed_' . $feed_id ), 'Target Feed selection is missing from the persisted Flow Step.' );
 		$this->set_feed_active_fixture( $feed_id, false );
 		$verification = ( new FlowStepVerifier( new WordPressConfigurationSource() ) )->verify( $this->form_id, $feed_id, $target_step_id );
 		self::assertTrue( $verification['ready'], $verification['reason'] );
+		self::assertSame( '', $verification['reason'] );
 		$service  = new CutoverService();
 		$scope_id = $service->prepare_flow( 'flow_step', $this->form_id, $source_step_id, $feed_id, $target_step_id );
 		self::assertIsString( $scope_id );
 		self::assertNotSame( '', $scope_id );
+		self::assertNotNull( CutoverRegistry::record( $scope_id ) );
 		self::assertTrue( $service->enable( $scope_id ) );
 		self::assertTrue( CutoverRegistry::feed_authorized( $feed_id ) );
 
