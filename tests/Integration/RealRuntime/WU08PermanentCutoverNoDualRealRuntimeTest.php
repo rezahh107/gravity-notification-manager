@@ -35,32 +35,20 @@ use WP_UnitTestCase;
  */
 final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 
-	/**
-	 * Real fixture Form ID.
-	 *
-	 * @var int
-	 */
+	/** @var int Real fixture Form ID. */
 	private int $form_id = 0;
 
-	/**
-	 * Real fixture Entry ID.
-	 *
-	 * @var int
-	 */
+	/** @var int Real fixture Entry ID. */
 	private int $entry_id = 0;
 
-	/**
-	 * Pre-test cutover option value.
-	 *
-	 * @var mixed
-	 */
+	/** @var mixed Pre-test cutover option value. */
 	private $cutover_before;
 
 	/** Prepare isolated real-runtime fixtures. */
 	public function set_up(): void {
 		parent::set_up();
 		if ( ! defined( 'GFSMS_SETTINGS_OPTION' ) ) {
-			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Immutable legacy bootstrap prerequisite.
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Legacy bootstrap prerequisite.
 			define( 'GFSMS_SETTINGS_OPTION', 'gfsms_settings' );
 		}
 		$this->cutover_before = get_option( CutoverRegistry::OPTION, null );
@@ -106,48 +94,51 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 	 * @testdox WU08-CUTOVER-NODUAL-REAL-18 Flow cutover and rollback preserve one effective sender authority
 	 */
 	public function test_wu08_cutover_nodual_real_18_flow_cutover_and_rollback_preserve_one_effective_sender_authority(): void {
-		$source_feed_id = $this->add_flow_feed( 'Legacy source identity', 'Source is inactive' );
-		$this->set_feed_active( $source_feed_id, false );
-		$source_step_id = $this->add_flow_step( 'Legacy source step', $source_feed_id );
-
-		$target_feed_id = $this->add_flow_feed( 'Greenfield target', 'RUN-033 {Name:1}' );
-		$target_step_id = $this->add_flow_step( 'Greenfield target step', $target_feed_id );
+		$target_feed_id = $this->add_target_feed();
+		$target_step_id = $this->add_target_step( $target_feed_id );
+		$source_step_id = $this->add_legacy_source_step();
+		$source_step    = ( new \Gravity_Flow_API( $this->form_id ) )->get_step( $source_step_id );
+		self::assertIsObject( $source_step );
+		self::assertSame( 'approval', $source_step->get_type() );
 
 		$service  = new CutoverService();
-		$scope_id = $service->prepare_flow( 'flow_step', $this->form_id, $source_step_id, $target_feed_id, $target_step_id );
+		$scope_id = $service->prepare_flow(
+			'flow_step',
+			$this->form_id,
+			$source_step_id,
+			$target_feed_id,
+			$target_step_id
+		);
 		self::assertIsString( $scope_id );
-		self::assertNotSame( '', $scope_id );
 		self::assertSame( CutoverSequence::PREPARED, CutoverRegistry::record( $scope_id )['state'] );
 		self::assertTrue( CutoverRegistry::legacy_flow_step_allowed( $this->form_id, $source_step_id ) );
 		self::assertFalse( CutoverRegistry::feed_authorized( $target_feed_id ) );
 		self::assertFalse( $this->feed_active( $target_feed_id ) );
 
 		$this->register_legacy_and_guard_callbacks();
-		$this->assert_one_legacy_step_callback( 'listener', array( LegacyListener::class, 'on_step_complete' ) );
-		$this->assert_one_legacy_step_callback( 'dispatcher', array( LegacyDispatcher::instance(), 'handle_step_complete' ) );
+		$this->assert_one_legacy_callback( array( LegacyListener::class, 'on_step_complete' ) );
+		$this->assert_one_legacy_callback( array( LegacyDispatcher::instance(), 'handle_step_complete' ) );
 
-		$enable_trace = $this->trace_cutover_option( $scope_id, $source_step_id, $target_feed_id, static fn() => $service->enable( $scope_id ) );
-		self::assertSame( array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::GREENFIELD_ENABLED ), array_column( $enable_trace, 'state' ) );
-		self::assertSame(
-			array(
-				'legacy_allowed'         => false,
-				'greenfield_authorized' => false,
-				'feed_active'            => false,
-			),
-			array_diff_key( $enable_trace[0], array( 'state' => true ) )
+		$enable_trace = $this->trace_cutover_option(
+			$scope_id,
+			$source_step_id,
+			$target_feed_id,
+			static fn() => $service->enable( $scope_id )
 		);
 		self::assertSame(
-			array(
-				'legacy_allowed'         => false,
-				'greenfield_authorized' => true,
-				'feed_active'            => true,
-			),
-			array_diff_key( $enable_trace[1], array( 'state' => true ) )
+			array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::GREENFIELD_ENABLED ),
+			array_column( $enable_trace, 'state' )
 		);
+		self::assertSame( false, $enable_trace[0]['legacy_allowed'] );
+		self::assertSame( false, $enable_trace[0]['greenfield_authorized'] );
+		self::assertSame( false, $enable_trace[0]['feed_active'] );
+		self::assertSame( false, $enable_trace[1]['legacy_allowed'] );
+		self::assertSame( true, $enable_trace[1]['greenfield_authorized'] );
+		self::assertSame( true, $enable_trace[1]['feed_active'] );
 
 		$this->assert_guarded_source_event( $source_step_id );
-		$this->assert_one_legacy_step_callback( 'listener', array( LegacyListener::class, 'on_step_complete' ) );
-		$this->assert_one_legacy_step_callback( 'dispatcher', array( LegacyDispatcher::instance(), 'handle_step_complete' ) );
+		$this->assert_one_legacy_callback( array( LegacyListener::class, 'on_step_complete' ) );
+		$this->assert_one_legacy_callback( array( LegacyDispatcher::instance(), 'handle_step_complete' ) );
 
 		$provider   = $this->configure_fake_greenfield_provider();
 		$submission = GFAPI::submit_form(
@@ -158,70 +149,44 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		self::assertTrue( (bool) rgar( $submission, 'is_valid' ) );
 		$this->entry_id = (int) rgar( $submission, 'entry_id' );
 		self::assertGreaterThan( 0, $this->entry_id );
-
-		$attempt_sources = array_map(
-			static function ( $request ): string {
-				if ( 'Source is inactive' === $request->message() ) {
-					return 'source_fixture';
-				}
-				if ( 'RUN-033 Alice' === $request->message() ) {
-					return 'target_fixture';
-				}
-				return 'other_fixture';
-			},
-			$provider->requests
-		);
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Synthetic IDs and fixed fixture labels only.
-		printf(
-			'GNM_CUTOVER_DIAGNOSTIC source_feed=%d source_step=%d target_feed=%d target_step=%d attempts=%s' . PHP_EOL,
-			$source_feed_id,
-			$source_step_id,
-			$target_feed_id,
-			$target_step_id,
-			implode( ',', $attempt_sources )
-		);
-		self::assertSame( 1, $provider->send_count, 'Greenfield Flow Feed must execute exactly once after cutover.' );
+		self::assertSame( 1, $provider->send_count );
+		self::assertCount( 1, $provider->requests );
+		self::assertSame( 'RUN-034 Alice', $provider->requests[0]->message() );
 		self::assertFalse( CutoverRegistry::legacy_flow_step_allowed( $this->form_id, $source_step_id ) );
 		self::assertTrue( CutoverRegistry::feed_authorized( $target_feed_id ) );
 
-		$rollback_trace = $this->trace_cutover_option( $scope_id, $source_step_id, $target_feed_id, static fn() => $service->rollback( $scope_id ) );
-		self::assertSame( array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::PREPARED ), array_column( $rollback_trace, 'state' ) );
-		self::assertSame(
-			array(
-				'legacy_allowed'         => false,
-				'greenfield_authorized' => false,
-				'feed_active'            => true,
-			),
-			array_diff_key( $rollback_trace[0], array( 'state' => true ) )
+		$rollback_trace = $this->trace_cutover_option(
+			$scope_id,
+			$source_step_id,
+			$target_feed_id,
+			static fn() => $service->rollback( $scope_id )
 		);
 		self::assertSame(
-			array(
-				'legacy_allowed'         => true,
-				'greenfield_authorized' => false,
-				'feed_active'            => false,
-			),
-			array_diff_key( $rollback_trace[1], array( 'state' => true ) )
+			array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::PREPARED ),
+			array_column( $rollback_trace, 'state' )
 		);
-		$this->assert_one_legacy_step_callback( 'listener', array( LegacyListener::class, 'on_step_complete' ) );
-		$this->assert_one_legacy_step_callback( 'dispatcher', array( LegacyDispatcher::instance(), 'handle_step_complete' ) );
+		self::assertFalse( $rollback_trace[0]['legacy_allowed'] );
+		self::assertFalse( $rollback_trace[0]['greenfield_authorized'] );
+		self::assertTrue( $rollback_trace[0]['feed_active'] );
+		self::assertTrue( $rollback_trace[1]['legacy_allowed'] );
+		self::assertFalse( $rollback_trace[1]['greenfield_authorized'] );
+		self::assertFalse( $rollback_trace[1]['feed_active'] );
 
 		self::assertTrue( $service->enable( $scope_id ) );
 		$this->assert_guarded_source_event( $source_step_id );
 		self::assertTrue( $service->rollback( $scope_id ) );
-		$this->assert_one_legacy_step_callback( 'listener', array( LegacyListener::class, 'on_step_complete' ) );
-		$this->assert_one_legacy_step_callback( 'dispatcher', array( LegacyDispatcher::instance(), 'handle_step_complete' ) );
-		self::assertTrue( CutoverRegistry::legacy_flow_step_allowed( $this->form_id, $source_step_id ) );
-		self::assertFalse( CutoverRegistry::feed_authorized( $target_feed_id ) );
+		$this->assert_one_legacy_callback( array( LegacyListener::class, 'on_step_complete' ) );
+		$this->assert_one_legacy_callback( array( LegacyDispatcher::instance(), 'handle_step_complete' ) );
 	}
 
 	/**
-	 * Capture authoritative registry/feed state at each cutover option transition.
+	 * Capture authoritative registry/feed state at each cutover transition.
 	 *
-	 * @param string   $scope_id       Cutover scope ID.
+	 * @param string   $scope_id       Scope ID.
 	 * @param int      $source_step_id Legacy source Step ID.
-	 * @param int      $feed_id        Greenfield target Feed ID.
+	 * @param int      $feed_id        Target Feed ID.
 	 * @param callable $operation      Cutover operation.
-	 * @return array<int, array{state:string,legacy_allowed:bool,greenfield_authorized:bool,feed_active:bool}>
+	 * @return array<int, array<string, mixed>>
 	 */
 	private function trace_cutover_option( string $scope_id, int $source_step_id, int $feed_id, callable $operation ): array {
 		$trace    = array();
@@ -249,7 +214,7 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		return $trace;
 	}
 
-	/** Register canonical legacy sender callbacks plus the production WU-08 guard. */
+	/** Register canonical legacy sender callbacks plus the WU-08 guard. */
 	private function register_legacy_and_guard_callbacks(): void {
 		add_action( 'gravityflow_step_complete', array( LegacyListener::class, 'on_step_complete' ), 10, 5 );
 		add_action( 'gravityflow_step_complete', array( LegacyDispatcher::instance(), 'handle_step_complete' ), 10, 5 );
@@ -257,7 +222,7 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Prove a real source-step action cannot reach canonical legacy sender callbacks.
+	 * Prove source-step callbacks are suppressed only inside the disabled scope.
 	 *
 	 * @param int $source_step_id Legacy source Step ID.
 	 */
@@ -277,7 +242,7 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		try {
 			$step = ( new \Gravity_Flow_API( $this->form_id ) )->get_step( $source_step_id );
 			self::assertIsObject( $step );
-			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Exercising the documented Gravity Flow hook.
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Documented Gravity Flow hook.
 			do_action( 'gravityflow_step_complete', $source_step_id, 0, $this->form_id, 'approved', $step );
 			self::assertSame( 1, $observations );
 		} finally {
@@ -285,7 +250,7 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		}
 	}
 
-	/** Configure the existing greenfield processor with a deterministic no-network provider. */
+	/** Configure the existing greenfield processor with a no-network provider. */
 	private function configure_fake_greenfield_provider(): FakeSmsProvider {
 		$provider = new FakeSmsProvider( AttemptStatus::SUCCESS );
 		$resolver = new RecipientResolver(
@@ -309,19 +274,13 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		return $provider;
 	}
 
-	/**
-	 * Persist one real GNM Feed.
-	 *
-	 * @param string $name    Feed name.
-	 * @param string $message Message.
-	 * @return int Feed ID.
-	 */
-	private function add_flow_feed( string $name, string $message ): int {
+	/** Persist the one greenfield target Feed. */
+	private function add_target_feed(): int {
 		$feed_id = GFAPI::add_feed(
 			$this->form_id,
 			array(
-				'feedName'               => $name,
-				'message'                => $message,
+				'feedName'               => 'Greenfield target',
+				'message'                => 'RUN-034 {Name:1}',
 				'recipient_source_type'  => FeedRuleSchema::RECIPIENT_FIXED,
 				'recipient_source_value' => '+15550000003',
 				'channel'                => FeedRuleSchema::CHANNEL_SMS,
@@ -334,18 +293,11 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		return $feed_id;
 	}
 
-	/**
-	 * Persist one real Gravity Flow GNM Feed Step.
-	 *
-	 * @param string $name    Step name.
-	 * @param int    $feed_id Selected Feed ID.
-	 * @return int Step ID.
-	 */
-	private function add_flow_step( string $name, int $feed_id ): int {
-		$api     = new \Gravity_Flow_API( $this->form_id );
-		$step_id = $api->add_step(
+	/** Persist the one greenfield target GNM Feed-Step first in workflow order. */
+	private function add_target_step( int $feed_id ): int {
+		$step_id = ( new \Gravity_Flow_API( $this->form_id ) )->add_step(
 			array(
-				'step_name'        => $name,
+				'step_name'        => 'Greenfield target step',
 				'step_type'        => 'gravity_notification_manager',
 				'feed_' . $feed_id => '1',
 			)
@@ -354,36 +306,27 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 		return $step_id;
 	}
 
-	/**
-	 * Set one fixture Feed active flag.
-	 *
-	 * @param int  $feed_id Feed ID.
-	 * @param bool $active  Desired state.
-	 */
-	private function set_feed_active( int $feed_id, bool $active ): void {
-		self::assertTrue( GFAPI::update_feed_property( $feed_id, 'is_active', $active ? 1 : 0 ) );
-		self::assertSame( $active, $this->feed_active( $feed_id ) );
+	/** Persist a real non-GNM source Step representing the legacy hook scope. */
+	private function add_legacy_source_step(): int {
+		$step_id = ( new \Gravity_Flow_API( $this->form_id ) )->add_step(
+			array(
+				'step_name' => 'Legacy source step',
+				'step_type' => 'approval',
+			)
+		);
+		self::assertGreaterThan( 0, $step_id );
+		return $step_id;
 	}
 
-	/**
-	 * Read one fixture Feed active flag.
-	 *
-	 * @param int $feed_id Feed ID.
-	 * @return bool
-	 */
+	/** Read the target Feed active flag. */
 	private function feed_active( int $feed_id ): bool {
 		$feeds = GFAPI::get_feeds( $feed_id, null, NotificationFeedAddOn::get_instance()->get_slug(), null );
 		$feed  = is_array( $feeds ) ? reset( $feeds ) : false;
 		return is_array( $feed ) && (bool) ( $feed['is_active'] ?? false );
 	}
 
-	/**
-	 * Assert one exact canonical legacy step callback registration.
-	 *
-	 * @param string            $label    Diagnostic label.
-	 * @param array<int, mixed> $callback Callback identity.
-	 */
-	private function assert_one_legacy_step_callback( string $label, array $callback ): void {
+	/** Assert one exact canonical legacy callback registration. */
+	private function assert_one_legacy_callback( array $callback ): void {
 		global $wp_filter;
 		self::assertArrayHasKey( 'gravityflow_step_complete', $wp_filter );
 		self::assertInstanceOf( WP_Hook::class, $wp_filter['gravityflow_step_complete'] );
@@ -391,7 +334,7 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 			$wp_filter['gravityflow_step_complete']->callbacks[10] ?? array(),
 			static fn( array $registered ): bool => ( $registered['function'] ?? null ) === $callback
 		);
-		self::assertCount( 1, $matches, sprintf( 'Canonical legacy %s callback must exist exactly once.', $label ) );
+		self::assertCount( 1, $matches );
 	}
 
 	/** Remove every callback this regression can register. */
