@@ -422,7 +422,7 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		$missing_source_step = $this->add_flow_step_fixture( 'Missing source target step', $missing_source_feed );
 		$missing_scope       = CutoverRegistry::prepare_flow( 'flow_step', $this->form_id, $source_step_id + 100000, $missing_source_feed, $missing_source_step );
 		self::assertIsString( $missing_scope );
-		$this->set_feed_active_fixture( $missing_source_feed, true );
+		self::assertTrue( $this->feed_active( $missing_source_feed ) );
 		self::assertTrue( CutoverRegistry::set_state( $missing_scope, CutoverSequence::GREENFIELD_ENABLED ) );
 		$missing_record = CutoverRegistry::record( $missing_scope );
 		self::assertFalse( CutoverRegistry::feed_authorized( $missing_source_feed ) );
@@ -432,7 +432,7 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		$mismatched_feed = $this->add_flow_feed_fixture( 'Mismatched workflow target' );
 		$mismatch_scope  = CutoverRegistry::prepare_flow( 'flow_workflow', $this->form_id, 0, $mismatched_feed, $target_step_id + 100000 );
 		self::assertIsString( $mismatch_scope );
-		$this->set_feed_active_fixture( $mismatched_feed, true );
+		self::assertTrue( $this->feed_active( $mismatched_feed ) );
 		self::assertTrue( CutoverRegistry::set_state( $mismatch_scope, CutoverSequence::GREENFIELD_ENABLED ) );
 		$mismatch_record = CutoverRegistry::record( $mismatch_scope );
 		self::assertFalse( CutoverRegistry::feed_authorized( $mismatched_feed ) );
