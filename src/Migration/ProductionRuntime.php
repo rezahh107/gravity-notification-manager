@@ -25,12 +25,22 @@ use GravityNotify\Recipient\RecipientResolver;
  */
 final class ProductionRuntime {
 
+	/**
+	 * Register the supported Gravity Forms add-on bootstrap hook.
+	 *
+	 * @return void
+	 */
 	public static function boot(): void {
 		if ( function_exists( 'add_action' ) ) {
 			add_action( 'gform_loaded', array( self::class, 'register' ), 5 );
 		}
 	}
 
+	/**
+	 * Register and configure the production Feed Add-On fail-closed.
+	 *
+	 * @return void
+	 */
 	public static function register(): void {
 		if ( ! class_exists( '\\GFForms' ) || ! method_exists( '\\GFForms', 'include_addon_framework' ) ) {
 			return;
@@ -48,6 +58,11 @@ final class ProductionRuntime {
 		$add_on->configure_processor( self::processor() );
 	}
 
+	/**
+	 * Compose the existing synchronous greenfield processor.
+	 *
+	 * @return NotificationFeedProcessor
+	 */
 	private static function processor(): NotificationFeedProcessor {
 		$settings  = Settings::read();
 		$http      = new WordPressHttpTransport();
@@ -68,6 +83,12 @@ final class ProductionRuntime {
 		);
 	}
 
+	/**
+	 * Require explicit cutover authority for every active GNM Feed.
+	 *
+	 * @param NotificationFeedAddOn $add_on Registered GNM Feed Add-On.
+	 * @return bool
+	 */
 	private static function all_active_feeds_authorized( NotificationFeedAddOn $add_on ): bool {
 		if ( ! class_exists( '\\GFAPI' ) ) {
 			return false;

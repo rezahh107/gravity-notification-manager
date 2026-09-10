@@ -45,13 +45,24 @@ final class MigrationInventory {
 		}
 
 		foreach ( array( 'secondary_api_key', 'secondary_sender_number', 'enable_fallback', 'use_queue', 'queue_delay', 'retry_enabled', 'max_retry', 'enable_rate_limit', 'log_retention_days', 'debug_mode', 'webhook_url', 'webhook_events', 'pattern_map', 'conditional_logic' ) as $key ) {
-			$result[ $key ] = array( 'classification' => self::DO_NOT_MIGRATE_RETIRE_LATER );
+			$result[ $key ] = array(
+				'classification' => self::DO_NOT_MIGRATE_RETIRE_LATER,
+			);
 		}
 
-		$result['gf_rules']          = array( 'classification' => self::MAP_DETERMINISTIC );
-		$result['recipient_rules']   = array( 'classification' => self::MANUAL_REQUIRED_AMBIGUOUS, 'reason' => 'workflow_recipient_semantics_require_native_flow_setup' );
-		$result['legacy_logs']       = array( 'classification' => self::RETAIN_READ_ONLY_TEMPORARILY );
-		$result['plato_user_mobile'] = array( 'classification' => self::DO_NOT_MIGRATE_RETIRE_LATER );
+		$result['gf_rules'] = array(
+			'classification' => self::MAP_DETERMINISTIC,
+		);
+		$result['recipient_rules'] = array(
+			'classification' => self::MANUAL_REQUIRED_AMBIGUOUS,
+			'reason'         => 'workflow_recipient_semantics_require_native_flow_setup',
+		);
+		$result['legacy_logs'] = array(
+			'classification' => self::RETAIN_READ_ONLY_TEMPORARILY,
+		);
+		$result['plato_user_mobile'] = array(
+			'classification' => self::DO_NOT_MIGRATE_RETIRE_LATER,
+		);
 
 		return $result;
 	}

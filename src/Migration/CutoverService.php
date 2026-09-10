@@ -15,7 +15,12 @@ use GravityNotify\GravityForms\NotificationFeedAddOn;
  */
 final class CutoverService {
 
-	/** Enable one prepared scope without intentional sender overlap. */
+	/**
+	 * Enable one prepared scope without intentional sender overlap.
+	 *
+	 * @param string $scope_id Cutover scope identity.
+	 * @return bool
+	 */
 	public function enable( string $scope_id ): bool {
 		$record = CutoverRegistry::record( $scope_id );
 		if ( null === $record || CutoverSequence::PREPARED !== ( $record['state'] ?? '' ) || ! $this->target_ready( $record ) ) {
@@ -44,7 +49,12 @@ final class CutoverService {
 		return CutoverRegistry::feed_authorized( (int) $record['feed_id'] );
 	}
 
-	/** Roll one scope back by closing greenfield before restoring legacy. */
+	/**
+	 * Roll one scope back by closing greenfield before restoring legacy.
+	 *
+	 * @param string $scope_id Cutover scope identity.
+	 * @return bool
+	 */
 	public function rollback( string $scope_id ): bool {
 		$record = CutoverRegistry::record( $scope_id );
 		if ( null === $record || CutoverSequence::GREENFIELD_ENABLED !== ( $record['state'] ?? '' ) ) {
@@ -59,7 +69,16 @@ final class CutoverService {
 		return CutoverRegistry::set_state( $scope_id, CutoverSequence::PREPARED );
 	}
 
-	/** Prepare an operator-confirmed Flow scope after read-only placement verification. */
+	/**
+	 * Prepare an operator-confirmed Flow scope after read-only placement verification.
+	 *
+	 * @param string $source_type         Legacy Flow source type.
+	 * @param int    $form_id             Form ID.
+	 * @param int    $legacy_step_id      Legacy Step ID or zero for workflow complete.
+	 * @param int    $feed_id             Target Feed ID.
+	 * @param int    $target_flow_step_id Target GNM Flow Step ID.
+	 * @return string|null
+	 */
 	public function prepare_flow( string $source_type, int $form_id, int $legacy_step_id, int $feed_id, int $target_flow_step_id ): ?string {
 		$verification = ( new FlowStepVerifier( new WordPressConfigurationSource() ) )->verify( $form_id, $feed_id, $target_flow_step_id );
 		if ( ! $verification['ready'] || ! $this->set_feed_active( $feed_id, false ) ) {
@@ -68,7 +87,12 @@ final class CutoverService {
 		return CutoverRegistry::prepare_flow( $source_type, $form_id, $legacy_step_id, $feed_id, $target_flow_step_id );
 	}
 
-	/** @param array<string, mixed> $record */
+	/**
+	 * Verify target Feed and optional Flow placement are ready for cutover.
+	 *
+	 * @param array<string, mixed> $record Cutover record.
+	 * @return bool
+	 */
 	private function target_ready( array $record ): bool {
 		$feed = $this->feed( (int) ( $record['feed_id'] ?? 0 ) );
 		if ( null === $feed || true === (bool) ( $feed['is_active'] ?? false ) ) {
@@ -85,7 +109,12 @@ final class CutoverService {
 		return 'direct_gf' === ( $record['source_type'] ?? '' );
 	}
 
-	/** @param array<string, mixed> $record */
+	/**
+	 * Verify the exact legacy sender scope is suppressed by current registry state.
+	 *
+	 * @param array<string, mixed> $record Cutover record.
+	 * @return bool
+	 */
 	private function legacy_inactive( array $record ): bool {
 		$source_type = (string) ( $record['source_type'] ?? '' );
 		if ( 'direct_gf' === $source_type ) {
@@ -106,6 +135,13 @@ final class CutoverService {
 		return false;
 	}
 
+	/**
+	 * Set one target Feed active flag and verify exact read-back.
+	 *
+	 * @param int  $feed_id Target Feed ID.
+	 * @param bool $active  Desired active state.
+	 * @return bool
+	 */
 	private function set_feed_active( int $feed_id, bool $active ): bool {
 		if ( 1 > $feed_id || ! class_exists( '\\GFAPI' ) ) {
 			return false;
@@ -115,10 +151,15 @@ final class CutoverService {
 			return false;
 		}
 		$feed = $this->feed( $feed_id );
-		return null !== $feed && $active === (bool) ( $feed['is_active'] ?? false );
+		return null !== $feed && (bool) ( $feed['is_active'] ?? false ) === $active;
 	}
 
-	/** @return array<string, mixed>|null */
+	/**
+	 * Read one target GNM Feed by identity.
+	 *
+	 * @param int $feed_id Target Feed ID.
+	 * @return array<string, mixed>|null
+	 */
 	private function feed( int $feed_id ): ?array {
 		if ( 1 > $feed_id || ! class_exists( '\\GFAPI' ) || ! class_exists( NotificationFeedAddOn::class ) ) {
 			return null;

@@ -14,38 +14,94 @@ final class CutoverRegistry {
 
 	public const OPTION = 'gravity_notify_cutover_v1';
 
-	/** @return array<string, array<string, mixed>> */
+	/**
+	 * Read all cutover records.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
 	public static function records(): array {
 		$value = function_exists( 'get_option' ) ? get_option( self::OPTION, array() ) : array();
 		return is_array( $value ) ? $value : array();
 	}
 
-	/** @return array<string, mixed>|null */
+	/**
+	 * Read one cutover record.
+	 *
+	 * @param string $scope_id Scope identity.
+	 * @return array<string, mixed>|null
+	 */
 	public static function record( string $scope_id ): ?array {
 		$records = self::records();
 		return isset( $records[ $scope_id ] ) && is_array( $records[ $scope_id ] ) ? $records[ $scope_id ] : null;
 	}
 
-	/** Persist a prepared direct-GF scope idempotently. */
+	/**
+	 * Persist a prepared direct-GF scope without regressing existing authority.
+	 *
+	 * @param int    $form_id     Form ID.
+	 * @param int    $legacy_index Stable legacy Rule index.
+	 * @param string $fingerprint Legacy Rule fingerprint.
+	 * @param int    $feed_id     Target Feed ID.
+	 * @return bool
+	 */
 	public static function prepare_direct( int $form_id, int $legacy_index, string $fingerprint, int $feed_id ): bool {
 		$scope_id = LegacyRuleMapper::direct_scope_id( $form_id, $legacy_index, $fingerprint );
-		return self::put(
-			$scope_id,
-			array(
-				'version'             => 1,
-				'source_type'         => 'direct_gf',
-				'form_id'             => $form_id,
-				'legacy_rule_index'   => $legacy_index,
-				'legacy_fingerprint'  => $fingerprint,
-				'legacy_step_id'      => 0,
-				'feed_id'             => $feed_id,
-				'target_flow_step_id' => 0,
-				'state'               => CutoverSequence::PREPARED,
-			)
+		$prepared = array(
+			'version'             => 1,
+			'source_type'         => 'direct_gf',
+			'form_id'             => $form_id,
+			'legacy_rule_index'   => $legacy_index,
+			'legacy_fingerprint'  => $fingerprint,
+			'legacy_step_id'      => 0,
+			'feed_id'             => $feed_id,
+			'target_flow_step_id' => 0,
+			'state'               => CutoverSequence::PREPARED,
+		);
+		$existing = self::record( $scope_id );
+		if ( null === $existing ) {
+			return self::put( $scope_id, $prepared );
+		}
+		if ( ! self::direct_record_matches( $existing, $form_id, $legacy_index, $fingerprint, $feed_id ) ) {
+			return false;
+		}
+		return in_array(
+			$existing['state'] ?? '',
+			array( CutoverSequence::PREPARED, CutoverSequence::LEGACY_DISABLED, CutoverSequence::GREENFIELD_ENABLED ),
+			true
 		);
 	}
 
-	/** Persist an operator-confirmed Flow scope after read-only target verification. */
+	/**
+	 * Check immutable direct-scope identity and target Feed binding.
+	 *
+	 * @param array<string, mixed> $record       Existing cutover record.
+	 * @param int                  $form_id      Form ID.
+	 * @param int                  $legacy_index Stable legacy Rule index.
+	 * @param string               $fingerprint  Legacy Rule fingerprint.
+	 * @param int                  $feed_id      Target Feed ID.
+	 * @return bool
+	 */
+	public static function direct_record_matches( array $record, int $form_id, int $legacy_index, string $fingerprint, int $feed_id ): bool {
+		return 1 === (int) ( $record['version'] ?? 0 )
+			&& 'direct_gf' === (string) ( $record['source_type'] ?? '' )
+			&& $form_id === (int) ( $record['form_id'] ?? 0 )
+			&& $legacy_index === (int) ( $record['legacy_rule_index'] ?? -1 )
+			&& $fingerprint === (string) ( $record['legacy_fingerprint'] ?? '' )
+			&& 0 === (int) ( $record['legacy_step_id'] ?? 0 )
+			&& $feed_id === (int) ( $record['feed_id'] ?? 0 )
+			&& 0 === (int) ( $record['target_flow_step_id'] ?? 0 );
+	}
+
+	/**
+	 * Persist an operator-confirmed Flow scope after read-only target verification.
+	 *
+	 * @param string $source_type         Flow source type.
+	 * @param int    $form_id             Form ID.
+	 * @param int    $legacy_step_id      Legacy Step ID, or zero for workflow complete.
+	 * @param int    $feed_id             Target Feed ID.
+	 * @param int    $target_flow_step_id Target Gravity Flow Feed-Step ID.
+	 * @return string|null
+	 */
 	public static function prepare_flow( string $source_type, int $form_id, int $legacy_step_id, int $feed_id, int $target_flow_step_id ): ?string {
 		if ( ! in_array( $source_type, array( 'flow_step', 'flow_workflow' ), true ) || 1 > $form_id || 1 > $feed_id || 1 > $target_flow_step_id ) {
 			return null;
@@ -75,7 +131,13 @@ final class CutoverRegistry {
 		return $ok ? $scope_id : null;
 	}
 
-	/** Persist only a valid state transition. */
+	/**
+	 * Persist only a valid state transition.
+	 *
+	 * @param string $scope_id Scope identity.
+	 * @param string $state    Target authority state.
+	 * @return bool
+	 */
 	public static function set_state( string $scope_id, string $state ): bool {
 		$record = self::record( $scope_id );
 		if ( null === $record || ! in_array( $state, array( CutoverSequence::PREPARED, CutoverSequence::LEGACY_DISABLED, CutoverSequence::GREENFIELD_ENABLED ), true ) ) {
@@ -85,7 +147,14 @@ final class CutoverRegistry {
 		return self::put( $scope_id, $record );
 	}
 
-	/** Whether one current legacy direct Rule may execute. */
+	/**
+	 * Determine whether one current legacy direct Rule may execute.
+	 *
+	 * @param int                  $form_id      Form ID.
+	 * @param int                  $legacy_index Stable legacy Rule index.
+	 * @param array<string, mixed> $rule         Current legacy Rule.
+	 * @return bool
+	 */
 	public static function legacy_direct_rule_allowed( int $form_id, int $legacy_index, array $rule ): bool {
 		$fingerprint = LegacyRuleMapper::fingerprint( $rule );
 		$scope_id    = LegacyRuleMapper::direct_scope_id( $form_id, $legacy_index, $fingerprint );
@@ -96,40 +165,61 @@ final class CutoverRegistry {
 		return ! in_array( $record['state'] ?? '', array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::GREENFIELD_ENABLED ), true );
 	}
 
-	/** Whether one current legacy Flow Step event may execute. */
+	/**
+	 * Determine whether one current legacy Flow Step event may execute.
+	 *
+	 * @param int $form_id Form ID.
+	 * @param int $step_id Legacy Step ID.
+	 * @return bool
+	 */
 	public static function legacy_flow_step_allowed( int $form_id, int $step_id ): bool {
 		foreach ( self::records() as $record ) {
 			if ( ! is_array( $record ) || 'flow_step' !== ( $record['source_type'] ?? '' ) ) {
 				continue;
 			}
-			if ( $form_id === (int) ( $record['form_id'] ?? 0 ) && $step_id === (int) ( $record['legacy_step_id'] ?? 0 ) && in_array( $record['state'] ?? '', array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::GREENFIELD_ENABLED ), true ) ) {
+			if ( (int) ( $record['form_id'] ?? 0 ) === $form_id && (int) ( $record['legacy_step_id'] ?? 0 ) === $step_id && in_array( $record['state'] ?? '', array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::GREENFIELD_ENABLED ), true ) ) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	/** Whether one current legacy workflow-complete event may execute. */
+	/**
+	 * Determine whether one current legacy workflow-complete event may execute.
+	 *
+	 * @param int $form_id Form ID.
+	 * @return bool
+	 */
 	public static function legacy_workflow_allowed( int $form_id ): bool {
 		foreach ( self::records() as $record ) {
-			if ( is_array( $record ) && 'flow_workflow' === ( $record['source_type'] ?? '' ) && $form_id === (int) ( $record['form_id'] ?? 0 ) && in_array( $record['state'] ?? '', array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::GREENFIELD_ENABLED ), true ) ) {
+			if ( is_array( $record ) && 'flow_workflow' === ( $record['source_type'] ?? '' ) && (int) ( $record['form_id'] ?? 0 ) === $form_id && in_array( $record['state'] ?? '', array( CutoverSequence::LEGACY_DISABLED, CutoverSequence::GREENFIELD_ENABLED ), true ) ) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	/** Whether an active target Feed has explicit greenfield authority. */
+	/**
+	 * Determine whether an active target Feed has explicit greenfield authority.
+	 *
+	 * @param int $feed_id Target Feed ID.
+	 * @return bool
+	 */
 	public static function feed_authorized( int $feed_id ): bool {
 		foreach ( self::records() as $record ) {
-			if ( is_array( $record ) && $feed_id === (int) ( $record['feed_id'] ?? 0 ) && CutoverSequence::GREENFIELD_ENABLED === ( $record['state'] ?? '' ) ) {
+			if ( is_array( $record ) && (int) ( $record['feed_id'] ?? 0 ) === $feed_id && CutoverSequence::GREENFIELD_ENABLED === ( $record['state'] ?? '' ) ) {
 				return self::legacy_identity_still_safe( $record );
 			}
 		}
 		return false;
 	}
 
-	/** Re-check the legacy identity so source drift disables greenfield authority. */
+	/**
+	 * Re-check the legacy identity so source drift disables greenfield authority.
+	 *
+	 * @param array<string, mixed> $record Cutover record.
+	 * @return bool
+	 */
 	private static function legacy_identity_still_safe( array $record ): bool {
 		$source_type = (string) ( $record['source_type'] ?? '' );
 		if ( 'direct_gf' !== $source_type ) {
@@ -145,6 +235,13 @@ final class CutoverRegistry {
 		return is_array( $rule ) && (string) ( $record['legacy_fingerprint'] ?? '' ) === LegacyRuleMapper::fingerprint( $rule );
 	}
 
+	/**
+	 * Persist one record and verify exact read-back.
+	 *
+	 * @param string               $scope_id Scope identity.
+	 * @param array<string, mixed> $record   Cutover record.
+	 * @return bool
+	 */
 	private static function put( string $scope_id, array $record ): bool {
 		if ( '' === $scope_id || ! function_exists( 'update_option' ) ) {
 			return false;

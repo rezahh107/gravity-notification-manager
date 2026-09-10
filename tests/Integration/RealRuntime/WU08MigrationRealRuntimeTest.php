@@ -20,6 +20,8 @@ use GravityNotify\Migration\FlowStepVerifier;
 use GravityNotify\Migration\LegacyRuleMapper;
 use GravityNotify\Migration\LegacyRuntimeGuard;
 use GravityNotify\Migration\MigrationService;
+use ReflectionMethod;
+use WP_Error;
 use WP_UnitTestCase;
 
 /**
@@ -27,19 +29,23 @@ use WP_UnitTestCase;
  */
 final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 
-	/** @var int */
+	/** Real synthetic Form ID. */
 	private int $form_id = 0;
 
-	/** @var mixed */
+	/** Legacy option value before the current test. @var mixed */
 	private $legacy_before;
 
-	/** @var mixed */
+	/** Target option value before the current test. @var mixed */
 	private $target_before;
 
-	/** @var mixed */
+	/** Cutover option value before the current test. @var mixed */
 	private $cutover_before;
 
-	/** Preserve options and create a real Form fixture. */
+	/**
+	 * Preserve options and create a real Form fixture.
+	 *
+	 * @return void
+	 */
 	public function set_up(): void {
 		parent::set_up();
 		$this->legacy_before  = get_option( 'gfsms_settings', null );
@@ -58,7 +64,11 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		update_option( 'gfsms_settings', $this->legacy_fixture(), false );
 	}
 
-	/** Remove fixtures and restore pre-test options. */
+	/**
+	 * Remove fixtures and restore pre-test options.
+	 *
+	 * @return void
+	 */
 	public function tear_down(): void {
 		if ( 0 < $this->form_id ) {
 			NotificationFeedAddOn::get_instance()->delete_feeds( $this->form_id );
@@ -70,19 +80,23 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		parent::tear_down();
 	}
 
-	/** @testdox WU08-MIGRATION-REAL-01 preview is secret-safe and execution is idempotent */
+	/**
+	 * Verify semantic zero Feeds, inaugural creation, and pre-cutover idempotence.
+	 *
+	 * @testdox WU08-MIGRATION-REAL-01 preview is secret-safe and execution is idempotent
+	 */
 	public function test_wu08_migration_real_01_preview_is_secret_safe_and_execution_is_idempotent(): void {
 		$service = new MigrationService();
 		$preview = $service->preview();
 		self::assertStringNotContainsString( 'synthetic-secret-do-not-report', (string) wp_json_encode( $preview ) );
-		self::assertSame( array(), GFAPI::get_feeds( null, $this->form_id, NotificationFeedAddOn::get_instance()->get_slug(), null ) );
+		$this->assert_semantic_zero_feeds();
 		self::assertSame( false, get_option( Settings::OPTION, false ) );
 		self::assertSame( false, get_option( CutoverRegistry::OPTION, false ) );
 		self::assertSame( LegacyRuleMapper::MAP_DETERMINISTIC, $preview['rules'][0]['classification'] );
 		self::assertSame( LegacyRuleMapper::MANUAL_REQUIRED_AMBIGUOUS, $preview['rules'][1]['classification'] );
 
 		$first = $service->execute();
-		$feeds = GFAPI::get_feeds( null, $this->form_id, NotificationFeedAddOn::get_instance()->get_slug(), null );
+		$feeds = $this->feeds_for_form();
 		self::assertCount( 1, $feeds );
 		self::assertFalse( (bool) $feeds[0]['is_active'] );
 		self::assertSame( 'CREATED_INACTIVE', $first['rules'][0]['mutation_state'] );
@@ -94,13 +108,18 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		self::assertSame( '+15550000001', $target['sms_from_number'] );
 
 		$second       = $service->execute();
-		$feeds_second = GFAPI::get_feeds( null, $this->form_id, NotificationFeedAddOn::get_instance()->get_slug(), null );
+		$feeds_second = $this->feeds_for_form();
 		self::assertCount( 1, $feeds_second );
 		self::assertSame( (int) $feeds[0]['id'], (int) $feeds_second[0]['id'] );
 		self::assertSame( 'UNCHANGED', $second['rules'][0]['mutation_state'] );
+		self::assertSame( CutoverSequence::PREPARED, CutoverRegistry::record( (string) $second['rules'][0]['scope_id'] )['state'] );
 	}
 
-	/** @testdox WU08-CUTOVER-REAL-02 cutover disables legacy before greenfield and rollback reverses safely */
+	/**
+	 * Preserve the explicit cutover and rollback ordering regression.
+	 *
+	 * @testdox WU08-CUTOVER-REAL-02 cutover disables legacy before greenfield and rollback reverses safely
+	 */
 	public function test_wu08_cutover_real_02_cutover_disables_legacy_before_greenfield_and_rollback_reverses_safely(): void {
 		$result   = ( new MigrationService() )->execute();
 		$scope_id = (string) $result['rules'][0]['scope_id'];
@@ -111,25 +130,19 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		self::assertTrue( $service->enable( $scope_id ) );
 		self::assertSame( CutoverSequence::GREENFIELD_ENABLED, CutoverRegistry::record( $scope_id )['state'] );
 		self::assertTrue( $this->feed_active( $feed_id ) );
-
-		$legacy = get_option( 'gfsms_settings', array() );
-		LegacyRuntimeGuard::begin_direct( array(), array( 'id' => $this->form_id ) );
-		$filtered = LegacyRuntimeGuard::filter_direct_settings( $legacy );
-		LegacyRuntimeGuard::end_direct( array(), array( 'id' => $this->form_id ) );
-		self::assertArrayNotHasKey( 0, $filtered['gf_rules'] );
-		self::assertArrayHasKey( 1, $filtered['gf_rules'] );
+		$this->assert_legacy_rule_suppressed( true );
 
 		self::assertTrue( $service->rollback( $scope_id ) );
 		self::assertSame( CutoverSequence::PREPARED, CutoverRegistry::record( $scope_id )['state'] );
 		self::assertFalse( $this->feed_active( $feed_id ) );
-
-		LegacyRuntimeGuard::begin_direct( array(), array( 'id' => $this->form_id ) );
-		$restored = LegacyRuntimeGuard::filter_direct_settings( $legacy );
-		LegacyRuntimeGuard::end_direct( array(), array( 'id' => $this->form_id ) );
-		self::assertArrayHasKey( 0, $restored['gf_rules'] );
+		$this->assert_legacy_rule_suppressed( false );
 	}
 
-	/** @testdox WU08-FLOW-REAL-03 Flow verification is read-only when target placement is missing */
+	/**
+	 * Preserve read-only Flow placement verification.
+	 *
+	 * @testdox WU08-FLOW-REAL-03 Flow verification is read-only when target placement is missing
+	 */
 	public function test_wu08_flow_real_03_flow_verification_is_read_only_when_target_placement_is_missing(): void {
 		$api    = new \Gravity_Flow_API( $this->form_id );
 		$before = $api->get_steps();
@@ -139,7 +152,191 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		self::assertSame( count( is_array( $before ) ? $before : array() ), count( is_array( $after ) ? $after : array() ) );
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Prove unrelated WP_Error values remain fail-closed at the production read boundary.
+	 *
+	 * @testdox WU08-ERROR-REAL-04 unrelated Feed-read WP_Error remains fail-closed
+	 */
+	public function test_wu08_error_real_04_unrelated_feed_read_wp_error_remains_fail_closed(): void {
+		$this->assert_semantic_zero_feeds();
+		$registry_before = get_option( CutoverRegistry::OPTION, false );
+		$service         = new MigrationService();
+		$method          = new ReflectionMethod( MigrationService::class, 'normalize_feed_read_result' );
+		$result          = $method->invoke( $service, new WP_Error( 'synthetic_storage_failure', 'Synthetic only.' ) );
+
+		self::assertSame( array(), $result['feeds'] );
+		self::assertSame( 'FAILED', $result['failure']['mutation_state'] );
+		self::assertSame( 'feed_read_failed', $result['failure']['mutation_reason'] );
+		$this->assert_semantic_zero_feeds();
+		self::assertSame( $registry_before, get_option( CutoverRegistry::OPTION, false ) );
+	}
+
+	/**
+	 * Prove valid completed cutover survives migration re-execution unchanged.
+	 *
+	 * @testdox WU08-REEXEC-REAL-05 Execute preserves valid GREENFIELD_ENABLED authority
+	 */
+	public function test_wu08_reexec_real_05_execute_preserves_valid_greenfield_enabled_authority(): void {
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		self::assertTrue( ( new CutoverService() )->enable( $scope_id ) );
+		self::assertTrue( $this->feed_active( $feed_id ) );
+		$this->assert_legacy_rule_suppressed( true );
+
+		$second = ( new MigrationService() )->execute();
+		$feeds  = $this->feeds_for_form();
+		self::assertCount( 1, $feeds );
+		self::assertSame( $feed_id, (int) $feeds[0]['id'] );
+		self::assertTrue( (bool) $feeds[0]['is_active'] );
+		self::assertSame( 'UNCHANGED_ACTIVE_CUTOVER', $second['rules'][0]['mutation_state'] );
+		self::assertSame( CutoverSequence::GREENFIELD_ENABLED, CutoverRegistry::record( $scope_id )['state'] );
+		$this->assert_legacy_rule_suppressed( true );
+	}
+
+	/**
+	 * Prove PREPARED plus active Feed is rejected without silent mutation.
+	 *
+	 * @testdox WU08-AUTHORITY-REAL-06 PREPARED plus active Feed fails closed
+	 */
+	public function test_wu08_authority_real_06_prepared_plus_active_feed_fails_closed(): void {
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		$this->set_feed_active_fixture( $feed_id, true );
+
+		$second = ( new MigrationService() )->execute();
+		self::assertSame( 'FAILED', $second['rules'][0]['mutation_state'] );
+		self::assertSame( 'contradictory_prepared_feed_active', $second['rules'][0]['mutation_reason'] );
+		self::assertTrue( $this->feed_active( $feed_id ) );
+		self::assertSame( CutoverSequence::PREPARED, CutoverRegistry::record( $scope_id )['state'] );
+	}
+
+	/**
+	 * Prove GREENFIELD_ENABLED plus inactive Feed is rejected without rollback.
+	 *
+	 * @testdox WU08-AUTHORITY-REAL-07 GREENFIELD_ENABLED plus inactive Feed fails closed
+	 */
+	public function test_wu08_authority_real_07_greenfield_enabled_plus_inactive_feed_fails_closed(): void {
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		self::assertTrue( ( new CutoverService() )->enable( $scope_id ) );
+		$this->set_feed_active_fixture( $feed_id, false );
+
+		$second = ( new MigrationService() )->execute();
+		self::assertSame( 'FAILED', $second['rules'][0]['mutation_state'] );
+		self::assertSame( 'contradictory_greenfield_feed_inactive', $second['rules'][0]['mutation_reason'] );
+		self::assertFalse( $this->feed_active( $feed_id ) );
+		self::assertSame( CutoverSequence::GREENFIELD_ENABLED, CutoverRegistry::record( $scope_id )['state'] );
+	}
+
+	/**
+	 * Prove transitional LEGACY_DISABLED authority is preserved without migration action.
+	 *
+	 * @testdox WU08-AUTHORITY-REAL-08 LEGACY_DISABLED is non-mutating during migration
+	 */
+	public function test_wu08_authority_real_08_legacy_disabled_is_non_mutating_during_migration(): void {
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		self::assertTrue( CutoverRegistry::set_state( $scope_id, CutoverSequence::LEGACY_DISABLED ) );
+
+		$second = ( new MigrationService() )->execute();
+		self::assertSame( 'FAILED', $second['rules'][0]['mutation_state'] );
+		self::assertSame( 'cutover_transition_in_progress', $second['rules'][0]['mutation_reason'] );
+		self::assertFalse( $this->feed_active( $feed_id ) );
+		self::assertSame( CutoverSequence::LEGACY_DISABLED, CutoverRegistry::record( $scope_id )['state'] );
+	}
+
+	/**
+	 * Prove an active migrated Feed without exact registry authority is never normalized.
+	 *
+	 * @testdox WU08-AUTHORITY-REAL-09 active Feed without registry authority fails closed
+	 */
+	public function test_wu08_authority_real_09_active_feed_without_registry_authority_fails_closed(): void {
+		$first   = ( new MigrationService() )->execute();
+		$feed_id = (int) $first['rules'][0]['feed_id'];
+		$this->set_feed_active_fixture( $feed_id, true );
+		delete_option( CutoverRegistry::OPTION );
+
+		$second = ( new MigrationService() )->execute();
+		self::assertSame( 'FAILED', $second['rules'][0]['mutation_state'] );
+		self::assertSame( 'existing_active_feed_without_cutover_authority', $second['rules'][0]['mutation_reason'] );
+		self::assertTrue( $this->feed_active( $feed_id ) );
+		self::assertSame( false, get_option( CutoverRegistry::OPTION, false ) );
+	}
+
+	/**
+	 * Prove registry/Feed identity disagreement fails closed without repair.
+	 *
+	 * @testdox WU08-AUTHORITY-REAL-10 registry Feed identity disagreement fails closed
+	 */
+	public function test_wu08_authority_real_10_registry_feed_identity_disagreement_fails_closed(): void {
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		$records  = get_option( CutoverRegistry::OPTION, array() );
+		$records[ $scope_id ]['feed_id'] = $feed_id + 100000;
+		update_option( CutoverRegistry::OPTION, $records, false );
+		$before = get_option( CutoverRegistry::OPTION, array() );
+
+		$second = ( new MigrationService() )->execute();
+		self::assertSame( 'FAILED', $second['rules'][0]['mutation_state'] );
+		self::assertSame( 'registered_feed_missing', $second['rules'][0]['mutation_reason'] );
+		self::assertFalse( $this->feed_active( $feed_id ) );
+		self::assertSame( $before, get_option( CutoverRegistry::OPTION, array() ) );
+	}
+
+	/**
+	 * Prove migration marker drift fails closed without rewriting Feed or registry.
+	 *
+	 * @testdox WU08-AUTHORITY-REAL-11 migration marker mismatch fails closed
+	 */
+	public function test_wu08_authority_real_11_migration_marker_mismatch_fails_closed(): void {
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		$feed     = $this->only_feed();
+		$meta     = (array) $feed['meta'];
+		$meta['gnm_migration_source'] = 'synthetic-mismatch';
+		self::assertTrue( GFAPI::update_feed( $feed_id, $meta, $this->form_id ) );
+		$record_before = CutoverRegistry::record( $scope_id );
+
+		$second = ( new MigrationService() )->execute();
+		self::assertSame( 'FAILED', $second['rules'][0]['mutation_state'] );
+		self::assertSame( 'migration_marker_mismatch', $second['rules'][0]['mutation_reason'] );
+		self::assertSame( 'synthetic-mismatch', $this->only_feed()['meta']['gnm_migration_source'] );
+		self::assertSame( $record_before, CutoverRegistry::record( $scope_id ) );
+	}
+
+	/**
+	 * Prove target metadata drift fails closed without rewriting Feed or registry.
+	 *
+	 * @testdox WU08-AUTHORITY-REAL-12 target metadata mismatch fails closed
+	 */
+	public function test_wu08_authority_real_12_target_metadata_mismatch_fails_closed(): void {
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		$feed     = $this->only_feed();
+		$meta     = (array) $feed['meta'];
+		$meta['message'] = 'Synthetic changed message';
+		self::assertTrue( GFAPI::update_feed( $feed_id, $meta, $this->form_id ) );
+		$record_before = CutoverRegistry::record( $scope_id );
+
+		$second = ( new MigrationService() )->execute();
+		self::assertSame( 'FAILED', $second['rules'][0]['mutation_state'] );
+		self::assertSame( 'target_metadata_mismatch', $second['rules'][0]['mutation_reason'] );
+		self::assertSame( 'Synthetic changed message', $this->only_feed()['meta']['message'] );
+		self::assertSame( $record_before, CutoverRegistry::record( $scope_id ) );
+	}
+
+	/**
+	 * Build the synthetic, non-production legacy settings fixture.
+	 *
+	 * @return array<string, mixed>
+	 */
 	private function legacy_fixture(): array {
 		return array(
 			'ippanel_api_key'       => 'synthetic-secret-do-not-report',
@@ -166,13 +363,91 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * Return all GNM Feeds for the current Form, normalizing only observed not_found.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function feeds_for_form(): array {
+		$feeds = GFAPI::get_feeds( null, $this->form_id, NotificationFeedAddOn::get_instance()->get_slug(), null );
+		if ( is_wp_error( $feeds ) ) {
+			self::assertSame( 'not_found', $feeds->get_error_code() );
+			return array();
+		}
+		self::assertIsArray( $feeds );
+		return $feeds;
+	}
+
+	/**
+	 * Assert semantic absence of target Feeds without assuming an array representation.
+	 *
+	 * @return void
+	 */
+	private function assert_semantic_zero_feeds(): void {
+		self::assertCount( 0, $this->feeds_for_form() );
+	}
+
+	/**
+	 * Return the single current target Feed.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function only_feed(): array {
+		$feeds = $this->feeds_for_form();
+		self::assertCount( 1, $feeds );
+		return $feeds[0];
+	}
+
+	/**
+	 * Read one Feed active state.
+	 *
+	 * @param int $feed_id Feed ID.
+	 * @return bool
+	 */
 	private function feed_active( int $feed_id ): bool {
 		$feeds = GFAPI::get_feeds( $feed_id, null, NotificationFeedAddOn::get_instance()->get_slug(), null );
 		$feed  = is_array( $feeds ) ? reset( $feeds ) : false;
 		return is_array( $feed ) && (bool) ( $feed['is_active'] ?? false );
 	}
 
-	/** @param mixed $value */
+	/**
+	 * Set Feed active state only to construct a contradictory test fixture.
+	 *
+	 * @param int  $feed_id Feed ID.
+	 * @param bool $active  Fixture active state.
+	 * @return void
+	 */
+	private function set_feed_active_fixture( int $feed_id, bool $active ): void {
+		self::assertTrue( GFAPI::update_feed_property( $feed_id, 'is_active', $active ? 1 : 0 ) );
+		self::assertSame( $active, $this->feed_active( $feed_id ) );
+	}
+
+	/**
+	 * Assert the first deterministic legacy Rule is suppressed or restored.
+	 *
+	 * @param bool $suppressed Expected suppression state.
+	 * @return void
+	 */
+	private function assert_legacy_rule_suppressed( bool $suppressed ): void {
+		$legacy = get_option( 'gfsms_settings', array() );
+		LegacyRuntimeGuard::begin_direct( array(), array( 'id' => $this->form_id ) );
+		$filtered = LegacyRuntimeGuard::filter_direct_settings( $legacy );
+		LegacyRuntimeGuard::end_direct( array(), array( 'id' => $this->form_id ) );
+		if ( $suppressed ) {
+			self::assertArrayNotHasKey( 0, $filtered['gf_rules'] );
+			self::assertArrayHasKey( 1, $filtered['gf_rules'] );
+			return;
+		}
+		self::assertArrayHasKey( 0, $filtered['gf_rules'] );
+	}
+
+	/**
+	 * Restore one WordPress option to its pre-test state.
+	 *
+	 * @param string $name  Option name.
+	 * @param mixed  $value Previous option value.
+	 * @return void
+	 */
 	private function restore_option( string $name, $value ): void {
 		if ( null === $value ) {
 			delete_option( $name );
