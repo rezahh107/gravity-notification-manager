@@ -22,13 +22,25 @@ final class IPPanelProvider implements SmsProviderInterface {
 	/** Current documented Edge send endpoint. */
 	private const ENDPOINT = 'https://edge.ippanel.com/v1/api/send';
 
-	/** @var string API access key/token. */
+	/**
+	 * API access key/token.
+	 *
+	 * @var string
+	 */
 	private string $api_key;
 
-	/** @var HttpTransportInterface Injected WordPress-compatible transport seam. */
+	/**
+	 * Injected WordPress-compatible transport seam.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
-	/** @var string Effective send endpoint. */
+	/**
+	 * Effective send endpoint.
+	 *
+	 * @var string
+	 */
 	private string $endpoint;
 
 	/**

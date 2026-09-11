@@ -173,15 +173,17 @@ if ( '/v1/api/send' === $gravity_notify_path ) {
 		);
 	}
 
-	$gravity_notify_keys        = is_array( $gravity_notify_payload ) ? array_keys( $gravity_notify_payload ) : array();
-	$gravity_notify_params      = is_array( $gravity_notify_payload ) ? ( $gravity_notify_payload['params'] ?? null ) : null;
-	$gravity_notify_param_keys  = is_array( $gravity_notify_params ) ? array_keys( $gravity_notify_params ) : array();
-	$gravity_notify_recipients  = is_array( $gravity_notify_params ) ? ( $gravity_notify_params['recipients'] ?? null ) : null;
-	$gravity_notify_valid_shape = is_array( $gravity_notify_payload )
+	$gravity_notify_keys            = is_array( $gravity_notify_payload ) ? array_keys( $gravity_notify_payload ) : array();
+	$gravity_notify_params          = is_array( $gravity_notify_payload ) ? ( $gravity_notify_payload['params'] ?? null ) : null;
+	$gravity_notify_param_keys      = is_array( $gravity_notify_params ) ? array_keys( $gravity_notify_params ) : array();
+	$gravity_notify_recipients      = is_array( $gravity_notify_params ) ? ( $gravity_notify_params['recipients'] ?? null ) : null;
+	$gravity_notify_payload_from    = is_array( $gravity_notify_payload ) ? ( $gravity_notify_payload['from_number'] ?? null ) : null;
+	$gravity_notify_payload_message = is_array( $gravity_notify_payload ) ? ( $gravity_notify_payload['message'] ?? null ) : null;
+	$gravity_notify_valid_shape     = is_array( $gravity_notify_payload )
 		&& array( 'sending_type', 'from_number', 'message', 'params' ) === $gravity_notify_keys
 		&& 'webservice' === ( $gravity_notify_payload['sending_type'] ?? null )
-		&& $gravity_notify_from === ( $gravity_notify_payload['from_number'] ?? null )
-		&& $gravity_notify_message === ( $gravity_notify_payload['message'] ?? null )
+		&& $gravity_notify_from === $gravity_notify_payload_from
+		&& $gravity_notify_message === $gravity_notify_payload_message
 		&& array( 'recipients' ) === $gravity_notify_param_keys
 		&& array( $gravity_notify_to ) === $gravity_notify_recipients;
 	if ( ! $gravity_notify_valid_shape ) {
@@ -257,10 +259,11 @@ if ( '/v1/api/report/recipients' === $gravity_notify_path ) {
 	}
 
 	gravity_notify_simulator_require_auth( $gravity_notify_token );
+	$gravity_notify_bulk_id = (string) ( $gravity_notify_query['bulk_id'] ?? '' );
 	if (
 		'1' !== (string) ( $gravity_notify_query['page'] ?? '' )
 		|| '10' !== (string) ( $gravity_notify_query['per_page'] ?? '' )
-		|| $gravity_notify_reference !== (string) ( $gravity_notify_query['bulk_id'] ?? '' )
+		|| $gravity_notify_reference !== $gravity_notify_bulk_id
 	) {
 		gravity_notify_simulator_respond(
 			422,
