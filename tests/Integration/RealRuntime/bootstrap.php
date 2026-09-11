@@ -39,9 +39,9 @@ tests_add_filter(
 	static function (): void {
 		require_once WP_PLUGIN_DIR . '/gravityforms/gravityforms.php';
 		require_once WP_PLUGIN_DIR . '/gravityflow/gravityflow.php';
-		require_once WP_PLUGIN_DIR . '/gravity-notification-manager-source/gravityflow-sms-ippanel.php';
 	}
 );
 require_once $gravity_notify_tests_dir . '/includes/bootstrap.php';
+require_once WP_PLUGIN_DIR . '/gravity-notification-manager-source/gravityflow-sms-ippanel.php';
 require_once WP_PLUGIN_DIR . '/gravity-notification-manager-source/vendor/autoload.php';
 require_once __DIR__ . '/test-plugin.php';
