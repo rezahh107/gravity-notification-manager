@@ -43,6 +43,12 @@ const GRAVITY_NOTIFY_REQUIRED_REAL_TESTS = array(
 	'IPPANEL-CONTRACT-REAL-19'    => 'test_ippanel_contract_real_19_real_gf_flow_production_path_reaches_delivered',
 );
 
+/**
+ * Emit the manifest state and terminate with the matching fail-closed code.
+ *
+ * @param string $state  Machine-readable integration state.
+ * @param string $detail Human-readable failure detail.
+ */
 function gravity_notify_manifest_state( string $state, string $detail ): never {
 	fwrite( STDERR, $detail . PHP_EOL );
 	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed CLI state vocabulary, never HTML.
@@ -50,6 +56,11 @@ function gravity_notify_manifest_state( string $state, string $detail ): never {
 	exit( 'REAL_INTEGRATION_INCOMPLETE' === $state ? 5 : ( 'REAL_INTEGRATION_DEFECT_FOUND' === $state ? 4 : 3 ) );
 }
 
+/**
+ * Validate that every required RealRuntime test exists and completed cleanly.
+ *
+ * @param string $result_path JUnit result path.
+ */
 function gravity_notify_validate_manifest( string $result_path ): void {
 	if ( '' === $result_path || ! is_readable( $result_path ) ) {
 		gravity_notify_manifest_state( 'HARNESS_FAILURE', 'JUnit result is missing or unreadable.' );

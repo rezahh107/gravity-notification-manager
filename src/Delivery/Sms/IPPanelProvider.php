@@ -54,7 +54,11 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return 'ippanel';
 	}
 
-	/** @return array<int, string> */
+	/**
+	 * Return the supported SMS capabilities.
+	 *
+	 * @return array<int, string>
+	 */
 	public function capabilities(): array {
 		return array(
 			SmsCapability::PLAIN,
@@ -105,7 +109,11 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return $this->classify_response( $request, $response );
 	}
 
-	/** @param SmsRequest $request Normalized request. */
+	/**
+	 * Check whether every request address is valid E.164.
+	 *
+	 * @param SmsRequest $request Normalized request.
+	 */
 	private function has_valid_e164_addresses( SmsRequest $request ): bool {
 		if ( ! $this->is_e164( $request->from() ) ) {
 			return false;
@@ -118,12 +126,18 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return true;
 	}
 
-	/** @param string $value Address value. */
+	/**
+	 * Check one address against the E.164 shape.
+	 *
+	 * @param string $value Address value.
+	 */
 	private function is_e164( string $value ): bool {
 		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value );
 	}
 
 	/**
+	 * Build the documented IPPanel request payload.
+	 *
 	 * @param SmsRequest $request Normalized request.
 	 * @return array<string, mixed>|null
 	 */
@@ -152,6 +166,8 @@ final class IPPanelProvider implements SmsProviderInterface {
 	}
 
 	/**
+	 * Classify an HTTP response into delivery attempt semantics.
+	 *
 	 * @param SmsRequest   $request  Original request.
 	 * @param HttpResponse $response Transport response.
 	 */
@@ -183,6 +199,8 @@ final class IPPanelProvider implements SmsProviderInterface {
 	}
 
 	/**
+	 * Extract documented provider message references.
+	 *
 	 * @param array<string, mixed> $decoded Decoded response.
 	 * @return array<int, string>
 	 */
@@ -201,6 +219,8 @@ final class IPPanelProvider implements SmsProviderInterface {
 	}
 
 	/**
+	 * Create one normalized attempt result.
+	 *
 	 * @param string             $status     Attempt status.
 	 * @param SmsRequest         $request    Request.
 	 * @param array<int, string> $references Safe provider references.

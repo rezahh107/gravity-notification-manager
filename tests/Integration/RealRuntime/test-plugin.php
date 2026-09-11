@@ -22,7 +22,27 @@ NotificationFeedAddOn::get_instance()->init();
 add_filter(
 	'pre_http_request',
 	static function ( $preempt, array $args, string $url ) {
-		unset( $preempt, $args );
+		unset( $args );
+
+		$simulator_endpoint = getenv( 'GNM_IPPANEL_SIMULATOR_SEND_ENDPOINT' );
+		$allowed_origin     = is_string( $simulator_endpoint ) ? wp_parse_url( $simulator_endpoint ) : false;
+		$request_origin     = wp_parse_url( $url );
+		$allowed_port       = is_array( $allowed_origin ) && isset( $allowed_origin['port'] ) ? (int) $allowed_origin['port'] : 0;
+
+		if (
+			is_array( $allowed_origin )
+			&& 'http' === ( $allowed_origin['scheme'] ?? '' )
+			&& '127.0.0.1' === ( $allowed_origin['host'] ?? '' )
+			&& 0 < $allowed_port
+			&& is_array( $request_origin )
+			&& ( $allowed_origin['scheme'] ?? '' ) === ( $request_origin['scheme'] ?? '' )
+			&& ( $allowed_origin['host'] ?? '' ) === ( $request_origin['host'] ?? '' )
+			&& isset( $request_origin['port'] )
+			&& $allowed_port === (int) $request_origin['port']
+		) {
+			return $preempt;
+		}
+
 		return new WP_Error( 'gravity_notify_test_http_blocked', 'External HTTP blocked by the GNM real-runtime harness.', $url );
 	},
 	PHP_INT_MIN,
