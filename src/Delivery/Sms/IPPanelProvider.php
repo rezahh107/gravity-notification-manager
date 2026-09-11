@@ -11,6 +11,7 @@ use GravityNotify\Delivery\AttemptResult;
 use GravityNotify\Delivery\AttemptStatus;
 use GravityNotify\Delivery\Http\HttpResponse;
 use GravityNotify\Delivery\Http\HttpTransportInterface;
+use GravityNotify\Support\NoSendGuard;
 use JsonException;
 
 /**
@@ -18,50 +19,42 @@ use JsonException;
  */
 final class IPPanelProvider implements SmsProviderInterface {
 
-	/**
-	 * Current documented Edge send endpoint.
-	 */
+	/** Current documented Edge send endpoint. */
 	private const ENDPOINT = 'https://edge.ippanel.com/v1/api/send';
 
-	/**
-	 * API access key/token.
-	 *
-	 * @var string
-	 */
+	/** @var string API access key/token. */
 	private string $api_key;
 
-	/**
-	 * Injected WordPress-compatible transport seam.
-	 *
-	 * @var HttpTransportInterface
-	 */
+	/** @var HttpTransportInterface Injected WordPress-compatible transport seam. */
 	private HttpTransportInterface $http;
+
+	/** @var string Effective send endpoint. */
+	private string $endpoint;
 
 	/**
 	 * Create the provider.
 	 *
-	 * @param string                 $api_key API access key/token.
-	 * @param HttpTransportInterface $http    Injected HTTP seam.
+	 * @param string                 $api_key       API access key/token.
+	 * @param HttpTransportInterface $http          Injected HTTP seam.
+	 * @param string|null            $test_endpoint Optional test-only loopback endpoint.
 	 */
-	public function __construct( string $api_key, HttpTransportInterface $http ) {
-		$this->api_key = $api_key;
-		$this->http    = $http;
+	public function __construct( string $api_key, HttpTransportInterface $http, ?string $test_endpoint = null ) {
+		$this->api_key  = $api_key;
+		$this->http     = $http;
+		$this->endpoint = self::ENDPOINT;
+
+		if ( null !== $test_endpoint ) {
+			NoSendGuard::assert_test_loopback_http_url( $test_endpoint );
+			$this->endpoint = $test_endpoint;
+		}
 	}
 
-	/**
-	 * Stable provider identifier.
-	 *
-	 * @return string
-	 */
+	/** Stable provider identifier. */
 	public function identifier(): string {
 		return 'ippanel';
 	}
 
-	/**
-	 * Capabilities verified from the current official send contract.
-	 *
-	 * @return array<int, string>
-	 */
+	/** @return array<int, string> */
 	public function capabilities(): array {
 		return array(
 			SmsCapability::PLAIN,
@@ -75,7 +68,6 @@ final class IPPanelProvider implements SmsProviderInterface {
 	 * Send one normalized request synchronously.
 	 *
 	 * @param SmsRequest $request Normalized request.
-	 * @return AttemptResult
 	 */
 	public function send( SmsRequest $request ): AttemptResult {
 		if ( ! in_array( $request->capability(), $this->capabilities(), true ) ) {
@@ -87,7 +79,6 @@ final class IPPanelProvider implements SmsProviderInterface {
 		}
 
 		$payload = $this->build_payload( $request );
-
 		if ( null === $payload ) {
 			return $this->result( AttemptStatus::FAILED, $request, array(), 'invalid_request_shape' );
 		}
@@ -100,7 +91,7 @@ final class IPPanelProvider implements SmsProviderInterface {
 		}
 
 		$response = $this->http->post(
-			self::ENDPOINT,
+			$this->endpoint,
 			array(
 				'headers' => array(
 					'Authorization' => $this->api_key,
@@ -114,39 +105,25 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return $this->classify_response( $request, $response );
 	}
 
-	/**
-	 * Validate the documented E.164 address shape before any network I/O.
-	 *
-	 * @param SmsRequest $request Normalized request.
-	 * @return bool
-	 */
+	/** @param SmsRequest $request Normalized request. */
 	private function has_valid_e164_addresses( SmsRequest $request ): bool {
 		if ( ! $this->is_e164( $request->from() ) ) {
 			return false;
 		}
-
 		foreach ( $request->recipients() as $recipient ) {
 			if ( ! is_string( $recipient ) || ! $this->is_e164( $recipient ) ) {
 				return false;
 			}
 		}
-
 		return true;
 	}
 
-	/**
-	 * Check the syntactic E.164 envelope documented by IPPanel.
-	 *
-	 * @param string $value Address value.
-	 * @return bool
-	 */
+	/** @param string $value Address value. */
 	private function is_e164( string $value ): bool {
 		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value );
 	}
 
 	/**
-	 * Build only documented request shapes.
-	 *
 	 * @param SmsRequest $request Normalized request.
 	 * @return array<string, mixed>|null
 	 */
@@ -171,84 +148,63 @@ final class IPPanelProvider implements SmsProviderInterface {
 				'params'       => $request->pattern_parameters(),
 			);
 		}
-
 		return null;
 	}
 
 	/**
-	 * Classify using only documented provider acceptance/rejection semantics.
-	 *
 	 * @param SmsRequest   $request  Original request.
 	 * @param HttpResponse $response Transport response.
-	 * @return AttemptResult
 	 */
 	private function classify_response( SmsRequest $request, HttpResponse $response ): AttemptResult {
 		if ( $response->is_transport_error() ) {
 			return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'transport_error' );
 		}
-
 		if ( 200 > $response->status_code() || 300 <= $response->status_code() ) {
 			return $this->result( AttemptStatus::FAILED, $request, array(), 'http_rejection' );
 		}
-
 		try {
 			$decoded = json_decode( $response->body(), true, 512, JSON_THROW_ON_ERROR );
 		} catch ( JsonException $exception ) {
 			unset( $exception );
 			return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'malformed_response' );
 		}
-
 		if ( ! is_array( $decoded ) ) {
 			return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'malformed_response' );
 		}
-
 		$meta = $decoded['meta'] ?? null;
-
 		if ( is_array( $meta ) && false === ( $meta['status'] ?? null ) ) {
 			return $this->result( AttemptStatus::FAILED, $request, array(), 'provider_rejection' );
 		}
-
 		$references = $this->documented_references( $decoded );
-
 		if ( is_array( $meta ) && true === ( $meta['status'] ?? null ) && ! empty( $references ) ) {
 			return $this->result( AttemptStatus::SUCCESS, $request, $references, 'accepted' );
 		}
-
 		return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'acceptance_unestablished' );
 	}
 
 	/**
-	 * Extract only documented message_outbox_ids.
-	 *
 	 * @param array<string, mixed> $decoded Decoded response.
 	 * @return array<int, string>
 	 */
 	private function documented_references( array $decoded ): array {
 		$data = $decoded['data'] ?? null;
-
 		if ( ! is_array( $data ) || ! isset( $data['message_outbox_ids'] ) || ! is_array( $data['message_outbox_ids'] ) ) {
 			return array();
 		}
-
 		$references = array();
-
 		foreach ( $data['message_outbox_ids'] as $reference ) {
 			if ( is_int( $reference ) || is_string( $reference ) ) {
 				$references[] = (string) $reference;
 			}
 		}
-
 		return $references;
 	}
 
 	/**
-	 * Create one safe attempt result.
-	 *
 	 * @param string             $status     Attempt status.
 	 * @param SmsRequest         $request    Request.
 	 * @param array<int, string> $references Safe provider references.
 	 * @param string             $diagnostic Safe diagnostic.
-	 * @return AttemptResult
 	 */
 	private function result( string $status, SmsRequest $request, array $references, string $diagnostic ): AttemptResult {
 		return new AttemptResult(

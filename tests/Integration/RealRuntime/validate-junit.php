@@ -40,15 +40,9 @@ const GRAVITY_NOTIFY_REQUIRED_REAL_TESTS = array(
 	'WU08-AUTHORITY-REAL-14'      => 'test_wu08_authority_real_14_stale_direct_identity_cannot_start_cutover',
 	'WU08-FLOW-AUTHORITY-REAL-15' => 'test_wu08_flow_authority_real_15_flow_source_and_target_drift_disables_authorization',
 	'WU08-CUTOVER-NODUAL-REAL-18' => 'test_wu08_cutover_nodual_real_18_flow_cutover_and_rollback_preserve_one_effective_sender_authority',
+	'IPPANEL-CONTRACT-REAL-19'    => 'test_ippanel_contract_real_19_real_gf_flow_production_path_reaches_delivered',
 );
 
-/**
- * Emit a fail-closed state and stop validation.
- *
- * @param string $state  Approved integration state.
- * @param string $detail Safe diagnostic detail.
- * @return never
- */
 function gravity_notify_manifest_state( string $state, string $detail ): never {
 	fwrite( STDERR, $detail . PHP_EOL );
 	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed CLI state vocabulary, never HTML.
@@ -56,22 +50,14 @@ function gravity_notify_manifest_state( string $state, string $detail ): never {
 	exit( 'REAL_INTEGRATION_INCOMPLETE' === $state ? 5 : ( 'REAL_INTEGRATION_DEFECT_FOUND' === $state ? 4 : 3 ) );
 }
 
-/**
- * Validate the required test manifest from one JUnit result.
- *
- * @param string $result_path JUnit result path.
- * @return void
- */
 function gravity_notify_validate_manifest( string $result_path ): void {
 	if ( '' === $result_path || ! is_readable( $result_path ) ) {
 		gravity_notify_manifest_state( 'HARNESS_FAILURE', 'JUnit result is missing or unreadable.' );
 	}
-
 	$document = new DOMDocument();
 	if ( ! $document->load( $result_path, LIBXML_NONET ) ) {
 		gravity_notify_manifest_state( 'HARNESS_FAILURE', 'JUnit result is malformed.' );
 	}
-
 	$test_cases = array();
 	foreach ( $document->getElementsByTagName( 'testcase' ) as $test_case ) {
 		$name = $test_case->attributes?->getNamedItem( 'name' )?->nodeValue;
@@ -79,7 +65,6 @@ function gravity_notify_validate_manifest( string $result_path ): void {
 			$test_cases[ $name ] = $test_case;
 		}
 	}
-
 	foreach ( GRAVITY_NOTIFY_REQUIRED_REAL_TESTS as $test_id => $method ) {
 		if ( ! isset( $test_cases[ $method ] ) ) {
 			gravity_notify_manifest_state( 'REAL_INTEGRATION_INCOMPLETE', sprintf( 'Required test %s was not present in JUnit output.', $test_id ) );
@@ -95,7 +80,6 @@ function gravity_notify_validate_manifest( string $result_path ): void {
 			gravity_notify_manifest_state( 'REAL_INTEGRATION_INCOMPLETE', sprintf( 'Required test %s was skipped or incomplete.', $test_id ) );
 		}
 	}
-
 	printf( 'GNM_REAL_INTEGRATION_MANIFEST=PASS tests=%d' . PHP_EOL, count( GRAVITY_NOTIFY_REQUIRED_REAL_TESTS ) );
 }
 

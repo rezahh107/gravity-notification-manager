@@ -14,6 +14,10 @@ if ( ! defined( 'WP_HTTP_BLOCK_EXTERNAL' ) ) {
 	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Intentional core network safeguard.
 	define( 'WP_HTTP_BLOCK_EXTERNAL', true );
 }
+if ( ! defined( 'WP_ACCESSIBLE_HOSTS' ) ) {
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Test-only loopback exception while external HTTP stays blocked.
+	define( 'WP_ACCESSIBLE_HOSTS', '127.0.0.1' );
+}
 
 $gravity_notify_polyfills_path = dirname( __DIR__, 3 ) . '/.wp-env.runtime/phpunit-polyfills';
 if ( ! is_dir( $gravity_notify_polyfills_path ) ) {

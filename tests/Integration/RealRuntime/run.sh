@@ -82,8 +82,7 @@ state READY
 npx wp-env start --update
 set +e
 npx wp-env run tests-cli --env-cwd=wp-content/plugins/gravity-notification-manager-source \
-	php vendor/bin/phpunit --configuration tests/Integration/RealRuntime/phpunit.xml.dist \
-	--log-junit .wp-env.runtime/real-runtime-junit.xml
+	bash tests/Integration/RealRuntime/run-in-container.sh
 phpunit_status=$?
 set -e
 
