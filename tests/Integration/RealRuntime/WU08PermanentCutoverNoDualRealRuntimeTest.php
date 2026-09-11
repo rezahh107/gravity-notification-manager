@@ -59,10 +59,14 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 	/** Prepare isolated real-runtime fixtures. */
 	public function set_up(): void {
 		parent::set_up();
-		if ( ! defined( 'GFSMS_SETTINGS_OPTION' ) ) {
-			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Legacy bootstrap prerequisite.
-			define( 'GFSMS_SETTINGS_OPTION', 'gfsms_settings' );
-		}
+		self::assertTrue(
+			defined( 'GFSMS_SETTINGS_OPTION' ),
+			'The real plugin entrypoint must define GFSMS_SETTINGS_OPTION before the WU-08 regression runs.'
+		);
+		self::assertSame(
+			'gfsms_settings',
+			constant( 'GFSMS_SETTINGS_OPTION' )
+		);
 		$this->cutover_before = get_option( CutoverRegistry::OPTION, null );
 		delete_option( CutoverRegistry::OPTION );
 		$this->remove_runtime_callbacks();
@@ -365,7 +369,7 @@ final class WU08PermanentCutoverNoDualRealRuntimeTest extends WP_UnitTestCase {
 	private function remove_runtime_callbacks(): void {
 		$dispatcher = LegacyDispatcher::instance();
 		remove_action( 'gravityflow_step_complete', array( LegacyListener::class, 'on_step_complete' ), 10 );
-		remove_action( 'gravityflow_step_complete', array( '\\GFSMS\\Integration\\Listener', 'on_step_complete' ), 10 );
+		remove_action( 'gravityflow_step_complete', array( '\GFSMS\Integration\Listener', 'on_step_complete' ), 10 );
 		remove_action( 'gravityflow_step_complete', array( $dispatcher, 'handle_step_complete' ), 10 );
 		remove_action( 'gravityflow_step_complete', array( LegacyRuntimeGuard::class, 'begin_flow_step' ), 1 );
 		remove_action( 'gravityflow_step_complete', array( LegacyRuntimeGuard::class, 'restore_flow_step' ), 11 );
