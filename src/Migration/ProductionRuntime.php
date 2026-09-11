@@ -19,29 +19,43 @@ use GravityNotify\Recipient\Native\GravityFlowAssigneeReader;
 use GravityNotify\Recipient\Native\GravityFormsEntryFieldReader;
 use GravityNotify\Recipient\Native\WordPressUserDirectory;
 use GravityNotify\Recipient\RecipientResolver;
+use GravityNotify\Support\NoSendGuard;
 
 /**
  * Enables the greenfield runtime only when every active GNM Feed is cutover-authorized.
  */
 final class ProductionRuntime {
 
-	/**
-	 * Register the supported Gravity Forms add-on bootstrap hook.
-	 *
-	 * @return void
-	 */
+	/** Register the supported Gravity Forms add-on bootstrap hook. */
 	public static function boot(): void {
 		if ( function_exists( 'add_action' ) ) {
 			add_action( 'gform_loaded', array( self::class, 'register' ), 5 );
 		}
 	}
 
-	/**
-	 * Register and configure the production Feed Add-On fail-closed.
-	 *
-	 * @return void
-	 */
+	/** Register and configure the production Feed Add-On fail-closed. */
 	public static function register(): void {
+		self::register_with_endpoint( null );
+	}
+
+	/**
+	 * Register the production composition against one test-only loopback endpoint.
+	 *
+	 * This seam is unavailable unless the automated no-send guard is active.
+	 *
+	 * @param string $endpoint Local IPPanel simulator send endpoint.
+	 */
+	public static function register_with_test_ippanel_endpoint( string $endpoint ): void {
+		NoSendGuard::assert_test_loopback_http_url( $endpoint );
+		self::register_with_endpoint( $endpoint );
+	}
+
+	/**
+	 * Register and configure with the selected provider endpoint.
+	 *
+	 * @param string|null $test_endpoint Test-only loopback endpoint or production default.
+	 */
+	private static function register_with_endpoint( ?string $test_endpoint ): void {
 		if ( ! class_exists( '\\GFForms' ) || ! method_exists( '\\GFForms', 'include_addon_framework' ) ) {
 			return;
 		}
@@ -55,20 +69,21 @@ final class ProductionRuntime {
 			$add_on->configure_processor( null );
 			return;
 		}
-		$add_on->configure_processor( self::processor() );
+		$add_on->configure_processor( self::processor( $test_endpoint ) );
 	}
 
 	/**
 	 * Compose the existing synchronous greenfield processor.
 	 *
+	 * @param string|null $test_endpoint Test-only loopback IPPanel endpoint.
 	 * @return NotificationFeedProcessor
 	 */
-	private static function processor(): NotificationFeedProcessor {
+	private static function processor( ?string $test_endpoint = null ): NotificationFeedProcessor {
 		$settings  = Settings::read();
 		$http      = new WordPressHttpTransport();
 		$providers = array();
 		if ( '' !== ( $settings['ippanel_api_key'] ?? '' ) ) {
-			$providers[] = new IPPanelProvider( $settings['ippanel_api_key'], $http );
+			$providers[] = new IPPanelProvider( $settings['ippanel_api_key'], $http, $test_endpoint );
 		}
 		$bale = '' !== ( $settings['bale_bot_token'] ?? '' ) ? new BaleClient( $settings['bale_bot_token'], $http ) : null;
 		$resolver = new RecipientResolver(

@@ -22,7 +22,7 @@ final class WordPressHttpTransport implements HttpTransportInterface {
 	 * @return HttpResponse
 	 */
 	public function post( string $url, array $args ): HttpResponse {
-		NoSendGuard::assert_outbound_allowed( 'http' );
+		NoSendGuard::assert_http_url_allowed( $url );
 
 		$response = wp_remote_post( $url, $args );
 
