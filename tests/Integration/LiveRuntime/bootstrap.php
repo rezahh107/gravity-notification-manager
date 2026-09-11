@@ -62,6 +62,7 @@ tests_add_filter(
 );
 require_once $gravity_notify_tests_dir . '/includes/bootstrap.php';
 require_once WP_PLUGIN_DIR . '/gravity-notification-manager-source/vendor/autoload.php';
+require_once __DIR__ . '/SafeIPPanelDiagnostics.php';
 
 if ( ! class_exists( 'GFFeedAddOn' ) || ! class_exists( 'Gravity_Flow_Step_Feed_Add_On' ) ) {
 	throw new RuntimeException( 'Real Gravity Forms and Gravity Flow must load before live validation.' );
@@ -69,3 +70,4 @@ if ( ! class_exists( 'GFFeedAddOn' ) || ! class_exists( 'Gravity_Flow_Step_Feed_
 
 \GFAddOn::register( \GravityNotify\GravityForms\NotificationFeedAddOn::class );
 \GravityNotify\GravityForms\NotificationFeedAddOn::get_instance()->init();
+\GravityNotify\Tests\Integration\LiveRuntime\SafeIPPanelDiagnostics::boot();
