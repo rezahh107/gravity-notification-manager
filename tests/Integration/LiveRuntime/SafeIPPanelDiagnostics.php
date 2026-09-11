@@ -47,28 +47,27 @@ final class SafeIPPanelDiagnostics {
 		$request = self::request_evidence( $args );
 		$result  = self::response_evidence( $response );
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Every dynamic field is reduced to bounded, non-sensitive metadata before output.
 		printf(
 			'GNM_LIVE_HTTP method=POST host=edge.ippanel.com path=/v1/api/send auth_header=%s content_type=%s payload_schema=%s sending_type=%s recipient_count=%d sender_matches_config=%s recipient_matches_config=%s request_body_length=%d request_body_sha256=%s http_status=%d transport_error=%s response_shape=%s response_content_type=%s response_body_length=%d response_body_sha256=%s safe_error_code=%s gateway_identifier=%s request_or_trace_id=%s retry_after=%s' . PHP_EOL,
-			$request['auth_header'],
-			$request['content_type'],
-			$request['payload_schema'],
-			$request['sending_type'],
-			$request['recipient_count'],
-			$request['sender_matches_config'],
-			$request['recipient_matches_config'],
-			$request['body_length'],
-			$request['body_sha256'],
-			$result['http_status'],
-			$result['transport_error'],
-			$result['response_shape'],
-			$result['content_type'],
-			$result['body_length'],
-			$result['body_sha256'],
-			$result['safe_error_code'],
-			$result['gateway_identifier'],
-			$result['request_or_trace_id'],
-			$result['retry_after']
+			esc_html( $request['auth_header'] ),
+			esc_html( $request['content_type'] ),
+			esc_html( $request['payload_schema'] ),
+			esc_html( $request['sending_type'] ),
+			absint( $request['recipient_count'] ),
+			esc_html( $request['sender_matches_config'] ),
+			esc_html( $request['recipient_matches_config'] ),
+			absint( $request['body_length'] ),
+			esc_html( $request['body_sha256'] ),
+			absint( $result['http_status'] ),
+			esc_html( $result['transport_error'] ),
+			esc_html( $result['response_shape'] ),
+			esc_html( $result['content_type'] ),
+			absint( $result['body_length'] ),
+			esc_html( $result['body_sha256'] ),
+			esc_html( $result['safe_error_code'] ),
+			esc_html( $result['gateway_identifier'] ),
+			esc_html( $result['request_or_trace_id'] ),
+			esc_html( $result['retry_after'] )
 		);
 	}
 
@@ -117,21 +116,20 @@ final class SafeIPPanelDiagnostics {
 			}
 		}
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Every dynamic field is reduced to bounded, non-sensitive metadata before output.
 		printf(
 			'GNM_LIVE_PREFLIGHT endpoint=numbers http_status=%d transport_error=%s response_shape=%s response_content_type=%s response_body_length=%d response_body_sha256=%s meta_status=%s safe_error_code=%s gateway_identifier=%s request_or_trace_id=%s retry_after=%s sender_observed=%s' . PHP_EOL,
-			$result['http_status'],
-			$result['transport_error'],
-			$result['response_shape'],
-			$result['content_type'],
-			$result['body_length'],
-			$result['body_sha256'],
-			$meta,
-			$result['safe_error_code'],
-			$result['gateway_identifier'],
-			$result['request_or_trace_id'],
-			$result['retry_after'],
-			$sender
+			absint( $result['http_status'] ),
+			esc_html( $result['transport_error'] ),
+			esc_html( $result['response_shape'] ),
+			esc_html( $result['content_type'] ),
+			absint( $result['body_length'] ),
+			esc_html( $result['body_sha256'] ),
+			esc_html( $meta ),
+			esc_html( $result['safe_error_code'] ),
+			esc_html( $result['gateway_identifier'] ),
+			esc_html( $result['request_or_trace_id'] ),
+			esc_html( $result['retry_after'] ),
+			esc_html( $sender )
 		);
 	}
 
