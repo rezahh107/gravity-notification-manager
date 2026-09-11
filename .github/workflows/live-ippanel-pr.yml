@@ -8,10 +8,16 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: live-ippanel-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   live-ippanel:
     name: Same-repository live IPPanel delivery
     if: github.event.pull_request.head.repo.full_name == github.repository
+    environment:
+      name: live-ippanel-pr
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:

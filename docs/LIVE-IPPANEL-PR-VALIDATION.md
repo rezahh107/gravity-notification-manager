@@ -4,19 +4,35 @@
 
 ## Trigger and isolation
 
-`.github/workflows/live-ippanel-pr.yml` runs for pull requests to `main` only when the pull-request head belongs to this repository. Fork pull requests do not receive repository secrets and the live job is skipped by the same-repository guard. The workflow uses `contents: read` permission only.
+`.github/workflows/live-ippanel-pr.yml` runs for pull requests to `main` only when the pull-request head belongs to this repository. Fork pull requests do not receive the live job because the existing same-repository guard skips them. The workflow uses `contents: read` permission only.
 
 Ordinary unit and real-runtime integration suites remain fail-closed/no-send. The live workflow uses the separate `tests/Integration/LiveRuntime/` harness and is the only automated path authorized to make the bounded real IPPanel call described here.
 
-## Required repository secrets
+The workflow declares bounded per-PR concurrency with `cancel-in-progress: true`. When a newer commit updates the same pull request, a superseded live-validation run is cancelled instead of allowing multiple obsolete live-delivery jobs to continue unnecessarily.
 
-The job requires these exact secret names and never prints their values:
+## Protected environment and required secrets
+
+The live job references the dedicated GitHub Environment `live-ippanel-pr`. That environment is part of the required security boundary and must be configured in GitHub repository settings with at least one required reviewer before live credentials are made available to the job.
+
+The following credentials must exist as **environment secrets** on `live-ippanel-pr` using these exact names:
 
 - `GNM_LIVE_IPPANEL_API_KEY`
 - `GNM_LIVE_SMS_FROM`
 - `GNM_LIVE_SMS_TO`
 
-Missing secrets on an eligible same-repository PR are a configuration/evidence failure, not a passing skip.
+They must not remain available as ordinary repository-wide live credentials. Missing environment secrets or a missing/unprotected approval boundary is a configuration/evidence failure, not a passing skip.
+
+### OWNER_ACTION_REQUIRED — environment settings
+
+Repository code cannot create or verify the required GitHub Environment protection settings. Before treating this live gate as security-complete, the repository owner must:
+
+1. Create or open the `live-ippanel-pr` GitHub Environment in repository settings.
+2. Configure an environment protection rule requiring review by at least one authorized reviewer before deployment/job access.
+3. Add `GNM_LIVE_IPPANEL_API_KEY`, `GNM_LIVE_SMS_FROM`, and `GNM_LIVE_SMS_TO` as secrets of that environment.
+4. Remove the old repository-level copies of those three credentials after migration, or rotate them and remove the superseded repository-level values, so the live credentials are not broadly available to same-repository PR code.
+5. Verify on the next live validation that GitHub places the `live-ippanel-pr` job behind the required environment approval before any secret-bearing live execution begins.
+
+Do not infer these settings from this file alone; they are GitHub-side configuration and require separate verification.
 
 ## Runtime and evidence
 
@@ -39,4 +55,4 @@ The delivery report is polled for a bounded window. Provider/network/reporting r
 
 ## Security boundary
 
-The workflow deliberately does not use `pull_request_target`. Secrets are injected only into the single live execution step. A temporary secret-bearing JSON file is written inside the ignored `.wp-env.runtime/` directory with mode `0600`, consumed inside the ephemeral wp-env test runtime, and removed by the harness cleanup trap. No secret-bearing file is uploaded as an artifact.
+The workflow deliberately does not use `pull_request_target`. The live job is bound to the `live-ippanel-pr` GitHub Environment while preserving the same-repository PR guard and exact-Head checkout. After the required environment review is approved, the three environment secrets are injected only into the single live execution step. A temporary secret-bearing JSON file is written inside the ignored `.wp-env.runtime/` directory with mode `0600`, consumed inside the ephemeral wp-env test runtime, and removed by the harness cleanup trap. No secret-bearing file is uploaded as an artifact.
