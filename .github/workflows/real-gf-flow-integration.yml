@@ -26,29 +26,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - label: WordPress 5.9 / PHP 8.2 / compatibility
-            wordpress: '5.9'
+          - label: WordPress 7.0 / PHP 8.2 / compatibility
+            wordpress: '7.0'
             php: '8.2'
             mode: compatibility
-          - label: WordPress 5.9 / PHP 8.3 / compatibility
-            wordpress: '5.9'
+          - label: WordPress 7.0 / PHP 8.3 / compatibility
+            wordpress: '7.0'
             php: '8.3'
             mode: compatibility
-          - label: WordPress 6.8 / PHP 8.2 / compatibility
-            wordpress: '6.8'
+          - label: WordPress 7.1 / PHP 8.2 / compatibility
+            wordpress: '7.1'
             php: '8.2'
-            mode: compatibility
-          - label: WordPress 6.8 / PHP 8.3 / compatibility
-            wordpress: '6.8'
-            php: '8.3'
-            mode: compatibility
-          - label: WordPress 6.9 / PHP 8.2 / compatibility
-            wordpress: '6.9'
-            php: '8.2'
-            mode: compatibility
-          - label: WordPress 6.9 / PHP 8.3 / compatibility
-            wordpress: '6.9'
-            php: '8.3'
             mode: compatibility
           - label: WordPress 7.1 / PHP 8.3 / full regression
             wordpress: '7.1'

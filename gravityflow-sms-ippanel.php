@@ -7,7 +7,7 @@
  * Text Domain: gfsms
  * Domain Path: /languages
  * Requires PHP: 8.2
- * Requires at least: 6.5
+ * Requires at least: 7.0
  */
 declare(strict_types=1);
 

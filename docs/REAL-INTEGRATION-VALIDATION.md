@@ -2,21 +2,26 @@
 
 `Real GF Flow Integration` is the deterministic repository-controlled integration gate. It uses real WordPress, real Gravity Forms, real Gravity Flow, and production GNM composition while automated no-send safeguards remain active.
 
-## WU-10 compatibility matrix
+## WU-10 Contract revision 4 compatibility matrix
 
-WU-10 keeps one real-package harness and extends it with explicit target cells rather than adding a parallel integration framework.
+WU-10 keeps one real-package harness and uses explicit exact-Head target cells rather than adding a parallel integration framework.
 
-Required compatibility evidence is executed on the exact PR Head for:
+Blocking compatibility evidence is executed for the accepted **WordPress >= 7.0** baseline on:
 
-- WordPress 5.9 with PHP 8.2 and PHP 8.3;
-- WordPress 6.8 with PHP 8.2 and PHP 8.3;
-- WordPress 6.9 with PHP 8.2 and PHP 8.3.
+- WordPress 7.0 with PHP 8.2;
+- WordPress 7.0 with PHP 8.3;
+- WordPress 7.1 with PHP 8.2;
+- WordPress 7.1 with PHP 8.3, retaining the full real-runtime regression.
 
-The existing WordPress 7.1 / PHP 8.3 full real-runtime regression is retained as a newer-target regression cell. Every cell logs the exact repository Head, GitHub run/job identity, WordPress target, host/container PHP runtime, Gravity Forms and Gravity Flow observed package versions, package SHA-256 values, and the exact source/provenance classification.
+The WordPress 7.0 cells prove the accepted floor. WordPress 7.1 supplies additional 7.x coverage. PHP 8.2 and 8.3 are exercised explicitly; untested WordPress/PHP combinations are not inferred as supported.
+
+WordPress 5.9, 6.8 and 6.9 results from RUN-036 are historical/informational under Contract revision 4. They are not blocking WU-10 acceptance and are not part of the RUN-037 blocking matrix.
+
+Every cell logs the exact repository Head, GitHub run/job identity, WordPress target, host/container PHP runtime, Gravity Forms and Gravity Flow observed package versions, package SHA-256 values, and the exact source/provenance classification.
 
 The compatibility cells use `WU10-COMPAT-REAL-01` to prove that the requested WordPress/PHP runtime is actually active, the admitted Gravity Forms/Gravity Flow packages are real rather than test stubs, the GNM `GFFeedAddOn` is registered, and the Gravity Flow notification Step is discoverable.
 
-A failed or unavailable cell leaves that compatibility claim not proven; it is never promoted from another target.
+A failed or unavailable blocking cell leaves the affected compatibility claim not proven; it is never promoted from another target.
 
 ## Authentic package evidence
 
