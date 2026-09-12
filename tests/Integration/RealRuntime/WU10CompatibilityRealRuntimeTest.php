@@ -18,6 +18,8 @@ use WP_UnitTestCase;
  */
 final class WU10CompatibilityRealRuntimeTest extends WP_UnitTestCase {
 	/**
+	 * Verify exact runtime identity and authentic dependency integration.
+	 *
 	 * @testdox WU10-COMPAT-REAL-01 exact runtime identity and authentic GF/Flow integration
 	 */
 	public function test_wu10_compat_real_01_exact_runtime_identity_and_authentic_dependencies(): void {
@@ -45,13 +47,5 @@ final class WU10CompatibilityRealRuntimeTest extends WP_UnitTestCase {
 		$steps = \Gravity_Flow_Steps::get_all();
 		self::assertArrayHasKey( 'gravity_notification_manager', $steps );
 		self::assertInstanceOf( NotificationFeedStep::class, $steps['gravity_notification_manager'] );
-
-		printf(
-			"WU10_RUNTIME_IDENTITY wordpress=%s php=%s gravity_forms=%s gravity_flow=%s mode=compatibility\n",
-			$wp_version,
-			PHP_VERSION,
-			\GFForms::$version,
-			(string) constant( 'GRAVITY_FLOW_VERSION' )
-		);
 	}
 }
