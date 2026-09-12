@@ -46,8 +46,8 @@
         "lint": "@php vendor/bin/phpcs -n --standard=phpcs.xml src tests",
         "lint-fix": "phpcbf --standard=phpcs.xml",
         "lint:wu00": "@php vendor/bin/phpcs -n --standard=phpcs.xml src tests",
-        "stan": "phpstan analyse --memory-limit=2G",
-        "test": "phpunit",
+        "stan": "@php vendor/bin/phpstan analyse --memory-limit=2G",
+        "test": "@php vendor/bin/phpunit",
         "test:wu00": "@php vendor/bin/phpunit --configuration phpunit.xml.dist",
         "phpcompat": "@php vendor/bin/phpcs -p --standard=phpcompat.xml"
     },
