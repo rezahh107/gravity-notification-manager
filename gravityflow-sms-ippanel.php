@@ -59,74 +59,26 @@ if ( file_exists( GFSMS_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 }
 
 // ---------------------------------------------------------------------------
-// Greenfield WU-06 admin foundation and WU-08 controlled-cutover bridges.
-// Register before the legacy runtime dependency gate so migration diagnostics
-// remain available even when optional runtime dependencies are unavailable.
+// Greenfield admin foundation and notification runtime.
+// WU-09 retired the legacy GFSMS sender/queue runtime. Migration state remains
+// readable for authorization/history, but no legacy runtime guard or migration
+// rollback controller is booted after retirement.
 // ---------------------------------------------------------------------------
 if ( ! defined( 'GRAVITY_NOTIFY_PLUGIN_URL' ) ) {
 	define( 'GRAVITY_NOTIFY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 }
-if ( class_exists( '\GravityNotify\Admin\AdminController' ) ) {
+if ( class_exists( '\\GravityNotify\\Admin\\AdminController' ) ) {
 	\GravityNotify\Admin\AdminController::boot();
 }
-if ( class_exists( '\GravityNotify\Migration\LegacyRuntimeGuard' ) ) {
-	\GravityNotify\Migration\LegacyRuntimeGuard::boot();
-}
-if ( class_exists( '\GravityNotify\Migration\MigrationAdminController' ) ) {
-	\GravityNotify\Migration\MigrationAdminController::boot();
-}
-if ( class_exists( '\GravityNotify\Migration\ProductionRuntime' ) ) {
+if ( class_exists( '\\GravityNotify\\Migration\\ProductionRuntime' ) ) {
 	\GravityNotify\Migration\ProductionRuntime::boot();
 }
 
 // ---------------------------------------------------------------------------
-// Activation / deactivation / uninstall hooks
+// Activation / deactivation / uninstall hooks.
+// Historical settings/log lifecycle is retained for WU-10 policy cleanup; it
+// is not part of notification delivery and cannot boot the retired sender.
 // ---------------------------------------------------------------------------
-register_activation_hook( GFSMS_PLUGIN_FILE, [ '\GFSMS\Lifecycle\Activator', 'activate' ] );
-register_deactivation_hook( GFSMS_PLUGIN_FILE, [ '\GFSMS\Lifecycle\Deactivator', 'deactivate' ] );
-register_uninstall_hook( GFSMS_PLUGIN_FILE, [ '\GFSMS\Lifecycle\Uninstaller', 'uninstall' ] );
-
-// ---------------------------------------------------------------------------
-// Plugin bootstrap
-// ---------------------------------------------------------------------------
-add_action( 'plugins_loaded', static function (): void {
-	// 1. PHP version check
-	if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
-		add_action( 'admin_notices', static function (): void {
-			echo '<div class="notice notice-error"><p>';
-			printf(
-				/* translators: %s: minimum PHP version */
-				esc_html__( 'Gravity Flow SMS Notifier requires PHP %s or higher.', 'gfsms' ),
-				'8.1'
-			);
-			echo '</p></div>';
-		} );
-		return;
-	}
-
-	// 2. Required plugins check
-	if ( ! class_exists( 'GFForms' ) || ! class_exists( 'Gravity_Flow' ) ) {
-		add_action( 'admin_notices', static function (): void {
-			echo '<div class="notice notice-error"><p>';
-			esc_html_e( 'Gravity Flow SMS Notifier requires Gravity Forms and Gravity Flow to be active.', 'gfsms' );
-			echo '</p></div>';
-		} );
-		return;
-	}
-
-	// 3. Bootstrap class existence check (in case autoloader mapping is missing)
-	if ( ! class_exists( '\GFSMS\Core\Bootstrap' ) ) {
-		add_action( 'admin_notices', static function (): void {
-			echo '<div class="notice notice-error"><p>';
-			printf(
-				/* translators: %s: class name */
-				esc_html__( 'Gravity Flow SMS Notifier: missing bootstrap class %s. Make sure all files are installed correctly.', 'gfsms' ),
-				'GFSMS\Core\Bootstrap'
-			);
-			echo '</p></div>';
-		} );
-		return;
-	}
-
-	\GFSMS\Core\Bootstrap::init();
-}, 20 );
+register_activation_hook( GFSMS_PLUGIN_FILE, [ '\\GFSMS\\Lifecycle\\Activator', 'activate' ] );
+register_deactivation_hook( GFSMS_PLUGIN_FILE, [ '\\GFSMS\\Lifecycle\\Deactivator', 'deactivate' ] );
+register_uninstall_hook( GFSMS_PLUGIN_FILE, [ '\\GFSMS\\Lifecycle\\Uninstaller', 'uninstall' ] );

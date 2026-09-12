@@ -39,7 +39,8 @@ const GRAVITY_NOTIFY_REQUIRED_REAL_TESTS = array(
 	'WU08-AUTHORITY-REAL-13'      => 'test_wu08_authority_real_13_direct_identity_drift_disables_runtime_authorization',
 	'WU08-AUTHORITY-REAL-14'      => 'test_wu08_authority_real_14_stale_direct_identity_cannot_start_cutover',
 	'WU08-FLOW-AUTHORITY-REAL-15' => 'test_wu08_flow_authority_real_15_flow_source_and_target_drift_disables_authorization',
-	'WU08-CUTOVER-NODUAL-REAL-18' => 'test_wu08_cutover_nodual_real_18_flow_cutover_and_rollback_preserve_one_effective_sender_authority',
+	'WU09-RETIRE-REAL-01'         => 'test_wu09_retire_real_01_legacy_sender_classes_and_hooks_are_absent',
+	'WU09-RETIRE-REAL-02'         => 'test_wu09_retire_real_02_greenfield_boot_is_the_only_notification_bootstrap',
 	'IPPANEL-CONTRACT-REAL-19'    => 'test_ippanel_contract_real_19_real_gf_flow_production_path_reaches_delivered',
 );
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Deterministic IPPanel contract coverage through the real production runtime.
+ * Deterministic IPPanel contract coverage through the real greenfield runtime.
  *
  * @package GravityNotify
  */
@@ -10,8 +10,6 @@ declare(strict_types=1);
 namespace GravityNotify\Tests\Integration\RealRuntime;
 
 use GFAPI;
-use GFSMS\Integration\Dispatcher as LegacyDispatcher;
-use GFSMS\Integration\Listener as LegacyListener;
 use GravityNotify\Admin\Settings;
 use GravityNotify\Delivery\AttemptStatus;
 use GravityNotify\Delivery\Http\WordPressHttpTransport;
@@ -23,7 +21,6 @@ use GravityNotify\GravityForms\NotificationFeedAddOn;
 use GravityNotify\Migration\CutoverRegistry;
 use GravityNotify\Migration\CutoverSequence;
 use GravityNotify\Migration\CutoverService;
-use GravityNotify\Migration\LegacyRuntimeGuard;
 use GravityNotify\Migration\ProductionRuntime;
 use ReflectionClass;
 use RuntimeException;
@@ -83,14 +80,13 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 		$this->cutover_before  = get_option( CutoverRegistry::OPTION, null );
 		delete_option( Settings::OPTION );
 		delete_option( CutoverRegistry::OPTION );
-		$this->remove_runtime_callbacks();
+		NotificationFeedAddOn::get_instance()->configure_processor( null );
 		$this->reset_simulator();
 	}
 
-	/** Restore options, callbacks, and database fixtures. */
+	/** Restore options and database fixtures. */
 	public function tear_down(): void {
 		NotificationFeedAddOn::get_instance()->configure_processor( null );
-		$this->remove_runtime_callbacks();
 		if ( 0 < $this->entry_id ) {
 			GFAPI::delete_entry( $this->entry_id );
 		}
@@ -104,9 +100,9 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Prove IPPANEL-CONTRACT-REAL-19 through the production runtime and loopback socket.
+	 * Prove IPPANEL-CONTRACT-REAL-19 through the retired-legacy production runtime.
 	 *
-	 * @testdox IPPANEL-CONTRACT-REAL-19 real GF/Flow production IPPanel path crosses loopback HTTP and reaches delivered
+	 * @testdox IPPANEL-CONTRACT-REAL-19 greenfield GF/Flow IPPanel path crosses loopback HTTP and reaches delivered
 	 */
 	public function test_ippanel_contract_real_19_real_gf_flow_production_path_reaches_delivered(): void {
 		self::assertSame( 'https://edge.ippanel.com/v1/api/send', $this->production_endpoint() );
@@ -143,10 +139,9 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 		$scope   = $service->prepare_flow( 'flow_step', $this->form_id, $source, $feed, $target );
 		self::assertIsString( $scope );
 		self::assertSame( CutoverSequence::PREPARED, CutoverRegistry::record( $scope )['state'] );
-		$this->register_legacy_and_guard_callbacks();
 		self::assertTrue( $service->enable( $scope ) );
+		self::assertFalse( CutoverRegistry::legacy_flow_step_allowed( $this->form_id, $source ) );
 		self::assertTrue( CutoverRegistry::feed_authorized( $feed ) );
-		$this->remove_legacy_sender_callbacks();
 
 		$endpoint = $this->send_endpoint();
 		ProductionRuntime::register_with_test_ippanel_endpoint( $endpoint );
@@ -309,7 +304,7 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 	/**
 	 * Return the immutable production IPPanel endpoint.
 	 *
-	 * @throws RuntimeException When the provider endpoint constant is unavailable.
+	 * @throws RuntimeException When the endpoint constant is unavailable.
 	 */
 	private function production_endpoint(): string {
 		$constant = ( new ReflectionClass( IPPanelProvider::class ) )->getReflectionConstant( 'ENDPOINT' );
@@ -369,9 +364,7 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 				'sending_type' => 'webservice',
 				'from_number'  => self::FROM,
 				'message'      => self::MESSAGE,
-				'params'       => array(
-					'recipients' => array( self::TO ),
-				),
+				'params'       => array( 'recipients' => array( self::TO ) ),
 			)
 		);
 	}
@@ -379,10 +372,10 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 	/**
 	 * Perform one raw WordPress HTTP request and return its status.
 	 *
-	 * @param string               $method  HTTP method.
-	 * @param string               $url     Request URL.
-	 * @param array<string, mixed> $headers Request headers.
-	 * @param string               $body    Request body.
+	 * @param string $method  HTTP method.
+	 * @param string $url     Request URL.
+	 * @param array  $headers Request headers.
+	 * @param string $body    Request body.
 	 */
 	private function raw_status( string $method, string $url, array $headers = array(), string $body = '' ): int {
 		$response = wp_remote_request(
@@ -403,7 +396,7 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 	 *
 	 * @param string $reference Provider reference.
 	 * @param string $scenario  Simulator scenario.
-	 * @param int    $max       Maximum polls.
+	 * @param int    $max       Maximum poll attempts.
 	 */
 	private function poll_delivery( string $reference, string $scenario, int $max ): string {
 		for ( $attempt = 1; $attempt <= $max; ++$attempt ) {
@@ -434,12 +427,10 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 			if ( ! is_array( $decoded ) || true !== ( $decoded['meta']['status'] ?? null ) || ! is_array( $decoded['data'] ?? null ) ) {
 				continue;
 			}
-
 			$record = reset( $decoded['data'] );
 			if ( ! is_array( $record ) ) {
 				continue;
 			}
-
 			$status = (string) ( $record['message_status'] ?? '' );
 			if ( '2' === $status ) {
 				return 'delivered';
@@ -448,11 +439,10 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 				return 'terminal_non_delivery';
 			}
 		}
-
 		return 'not_delivered';
 	}
 
-	/** Add the deterministic greenfield target feed. */
+	/** Add the deterministic greenfield target Feed. */
 	private function add_target_feed(): int {
 		$feed_id = GFAPI::add_feed(
 			$this->form_id,
@@ -472,27 +462,27 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Add the deterministic target Gravity Flow step.
+	 * Add the deterministic target Gravity Flow Step.
 	 *
-	 * @param int $feed_id Target feed ID.
+	 * @param int $feed_id Target Feed ID.
 	 */
 	private function add_target_step( int $feed_id ): int {
 		$step_id = ( new \Gravity_Flow_API( $this->form_id ) )->add_step(
 			array(
-				'step_name'          => 'Deterministic IPPanel target step',
-				'step_type'          => 'gravity_notification_manager',
-				'feed_' . $feed_id   => '1',
+				'step_name'        => 'Deterministic IPPanel target step',
+				'step_type'        => 'gravity_notification_manager',
+				'feed_' . $feed_id => '1',
 			)
 		);
 		self::assertGreaterThan( 0, $step_id );
 		return $step_id;
 	}
 
-	/** Add the legacy source Gravity Flow step. */
+	/** Add the historical source Step identity used by cutover authorization. */
 	private function add_legacy_source_step(): int {
 		$step_id = ( new \Gravity_Flow_API( $this->form_id ) )->add_step(
 			array(
-				'step_name' => 'Legacy source step',
+				'step_name' => 'Legacy source identity',
 				'step_type' => 'approval',
 			)
 		);
@@ -500,41 +490,11 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 		return $step_id;
 	}
 
-	/** Register legacy callbacks plus the cutover guard for the fixture. */
-	private function register_legacy_and_guard_callbacks(): void {
-		add_action( 'gravityflow_step_complete', array( LegacyListener::class, 'on_step_complete' ), 10, 5 );
-		add_action( 'gravityflow_step_complete', array( LegacyDispatcher::instance(), 'handle_step_complete' ), 10, 5 );
-		LegacyRuntimeGuard::boot();
-	}
-
-	/** Remove legacy sender callbacks from the fixture runtime. */
-	private function remove_legacy_sender_callbacks(): void {
-		remove_action( 'gravityflow_step_complete', array( LegacyListener::class, 'on_step_complete' ), 10 );
-		remove_action( 'gravityflow_step_complete', array( '\\GFSMS\\Integration\\Listener', 'on_step_complete' ), 10 );
-		remove_action( 'gravityflow_step_complete', array( LegacyDispatcher::instance(), 'handle_step_complete' ), 10 );
-	}
-
-	/** Remove request-local production and legacy guard callbacks. */
-	private function remove_runtime_callbacks(): void {
-		$this->remove_legacy_sender_callbacks();
-		remove_action( 'gravityflow_step_complete', array( LegacyRuntimeGuard::class, 'begin_flow_step' ), 1 );
-		remove_action( 'gravityflow_step_complete', array( LegacyRuntimeGuard::class, 'restore_flow_step' ), 11 );
-		remove_action( 'gravityflow_workflow_complete', array( LegacyRuntimeGuard::class, 'begin_workflow' ), 1 );
-		remove_action( 'gravityflow_workflow_complete', array( LegacyRuntimeGuard::class, 'restore_workflow' ), 11 );
-		remove_action( 'gform_after_submission', array( LegacyRuntimeGuard::class, 'begin_direct' ), 1 );
-		remove_action( 'gform_after_submission', array( LegacyRuntimeGuard::class, 'end_direct' ), 11 );
-		remove_filter( 'option_gfsms_settings', array( LegacyRuntimeGuard::class, 'filter_direct_settings' ), PHP_INT_MAX );
-		remove_action( 'gfsms_process_payload', array( LegacyRuntimeGuard::class, 'begin_process_payload' ), 1 );
-		remove_action( 'gfsms_process_payload', array( LegacyRuntimeGuard::class, 'restore_process_payload' ), 11 );
-		remove_action( 'gfsms_retry_payload', array( LegacyRuntimeGuard::class, 'begin_retry_payload' ), 1 );
-		remove_action( 'gfsms_retry_payload', array( LegacyRuntimeGuard::class, 'restore_retry_payload' ), 11 );
-	}
-
 	/**
 	 * Restore one WordPress option to its pre-test state.
 	 *
 	 * @param string $name  Option name.
-	 * @param mixed  $value Previous option value.
+	 * @param mixed  $value Original option value.
 	 */
 	private function restore_option( string $name, $value ): void {
 		if ( null === $value ) {
