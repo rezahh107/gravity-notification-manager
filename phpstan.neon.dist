@@ -4,3 +4,5 @@ parameters:
         - src
         - includes
         - gravityflow-sms-ippanel.php
+    scanFiles:
+        - phpstan-stubs.php
