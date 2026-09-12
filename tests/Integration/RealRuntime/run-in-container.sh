@@ -12,6 +12,8 @@ export GNM_IPPANEL_SIMULATOR_SEND_ENDPOINT="http://${SIMULATOR_HOST}:${SIMULATOR
 export GNM_IPPANEL_SIMULATOR_REPORT_ENDPOINT="http://${SIMULATOR_HOST}:${SIMULATOR_PORT}/v1/api/report/recipients"
 rm -f "$GNM_IPPANEL_SIMULATOR_STATE"
 
+printf 'CONTAINER_PHP_RUNTIME=%s expected_minor=%s mode=%s\n' "$(php -r 'echo PHP_VERSION;')" "${GNM_EXPECTED_PHP_VERSION:-unset}" "${GNM_REAL_INTEGRATION_MODE:-full}"
+
 php -S "${SIMULATOR_HOST}:${SIMULATOR_PORT}" tests/Integration/RealRuntime/ippanel-simulator.php >/tmp/gnm-ippanel-simulator.log 2>&1 &
 simulator_pid=$!
 cleanup() {
@@ -35,5 +37,11 @@ if [[ "$ready" != '1' ]]; then
 fi
 
 echo 'GNM_IPPANEL_SIMULATOR_SOCKET=READY address=127.0.0.1:8765'
-php vendor/bin/phpunit --configuration tests/Integration/RealRuntime/phpunit.xml.dist \
-	--log-junit .wp-env.runtime/real-runtime-junit.xml
+if [[ "${GNM_REAL_INTEGRATION_MODE:-full}" == 'compatibility' ]]; then
+	php vendor/bin/phpunit --configuration tests/Integration/RealRuntime/phpunit.xml.dist \
+		tests/Integration/RealRuntime/WU10CompatibilityRealRuntimeTest.php \
+		--log-junit .wp-env.runtime/real-runtime-junit.xml
+else
+	php vendor/bin/phpunit --configuration tests/Integration/RealRuntime/phpunit.xml.dist \
+		--log-junit .wp-env.runtime/real-runtime-junit.xml
+fi

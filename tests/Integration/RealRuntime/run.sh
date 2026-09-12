@@ -6,10 +6,12 @@ readonly ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 readonly RUNTIME_DIR="${ROOT}/.wp-env.runtime"
 readonly OVERRIDE_FILE="${ROOT}/.wp-env.override.json"
 readonly POLYFILLS_COMMIT="134921bfca9b02d8f374c48381451da1d98402f9"
+readonly EVIDENCE_FILE="${RUNTIME_DIR}/wu10-evidence.txt"
 
 state() { printf 'GNM_REAL_INTEGRATION_STATE=%s\n' "$1"; }
 fail() { state "$1"; printf '%s\n' "$2" >&2; exit "${3:-1}"; }
 need() { command -v "$1" >/dev/null 2>&1 || fail NOT_EXECUTED_ENVIRONMENT_UNAVAILABLE "Missing prerequisite: $1" "$RESULT_UNAVAILABLE"; }
+record() { printf '%s\n' "$1" | tee -a "$EVIDENCE_FILE"; }
 
 cleanup() {
 	if [[ "${GNM_KEEP_WP_ENV:-0}" != "1" && -f "$OVERRIDE_FILE" ]]; then
@@ -29,6 +31,16 @@ for required_input in GNM_GF_ZIP GNM_GF_SHA256 GNM_GFLOW_ZIP GNM_GFLOW_SHA256; d
 	[[ -n "${!required_input:-}" ]] || fail NOT_EXECUTED_ENVIRONMENT_UNAVAILABLE "Missing required input: $required_input" "$RESULT_UNAVAILABLE"
 done
 
+wp_version="${GNM_WP_VERSION:-7.1}"
+php_version="${GNM_PHP_VERSION:-8.3}"
+mode="${GNM_REAL_INTEGRATION_MODE:-full}"
+[[ "$wp_version" =~ ^[0-9]+\.[0-9]+([.][0-9]+)?$ ]] || fail HARNESS_FAILURE 'GNM_WP_VERSION is malformed.'
+[[ "$php_version" =~ ^[0-9]+\.[0-9]+$ ]] || fail HARNESS_FAILURE 'GNM_PHP_VERSION is malformed.'
+case "$mode" in
+	full|compatibility) ;;
+	*) fail HARNESS_FAILURE 'GNM_REAL_INTEGRATION_MODE must be full or compatibility.' ;;
+esac
+
 source_class="${GNM_PACKAGE_SOURCE_CLASS:-OWNER_LOCAL_PACKAGE}"
 case "$source_class" in
 	OWNER_LOCAL_PACKAGE|OWNER_AUTHORIZED_SECURE_SOURCE|OWNER_AUTHORIZED_PUBLIC_SOURCE) ;;
@@ -37,7 +49,11 @@ esac
 
 rm -rf "$RUNTIME_DIR"
 mkdir -p "$RUNTIME_DIR/vendor"
+: > "$EVIDENCE_FILE"
 export WP_ENV_HOME="${RUNTIME_DIR}/wp-env-home"
+record "EVIDENCE repository=${GITHUB_REPOSITORY:-local} head=${GNM_REPOSITORY_HEAD:-unknown} run=${GITHUB_RUN_ID:-local} job=${GITHUB_JOB:-local}"
+record "TARGET wordpress=${wp_version} php=${php_version} mode=${mode}"
+record "PACKAGE_SOURCE classification=${source_class}"
 
 polyfills_dir="${RUNTIME_DIR}/phpunit-polyfills"
 git init -q "$polyfills_dir"
@@ -65,37 +81,51 @@ admit_package() {
 	[[ -n "$header" ]] || fail PACKAGE_INVALID "$label plugin header was not detected."
 	version="$(awk -F: '/^[[:space:]]*(\*[[:space:]]*)?Version:/{sub(/^[[:space:]]+/,"",$2); print $2; exit}' "$header")"
 	[[ -n "$version" ]] || fail PACKAGE_INVALID "$label plugin version was not detected."
-	printf 'PACKAGE label=%s filename=%s slug=%s version=%s sha256=%s source=%s\n' "$label" "$(basename "$zip_path")" "$slug" "$version" "$actual" "$source_class"
+	line="PACKAGE label=${label} filename=$(basename "$zip_path") slug=${slug} version=${version} sha256=${actual} source=${source_class}"
+	printf '%s\n' "$line"
+	record "$line"
 }
 
 admit_package 'Gravity Forms' "$GNM_GF_ZIP" "$GNM_GF_SHA256" gravityforms "$RUNTIME_DIR/vendor/gf"
 admit_package 'Gravity Flow' "$GNM_GFLOW_ZIP" "$GNM_GFLOW_SHA256" gravityflow "$RUNTIME_DIR/vendor/gflow"
 
 php -r '
-$config = ["plugins" => [$argv[1], $argv[2]]];
+$config = [
+    "core" => "WordPress/WordPress#" . $argv[1],
+    "phpVersion" => $argv[2],
+    "plugins" => [$argv[3], $argv[4]],
+];
 $json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-if ($json === false || file_put_contents($argv[3], $json . PHP_EOL) === false) { exit(1); }
-' "$RUNTIME_DIR/vendor/gf/gravityforms" "$RUNTIME_DIR/vendor/gflow/gravityflow" "$OVERRIDE_FILE"
+if ($json === false || file_put_contents($argv[5], $json . PHP_EOL) === false) { exit(1); }
+' "$wp_version" "$php_version" "$RUNTIME_DIR/vendor/gf/gravityforms" "$RUNTIME_DIR/vendor/gflow/gravityflow" "$OVERRIDE_FILE"
 
 cd "$ROOT"
 state READY
 npx wp-env start --update
 set +e
 npx wp-env run tests-cli --env-cwd=wp-content/plugins/gravity-notification-manager-source \
+	env GNM_EXPECTED_WP_VERSION="$wp_version" GNM_EXPECTED_PHP_VERSION="$php_version" GNM_REAL_INTEGRATION_MODE="$mode" \
 	bash tests/Integration/RealRuntime/run-in-container.sh
 phpunit_status=$?
 set -e
 
+validator='tests/Integration/RealRuntime/validate-junit.php'
+if [[ "$mode" == 'compatibility' ]]; then
+	validator='tests/Integration/RealRuntime/validate-compat-junit.php'
+fi
 set +e
-php tests/Integration/RealRuntime/validate-junit.php "$RUNTIME_DIR/real-runtime-junit.xml"
+php "$validator" "$RUNTIME_DIR/real-runtime-junit.xml"
 manifest_status=$?
 set -e
 
 if [[ "$manifest_status" -ne 0 ]]; then
+	record "RESULT state=MANIFEST_FAILURE exit=${manifest_status}"
 	exit "$manifest_status"
 fi
 if [[ "$phpunit_status" -ne 0 ]]; then
 	state HARNESS_FAILURE
+	record "RESULT state=HARNESS_FAILURE exit=${phpunit_status}"
 	exit "$phpunit_status"
 fi
+record 'RESULT state=REAL_INTEGRATION_PASS'
 state REAL_INTEGRATION_PASS
