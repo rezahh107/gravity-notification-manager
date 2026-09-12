@@ -45,16 +45,32 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 	/** Deterministic provider reference returned by the simulator. */
 	private const REFERENCE = '424242';
 
-	/** @var int Fixture form ID. */
+	/**
+	 * Fixture form ID.
+	 *
+	 * @var int
+	 */
 	private int $form_id = 0;
 
-	/** @var int Fixture entry ID. */
+	/**
+	 * Fixture entry ID.
+	 *
+	 * @var int
+	 */
 	private int $entry_id = 0;
 
-	/** @var mixed Original settings option value. */
+	/**
+	 * Original settings option value.
+	 *
+	 * @var mixed
+	 */
 	private $settings_before;
 
-	/** @var mixed Original cutover option value. */
+	/**
+	 * Original cutover option value.
+	 *
+	 * @var mixed
+	 */
 	private $cutover_before;
 
 	/** Prepare deterministic runtime state for each contract test. */
@@ -175,14 +191,91 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 		self::assertSame( 'gravity_notify_test_http_blocked', $blocked->get_error_code() );
 
 		self::assertSame( 401, $this->raw_status( 'POST', $endpoint, array( 'Content-Type' => 'application/json' ), $this->valid_body() ) );
-		self::assertSame( 401, $this->raw_status( 'POST', $endpoint, array( 'Authorization' => 'wrong', 'Content-Type' => 'application/json' ), $this->valid_body() ) );
+		self::assertSame(
+			401,
+			$this->raw_status(
+				'POST',
+				$endpoint,
+				array(
+					'Authorization' => 'wrong',
+					'Content-Type'  => 'application/json',
+				),
+				$this->valid_body()
+			)
+		);
 		self::assertSame( 405, $this->raw_status( 'GET', $endpoint, array( 'Authorization' => self::TOKEN ) ) );
-		self::assertSame( 404, $this->raw_status( 'POST', 'http://127.0.0.1:8765/v1/api/wrong', array( 'Authorization' => self::TOKEN, 'Content-Type' => 'application/json' ), $this->valid_body() ) );
-		self::assertSame( 415, $this->raw_status( 'POST', $endpoint, array( 'Authorization' => self::TOKEN, 'Content-Type' => 'text/plain' ), $this->valid_body() ) );
-		self::assertSame( 400, $this->raw_status( 'POST', $endpoint, array( 'Authorization' => self::TOKEN, 'Content-Type' => 'application/json' ), '{bad-json' ) );
-		self::assertSame( 422, $this->raw_status( 'POST', $endpoint, array( 'Authorization' => self::TOKEN, 'Content-Type' => 'application/json' ), '{}' ) );
-		self::assertSame( 200, $this->raw_status( 'POST', $endpoint, array( 'Authorization' => self::TOKEN, 'Content-Type' => 'application/json' ), $this->valid_body() ) );
-		self::assertSame( 409, $this->raw_status( 'POST', $endpoint, array( 'Authorization' => self::TOKEN, 'Content-Type' => 'application/json' ), $this->valid_body() ) );
+		self::assertSame(
+			404,
+			$this->raw_status(
+				'POST',
+				'http://127.0.0.1:8765/v1/api/wrong',
+				array(
+					'Authorization' => self::TOKEN,
+					'Content-Type'  => 'application/json',
+				),
+				$this->valid_body()
+			)
+		);
+		self::assertSame(
+			415,
+			$this->raw_status(
+				'POST',
+				$endpoint,
+				array(
+					'Authorization' => self::TOKEN,
+					'Content-Type'  => 'text/plain',
+				),
+				$this->valid_body()
+			)
+		);
+		self::assertSame(
+			400,
+			$this->raw_status(
+				'POST',
+				$endpoint,
+				array(
+					'Authorization' => self::TOKEN,
+					'Content-Type'  => 'application/json',
+				),
+				'{bad-json'
+			)
+		);
+		self::assertSame(
+			422,
+			$this->raw_status(
+				'POST',
+				$endpoint,
+				array(
+					'Authorization' => self::TOKEN,
+					'Content-Type'  => 'application/json',
+				),
+				'{}'
+			)
+		);
+		self::assertSame(
+			200,
+			$this->raw_status(
+				'POST',
+				$endpoint,
+				array(
+					'Authorization' => self::TOKEN,
+					'Content-Type'  => 'application/json',
+				),
+				$this->valid_body()
+			)
+		);
+		self::assertSame(
+			409,
+			$this->raw_status(
+				'POST',
+				$endpoint,
+				array(
+					'Authorization' => self::TOKEN,
+					'Content-Type'  => 'application/json',
+				),
+				$this->valid_body()
+			)
+		);
 	}
 
 	/** Prove provider parsing fails closed on rejected or reference-less acceptance. */
@@ -208,7 +301,11 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 		self::assertSame( 'not_delivered', $this->poll_delivery( self::REFERENCE, 'pending', 2 ) );
 	}
 
-	/** Return the immutable production IPPanel endpoint. */
+	/**
+	 * Return the immutable production IPPanel endpoint.
+	 *
+	 * @throws RuntimeException When the endpoint constant is unavailable.
+	 */
 	private function production_endpoint(): string {
 		$constant = ( new ReflectionClass( IPPanelProvider::class ) )->getReflectionConstant( 'ENDPOINT' );
 		if ( false === $constant ) {
@@ -272,7 +369,14 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 		);
 	}
 
-	/** Perform one raw WordPress HTTP request and return its status. */
+	/**
+	 * Perform one raw WordPress HTTP request and return its status.
+	 *
+	 * @param string $method  HTTP method.
+	 * @param string $url     Request URL.
+	 * @param array  $headers Request headers.
+	 * @param string $body    Request body.
+	 */
 	private function raw_status( string $method, string $url, array $headers = array(), string $body = '' ): int {
 		$response = wp_remote_request(
 			$url,
@@ -287,7 +391,13 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 		return (int) wp_remote_retrieve_response_code( $response );
 	}
 
-	/** Poll deterministic delivery reports with a bounded attempt count. */
+	/**
+	 * Poll deterministic delivery reports with a bounded attempt count.
+	 *
+	 * @param string $reference Provider reference.
+	 * @param string $scenario  Simulator scenario.
+	 * @param int    $max       Maximum poll attempts.
+	 */
 	private function poll_delivery( string $reference, string $scenario, int $max ): string {
 		for ( $attempt = 1; $attempt <= $max; ++$attempt ) {
 			$url      = add_query_arg(
@@ -351,7 +461,11 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 		return $feed_id;
 	}
 
-	/** Add the deterministic target Gravity Flow Step. */
+	/**
+	 * Add the deterministic target Gravity Flow Step.
+	 *
+	 * @param int $feed_id Target Feed ID.
+	 */
 	private function add_target_step( int $feed_id ): int {
 		$step_id = ( new \Gravity_Flow_API( $this->form_id ) )->add_step(
 			array(
@@ -376,7 +490,12 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 		return $step_id;
 	}
 
-	/** Restore one WordPress option to its pre-test state. */
+	/**
+	 * Restore one WordPress option to its pre-test state.
+	 *
+	 * @param string $name  Option name.
+	 * @param mixed  $value Original option value.
+	 */
 	private function restore_option( string $name, $value ): void {
 		if ( null === $value ) {
 			delete_option( $name );
