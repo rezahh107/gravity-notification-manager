@@ -4,9 +4,7 @@ Native-first multi-channel notifications for Gravity Forms and Gravity Flow with
 
 ## Project status
 
-The target architecture is **decision-closed** and the new core is being built **docs-first / greenfield-by-default**.
-
-The current repository still contains the pre-greenfield runtime until controlled cutover. That legacy implementation is not architecture authority and is not used as the initial design source for new components.
+The target architecture is **decision-closed**. The greenfield notification runtime is active, and WU-09 retired the legacy sender/queue runtime and its notification call sites. Historical lifecycle/migration data may remain readable where required for authorization or evidence, but it is not an alternate notification runtime.
 
 Normal implementation method:
 

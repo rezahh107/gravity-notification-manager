@@ -6,8 +6,8 @@
  * Author: Reza Hashemi Hosseini
  * Text Domain: gfsms
  * Domain Path: /languages
- * Requires PHP: 8.1
- * Requires at least: 6.0
+ * Requires PHP: 8.2
+ * Requires at least: 7.0
  */
 declare(strict_types=1);
 

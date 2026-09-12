@@ -19,11 +19,34 @@ permissions:
 
 jobs:
   real-integration:
-    name: WordPress 7.1 / PHP 8.3 / real premium plugins
+    name: ${{ matrix.label }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: WordPress 7.0 / PHP 8.2 / compatibility
+            wordpress: '7.0'
+            php: '8.2'
+            mode: compatibility
+          - label: WordPress 7.0 / PHP 8.3 / compatibility
+            wordpress: '7.0'
+            php: '8.3'
+            mode: compatibility
+          - label: WordPress 7.1 / PHP 8.2 / compatibility
+            wordpress: '7.1'
+            php: '8.2'
+            mode: compatibility
+          - label: WordPress 7.1 / PHP 8.3 / full regression
+            wordpress: '7.1'
+            php: '8.3'
+            mode: full
     env:
       EXPECTED_HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || inputs.target_sha || github.sha }}
+      GNM_WP_VERSION: ${{ matrix.wordpress }}
+      GNM_PHP_VERSION: ${{ matrix.php }}
+      GNM_REAL_INTEGRATION_MODE: ${{ matrix.mode }}
       GNM_GF_SHA256: 542f56ae0747f3661d1474996527298027db3fb8ed3e6469a6391aaabf61069b
       GNM_GFLOW_SHA256: ac0573b75831380417a21a455176e25eb746d718bbbd0bb70d6da6f48cba5404
       GNM_PACKAGE_SOURCE_CLASS: OWNER_AUTHORIZED_PUBLIC_SOURCE
@@ -50,16 +73,21 @@ jobs:
         run: |
           set -Eeuo pipefail
           observed="$(git rev-parse HEAD)"
-          printf 'repository=%s ref=%s expected_sha=%s observed_sha=%s run=%s job=%s\n' \
-            "$GITHUB_REPOSITORY" "$GITHUB_REF" "$EXPECTED_HEAD" "$observed" "$GITHUB_RUN_ID" "$GITHUB_JOB"
+          printf 'repository=%s ref=%s expected_sha=%s observed_sha=%s run=%s job=%s matrix=%s wp=%s php=%s mode=%s\n' \
+            "$GITHUB_REPOSITORY" "$GITHUB_REF" "$EXPECTED_HEAD" "$observed" "$GITHUB_RUN_ID" "$GITHUB_JOB" \
+            '${{ matrix.label }}' "$GNM_WP_VERSION" "$GNM_PHP_VERSION" "$GNM_REAL_INTEGRATION_MODE"
           test "$observed" = "$EXPECTED_HEAD"
 
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
-          php-version: '8.3'
+          php-version: ${{ matrix.php }}
           coverage: none
           tools: composer:v2
+
+      - name: Record host PHP runtime
+        shell: bash
+        run: php -r 'printf("HOST_PHP_RUNTIME=%s\n", PHP_VERSION);'
 
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -92,4 +120,21 @@ jobs:
           echo "GNM_GFLOW_ZIP=$gflow_zip" >> "$GITHUB_ENV"
 
       - name: Execute real-runtime contract
+        env:
+          GNM_REPOSITORY_HEAD: ${{ env.EXPECTED_HEAD }}
         run: npm run test:integration:real
+
+      - name: Publish claim-mapped evidence summary
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          echo '### WU-10 real-package evidence' >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- exact Head: `%s`\n' "$EXPECTED_HEAD" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- target: WordPress `%s`, PHP `%s`, mode `%s`\n' "$GNM_WP_VERSION" "$GNM_PHP_VERSION" "$GNM_REAL_INTEGRATION_MODE" >> "$GITHUB_STEP_SUMMARY"
+          printf -- '- source classification: `%s`\n' "$GNM_PACKAGE_SOURCE_CLASS" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -f .wp-env.runtime/wu10-evidence.txt ]]; then
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+            cat .wp-env.runtime/wu10-evidence.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
