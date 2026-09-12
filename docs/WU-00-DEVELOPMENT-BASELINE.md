@@ -116,4 +116,4 @@ Blocking checks for this Run are:
 - PHPCS on WU-00 greenfield PHP/test surfaces.
 - GitHub Actions execution on the exact final Head with normal blocking failure semantics.
 
-PHPStan is present as a repository development dependency, but the current repository has no PHPStan configuration/path contract. WU-00 does not invent a parallel static-analysis scope; its Result must report PHPStan as not executed unless a valid repository-specific path/config is established during the Run.
+PHPStan remains a repository development dependency and now has one tracked root-level scope contract: `phpstan.neon.dist`. That file is the sole owner of the maintained production analysis boundary: `src/`, `includes/`, and `gravityflow-sms-ippanel.php`. The contract uses PHPStan level `0`, the minimum supported baseline, so establishing the missing scope does not independently raise static-analysis strictness. `composer stan` consumes that configuration without duplicating path arguments, and WU-00 treats both configuration errors and genuine PHPStan findings as blocking nonzero qualification results.
