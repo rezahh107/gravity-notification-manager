@@ -77,6 +77,11 @@ jobs:
       - name: Run WU-08 migration and cutover targets
         run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Migration
 
+      - name: Run WU-09 retirement target and zero-call-site audit
+        run: |
+          php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Migration/LegacyRuntimeRetirementTest.php
+          bash tools/validate-wu09-retirement.sh
+
       - name: Lint WU-00 PHP surfaces
         run: composer lint:wu00
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Explicitly authorized live IPPanel end-to-end PR validation.
+ * Explicitly authorized live IPPanel end-to-end validation.
  *
  * @package GravityNotify
  */
@@ -10,8 +10,6 @@ declare(strict_types=1);
 namespace GravityNotify\Tests\Integration\LiveRuntime;
 
 use GFAPI;
-use GFSMS\Integration\Dispatcher as LegacyDispatcher;
-use GFSMS\Integration\Listener as LegacyListener;
 use GravityNotify\Admin\Settings;
 use GravityNotify\Delivery\AttemptStatus;
 use GravityNotify\GravityForms\FeedRuleSchema;
@@ -19,41 +17,23 @@ use GravityNotify\GravityForms\NotificationFeedAddOn;
 use GravityNotify\Migration\CutoverRegistry;
 use GravityNotify\Migration\CutoverSequence;
 use GravityNotify\Migration\CutoverService;
-use GravityNotify\Migration\LegacyRuntimeGuard;
 use GravityNotify\Migration\ProductionRuntime;
 use WP_UnitTestCase;
 
 /**
- * Sends one plain SMS through the cutover-authorized production Flow path.
+ * Sends one plain SMS through the retired-legacy production Flow path.
  */
 final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
-
-	/**
-	 * Real fixture Form ID.
-	 *
-	 * @var int
-	 */
+	/** @var int Real fixture Form ID. */
 	private int $form_id = 0;
 
-	/**
-	 * Real fixture Entry ID.
-	 *
-	 * @var int
-	 */
+	/** @var int Real fixture Entry ID. */
 	private int $entry_id = 0;
 
-	/**
-	 * Pre-test greenfield settings option.
-	 *
-	 * @var mixed
-	 */
+	/** @var mixed Pre-test greenfield settings option. */
 	private $settings_before;
 
-	/**
-	 * Pre-test cutover registry option.
-	 *
-	 * @var mixed
-	 */
+	/** @var mixed Pre-test cutover registry option. */
 	private $cutover_before;
 
 	/** Prepare isolated live-runtime state. */
@@ -63,13 +43,12 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		$this->cutover_before  = get_option( CutoverRegistry::OPTION, null );
 		delete_option( Settings::OPTION );
 		delete_option( CutoverRegistry::OPTION );
-		$this->remove_runtime_callbacks();
+		NotificationFeedAddOn::get_instance()->configure_processor( null );
 	}
 
 	/** Restore all local WordPress state after live validation. */
 	public function tear_down(): void {
 		NotificationFeedAddOn::get_instance()->configure_processor( null );
-		$this->remove_runtime_callbacks();
 		if ( 0 < $this->entry_id ) {
 			GFAPI::delete_entry( $this->entry_id );
 		}
@@ -83,9 +62,9 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Prove one cutover-authorized Flow Feed reaches documented delivery.
+	 * Prove one cutover-authorized greenfield Flow Feed reaches documented delivery.
 	 *
-	 * @testdox LIVE-IPPANEL-PR-01 one cutover-authorized Flow Feed sends and reaches documented delivered state
+	 * @testdox LIVE-IPPANEL-PR-01 one greenfield Flow Feed sends and reaches documented delivered state
 	 */
 	public function test_live_ippanel_pr_01_flow_feed_sends_and_reaches_delivered_state(): void {
 		self::assertSame( 1, preg_match( '/^\+[1-9][0-9]{1,14}$/D', GRAVITY_NOTIFY_LIVE_SMS_FROM ) );
@@ -111,7 +90,7 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 
 		$this->form_id = GFAPI::add_form(
 			array(
-				'title'  => 'GNM live IPPanel PR validation',
+				'title'  => 'GNM live IPPanel validation',
 				'fields' => array(
 					array(
 						'id'    => 1,
@@ -123,7 +102,7 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		);
 		self::assertGreaterThan( 0, $this->form_id );
 
-		$target_feed_id = $this->add_target_feed( 'GNM RUN034 ' . $correlation );
+		$target_feed_id = $this->add_target_feed( 'GNM RUN035 ' . $correlation );
 		$target_step_id = $this->add_target_step( $target_feed_id );
 		$source_step_id = $this->add_legacy_source_step();
 		$source_step    = ( new \Gravity_Flow_API( $this->form_id ) )->get_step( $source_step_id );
@@ -140,13 +119,9 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		);
 		self::assertIsString( $scope_id );
 		self::assertSame( CutoverSequence::PREPARED, CutoverRegistry::record( $scope_id )['state'] );
-		$this->register_legacy_and_guard_callbacks();
 		self::assertTrue( $service->enable( $scope_id ) );
 		self::assertFalse( CutoverRegistry::legacy_flow_step_allowed( $this->form_id, $source_step_id ) );
 		self::assertTrue( CutoverRegistry::feed_authorized( $target_feed_id ) );
-		$this->assert_source_event_is_guarded( $source_step_id );
-
-		$this->remove_legacy_sender_callbacks();
 		ProductionRuntime::register();
 
 		$http_status     = 0;
@@ -207,11 +182,7 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		$this->require_documented_delivery( $reference );
 	}
 
-	/**
-	 * Poll the documented IPPanel recipient report until terminal delivery.
-	 *
-	 * @param string $reference Safe provider outbox reference.
-	 */
+	/** Poll the documented IPPanel recipient report until terminal delivery. */
 	private function require_documented_delivery( string $reference ): void {
 		$last_state = 'not_final';
 		for ( $poll = 1; $poll <= 30; ++$poll ) {
@@ -276,47 +247,7 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		self::fail( 'IPPanel delivery did not reach delivered state; state=' . $last_state );
 	}
 
-	/**
-	 * Prove the legacy sender callbacks are absent inside the source scope.
-	 *
-	 * @param int $source_step_id Legacy source Step ID.
-	 */
-	private function assert_source_event_is_guarded( int $source_step_id ): void {
-		$observed   = 0;
-		$listener   = array( LegacyListener::class, 'on_step_complete' );
-		$dispatcher = array( LegacyDispatcher::instance(), 'handle_step_complete' );
-		$observer   = function ( $step_id ) use ( &$observed, $source_step_id, $listener, $dispatcher ): void {
-			if ( $source_step_id !== (int) $step_id ) {
-				return;
-			}
-			++$observed;
-			self::assertFalse( has_action( 'gravityflow_step_complete', $listener ) );
-			self::assertFalse( has_action( 'gravityflow_step_complete', $dispatcher ) );
-		};
-		add_action( 'gravityflow_step_complete', $observer, 5, 1 );
-		try {
-			$step = ( new \Gravity_Flow_API( $this->form_id ) )->get_step( $source_step_id );
-			self::assertIsObject( $step );
-			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Documented Gravity Flow hook.
-			do_action( 'gravityflow_step_complete', $source_step_id, 0, $this->form_id, 'approved', $step );
-			self::assertSame( 1, $observed );
-		} finally {
-			remove_action( 'gravityflow_step_complete', $observer, 5 );
-		}
-	}
-
-	/** Register canonical legacy callbacks and the production cutover guard. */
-	private function register_legacy_and_guard_callbacks(): void {
-		add_action( 'gravityflow_step_complete', array( LegacyListener::class, 'on_step_complete' ), 10, 5 );
-		add_action( 'gravityflow_step_complete', array( LegacyDispatcher::instance(), 'handle_step_complete' ), 10, 5 );
-		LegacyRuntimeGuard::boot();
-	}
-
-	/**
-	 * Persist the one live greenfield target Feed.
-	 *
-	 * @param string $message Correlation-safe message body.
-	 */
+	/** Persist the one live greenfield target Feed. */
 	private function add_target_feed( string $message ): int {
 		$feed_id = GFAPI::add_feed(
 			$this->form_id,
@@ -335,11 +266,7 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		return $feed_id;
 	}
 
-	/**
-	 * Persist the live target GNM Feed-Step first in workflow order.
-	 *
-	 * @param int $feed_id Selected target Feed ID.
-	 */
+	/** Persist the live target GNM Feed-Step first in workflow order. */
 	private function add_target_step( int $feed_id ): int {
 		$step_id = ( new \Gravity_Flow_API( $this->form_id ) )->add_step(
 			array(
@@ -352,11 +279,11 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		return $step_id;
 	}
 
-	/** Persist a real non-GNM Step that supplies legacy source identity only. */
+	/** Persist a non-GNM Step supplying historical cutover source identity. */
 	private function add_legacy_source_step(): int {
 		$step_id = ( new \Gravity_Flow_API( $this->form_id ) )->add_step(
 			array(
-				'step_name' => 'Legacy source step',
+				'step_name' => 'Legacy source identity',
 				'step_type' => 'approval',
 			)
 		);
@@ -364,55 +291,19 @@ final class LiveIPPanelFlowStepValidationTest extends WP_UnitTestCase {
 		return $step_id;
 	}
 
-	/**
-	 * Reduce a provider reference to a bounded log-safe identifier.
-	 *
-	 * @param string $reference Provider reference.
-	 */
+	/** Reduce a provider reference to a bounded log-safe identifier. */
 	private function safe_reference( string $reference ): string {
 		$reference = preg_replace( '/[^A-Za-z0-9_-]/', '', $reference ) ?? '';
 		return substr( $reference, 0, 128 );
 	}
 
-	/**
-	 * Reduce provider-neutral diagnostic text to a bounded safe token.
-	 *
-	 * @param string $value Diagnostic value.
-	 */
+	/** Reduce provider-neutral diagnostic text to a bounded safe token. */
 	private function safe_token( string $value ): string {
 		$value = preg_replace( '/[^A-Za-z0-9_.:-]/', '_', $value ) ?? '';
 		return substr( $value, 0, 64 );
 	}
 
-	/** Remove canonical legacy step sender callbacks. */
-	private function remove_legacy_sender_callbacks(): void {
-		remove_action( 'gravityflow_step_complete', array( LegacyListener::class, 'on_step_complete' ), 10 );
-		remove_action( 'gravityflow_step_complete', array( '\\GFSMS\\Integration\\Listener', 'on_step_complete' ), 10 );
-		remove_action( 'gravityflow_step_complete', array( LegacyDispatcher::instance(), 'handle_step_complete' ), 10 );
-	}
-
-	/** Remove every runtime callback installed by this live test. */
-	private function remove_runtime_callbacks(): void {
-		$this->remove_legacy_sender_callbacks();
-		remove_action( 'gravityflow_step_complete', array( LegacyRuntimeGuard::class, 'begin_flow_step' ), 1 );
-		remove_action( 'gravityflow_step_complete', array( LegacyRuntimeGuard::class, 'restore_flow_step' ), 11 );
-		remove_action( 'gravityflow_workflow_complete', array( LegacyRuntimeGuard::class, 'begin_workflow' ), 1 );
-		remove_action( 'gravityflow_workflow_complete', array( LegacyRuntimeGuard::class, 'restore_workflow' ), 11 );
-		remove_action( 'gform_after_submission', array( LegacyRuntimeGuard::class, 'begin_direct' ), 1 );
-		remove_action( 'gform_after_submission', array( LegacyRuntimeGuard::class, 'end_direct' ), 11 );
-		remove_filter( 'option_gfsms_settings', array( LegacyRuntimeGuard::class, 'filter_direct_settings' ), PHP_INT_MAX );
-		remove_action( 'gfsms_process_payload', array( LegacyRuntimeGuard::class, 'begin_process_payload' ), 1 );
-		remove_action( 'gfsms_process_payload', array( LegacyRuntimeGuard::class, 'restore_process_payload' ), 11 );
-		remove_action( 'gfsms_retry_payload', array( LegacyRuntimeGuard::class, 'begin_retry_payload' ), 1 );
-		remove_action( 'gfsms_retry_payload', array( LegacyRuntimeGuard::class, 'restore_retry_payload' ), 11 );
-	}
-
-	/**
-	 * Restore one WordPress option exactly.
-	 *
-	 * @param string $name  Option name.
-	 * @param mixed  $value Original option value.
-	 */
+	/** Restore one WordPress option exactly. */
 	private function restore_option( string $name, $value ): void {
 		if ( null === $value ) {
 			delete_option( $name );
