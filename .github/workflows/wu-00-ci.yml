@@ -90,3 +90,17 @@ jobs:
 
       - name: Run PHPCompatibility
         run: composer phpcompat
+
+      - name: Run RUN-035 full Composer validation
+        shell: bash
+        run: |
+          set +e
+          composer stan
+          stan_status=$?
+          composer test
+          test_status=$?
+          printf 'RUN035_COMPOSER_STAN_EXIT=%d\n' "$stan_status"
+          printf 'RUN035_COMPOSER_TEST_EXIT=%d\n' "$test_status"
+          if (( stan_status != 0 || test_status != 0 )); then
+            exit 1
+          fi
