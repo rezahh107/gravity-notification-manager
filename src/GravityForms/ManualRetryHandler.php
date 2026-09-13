@@ -136,7 +136,7 @@ final class ManualRetryHandler {
 				? esc_html__( 'Gravity Notification Manager Retry', 'gravity-notification-manager' )
 				: 'Gravity Notification Manager Retry';
 			wp_die(
-				esc_html( $result ),
+				esc_html( self::result_message( $result ) ),
 				esc_html( $title ),
 				array( 'response' => absint( $code ) )
 			);
@@ -340,5 +340,27 @@ final class ManualRetryHandler {
 		}
 
 		return 400;
+	}
+
+	/**
+	 * Translate bounded internal result codes for user-facing wp_die() output.
+	 *
+	 * @param string $result Bounded Retry result code.
+	 * @return string
+	 */
+	private static function result_message( string $result ): string {
+		return match ( $result ) {
+			self::RESULT_SUCCESS      => __( 'Retry completed successfully.', 'gravity-notification-manager' ),
+			self::RESULT_UNRESOLVED   => __( 'Retry completed, but delivery resolution is not confirmed.', 'gravity-notification-manager' ),
+			self::ERROR_METHOD        => __( 'Retry requires a POST request.', 'gravity-notification-manager' ),
+			self::ERROR_CAPABILITY    => __( 'You are not allowed to retry this notification.', 'gravity-notification-manager' ),
+			self::ERROR_ENTRY_ID      => __( 'The Entry ID is invalid.', 'gravity-notification-manager' ),
+			self::ERROR_FEED_ID       => __( 'The Feed ID is invalid.', 'gravity-notification-manager' ),
+			self::ERROR_NONCE         => __( 'The Retry request could not be verified. Reload the page and try again.', 'gravity-notification-manager' ),
+			self::ERROR_ENTRY         => __( 'The requested Gravity Forms Entry could not be found.', 'gravity-notification-manager' ),
+			self::ERROR_FEED          => __( 'The requested notification Feed is invalid or unavailable.', 'gravity-notification-manager' ),
+			self::ERROR_STATE         => __( 'This notification is not currently eligible for Retry, or its updated state could not be confirmed.', 'gravity-notification-manager' ),
+			default                   => __( 'The Retry request could not be completed.', 'gravity-notification-manager' ),
+		};
 	}
 }

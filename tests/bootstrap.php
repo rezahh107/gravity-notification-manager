@@ -14,4 +14,21 @@ if ( ! defined( 'WP_HTTP_BLOCK_EXTERNAL' ) ) {
 	define( 'WP_HTTP_BLOCK_EXTERNAL', true );
 }
 
+// The unit suite intentionally runs without booting WordPress. Production code
+// still uses native gettext; these identity stubs keep source-locale unit tests
+// deterministic without faking locale/catalog behavior.
+if ( ! function_exists( '__' ) ) {
+	function __( string $text, string $domain = 'default' ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- WordPress core test stub.
+		unset( $domain );
+		return $text;
+	}
+}
+
+if ( ! function_exists( 'esc_html__' ) ) {
+	function esc_html__( string $text, string $domain = 'default' ): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- WordPress core test stub.
+		unset( $domain );
+		return htmlspecialchars( $text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8' );
+	}
+}
+
 require dirname( __DIR__ ) . '/vendor/autoload.php';

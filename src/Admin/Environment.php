@@ -19,12 +19,12 @@ final class Environment {
 	 */
 	public static function facts(): array {
 		return array(
-			'WordPress'     => function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'version' ) : 'Unavailable',
-			'PHP'           => PHP_VERSION,
-			'Gravity Forms' => self::availability( 'GFForms' ),
-			'Gravity Flow'  => self::availability( 'Gravity_Flow' ),
-			'GravityView'   => class_exists( 'GravityView_Plugin' ) || class_exists( 'GV\\Plugin' ) ? 'Available' : 'Not detected',
-			'Feed/Flow'     => class_exists( '\\GFFeedAddOn' ) && class_exists( '\\Gravity_Flow_API' ) ? 'Available' : 'Unavailable',
+			__( 'WordPress', 'gravity-notification-manager' )     => function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'version' ) : __( 'Unavailable', 'gravity-notification-manager' ),
+			__( 'PHP', 'gravity-notification-manager' )           => PHP_VERSION,
+			__( 'Gravity Forms', 'gravity-notification-manager' ) => self::availability( 'GFForms' ),
+			__( 'Gravity Flow', 'gravity-notification-manager' )  => self::availability( 'Gravity_Flow' ),
+			__( 'GravityView', 'gravity-notification-manager' )   => class_exists( 'GravityView_Plugin' ) || class_exists( 'GV\\Plugin' ) ? __( 'Available', 'gravity-notification-manager' ) : __( 'Not detected', 'gravity-notification-manager' ),
+			__( 'Feed/Flow', 'gravity-notification-manager' )     => class_exists( '\\GFFeedAddOn' ) && class_exists( '\\Gravity_Flow_API' ) ? __( 'Available', 'gravity-notification-manager' ) : __( 'Unavailable', 'gravity-notification-manager' ),
 		);
 	}
 
@@ -35,6 +35,6 @@ final class Environment {
 	 * @return string
 	 */
 	private static function availability( string $class_name ): string {
-		return class_exists( $class_name ) ? 'Available' : 'Unavailable';
+		return class_exists( $class_name ) ? __( 'Available', 'gravity-notification-manager' ) : __( 'Unavailable', 'gravity-notification-manager' );
 	}
 }

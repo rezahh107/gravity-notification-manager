@@ -86,8 +86,8 @@ final class Settings {
 	public static function diagnostic_facts( ?array $settings = null ): array {
 		$ready = self::readiness( $settings );
 		return array(
-			'IPPanel' => $ready['ippanel'] ? 'CONFIGURED' : 'NEEDS_SETUP',
-			'Bale'    => $ready['bale'] ? 'CONFIGURED' : 'NEEDS_SETUP',
+			__( 'IPPanel', 'gravity-notification-manager' ) => $ready['ippanel'] ? 'CONFIGURED' : 'NEEDS_SETUP',
+			__( 'Bale', 'gravity-notification-manager' )    => $ready['bale'] ? 'CONFIGURED' : 'NEEDS_SETUP',
 		);
 	}
 

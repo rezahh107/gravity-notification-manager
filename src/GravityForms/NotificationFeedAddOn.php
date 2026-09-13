@@ -38,18 +38,18 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	protected $_slug = 'gravity-notification-manager';
 
 	/**
-	 * Canonical product title.
+	 * Canonical product title. Localized before parent Add-On initialization.
 	 *
 	 * @var string
 	 */
-	protected $_title = 'Gravity Notification Manager';
+	protected $_title = '';
 
 	/**
-	 * Canonical short title.
+	 * Canonical short title. Localized before parent Add-On initialization.
 	 *
 	 * @var string
 	 */
-	protected $_short_title = 'Gravity Notification Manager';
+	protected $_short_title = '';
 
 	/**
 	 * Keep feed processing synchronous by closed architecture decision.
@@ -109,6 +109,8 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	 * @return void
 	 */
 	public function init() {
+		$this->_title       = __( 'Gravity Notification Manager', 'gravity-notification-manager' );
+		$this->_short_title = __( 'Gravity Notification Manager', 'gravity-notification-manager' );
 		parent::init();
 		ManualRetryHandler::boot( $this );
 	}
@@ -153,65 +155,65 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	public function feed_settings_fields() {
 		return array(
 			array(
-				'title'  => 'Notification Rule',
+				'title'  => __( 'Notification Rule', 'gravity-notification-manager' ),
 				'fields' => array(
 					array(
 						'name'     => 'feedName',
-						'label'    => 'Feed Name',
+						'label'    => __( 'Feed Name', 'gravity-notification-manager' ),
 						'type'     => 'text',
 						'required' => true,
 					),
 					array(
 						'name'     => 'message',
-						'label'    => 'Message',
+						'label'    => __( 'Message', 'gravity-notification-manager' ),
 						'type'     => 'textarea',
 						'class'    => 'medium merge-tag-support mt-position-right',
 						'required' => true,
 					),
 					array(
 						'name'    => 'recipient_source_type',
-						'label'   => 'Recipient Source',
+						'label'   => __( 'Recipient Source', 'gravity-notification-manager' ),
 						'type'    => 'select',
 						'choices' => $this->recipient_source_choices(),
 					),
 					array(
 						'name'  => 'recipient_source_value',
-						'label' => 'Recipient Source Value',
+						'label' => __( 'Recipient Source Value', 'gravity-notification-manager' ),
 						'type'  => 'text',
 					),
 					array(
 						'name'    => 'channel',
-						'label'   => 'Channel',
+						'label'   => __( 'Channel', 'gravity-notification-manager' ),
 						'type'    => 'select',
 						'choices' => array(
 							array(
-								'label' => 'SMS',
+								'label' => __( 'SMS', 'gravity-notification-manager' ),
 								'value' => FeedRuleSchema::CHANNEL_SMS,
 							),
 							array(
-								'label' => 'Bale',
+								'label' => __( 'Bale', 'gravity-notification-manager' ),
 								'value' => FeedRuleSchema::CHANNEL_BALE,
 							),
 						),
 					),
 					array(
 						'name'    => 'fallback_policy',
-						'label'   => 'Fallback Policy',
+						'label'   => __( 'Fallback Policy', 'gravity-notification-manager' ),
 						'type'    => 'select',
 						'choices' => array(
 							array(
-								'label' => 'No fallback',
+								'label' => __( 'No fallback', 'gravity-notification-manager' ),
 								'value' => FeedRuleSchema::FALLBACK_NONE,
 							),
 							array(
-								'label' => 'Compatible SMS fallback',
+								'label' => __( 'Compatible SMS fallback', 'gravity-notification-manager' ),
 								'value' => FeedRuleSchema::FALLBACK_COMPATIBLE_SMS,
 							),
 						),
 					),
 					array(
 						'name'  => 'feed_condition',
-						'label' => 'Condition',
+						'label' => __( 'Condition', 'gravity-notification-manager' ),
 						'type'  => 'feed_condition',
 					),
 				),
@@ -426,23 +428,23 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	private function recipient_source_choices(): array {
 		return array(
 			array(
-				'label' => 'Entry field',
+				'label' => __( 'Entry field', 'gravity-notification-manager' ),
 				'value' => FeedRuleSchema::RECIPIENT_ENTRY_FIELD,
 			),
 			array(
-				'label' => 'Fixed target',
+				'label' => __( 'Fixed target', 'gravity-notification-manager' ),
 				'value' => FeedRuleSchema::RECIPIENT_FIXED,
 			),
 			array(
-				'label' => 'WordPress user',
+				'label' => __( 'WordPress user', 'gravity-notification-manager' ),
 				'value' => FeedRuleSchema::RECIPIENT_USER,
 			),
 			array(
-				'label' => 'WordPress role',
+				'label' => __( 'WordPress role', 'gravity-notification-manager' ),
 				'value' => FeedRuleSchema::RECIPIENT_ROLE,
 			),
 			array(
-				'label' => 'Gravity Flow assignee',
+				'label' => __( 'Gravity Flow assignee', 'gravity-notification-manager' ),
 				'value' => FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE,
 			),
 		);
