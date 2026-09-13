@@ -1,0 +1,341 @@
+name: Artifact Install Smoke
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_run:
+    workflows:
+      - Build and Publish Release
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gravity-notification-manager-artifact-smoke-${{ github.event.workflow_run.id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract-tests:
+    name: Packaging / release identity contracts
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact target source with full history and tags
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Execute packaging and release identity contract controls
+        run: bash tests/Integration/ArtifactRuntime/contracts.sh
+
+  generated-artifact:
+    name: Generated ZIP / WordPress 7.0 / PHP 8.2
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      WP_VERSION: '7.0'
+      PHP_VERSION: '8.2'
+
+    steps:
+      - name: Checkout exact target source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact source identity
+        id: source
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          observed_head="$(git rev-parse HEAD)"
+          [[ "$observed_head" == "$EXPECTED_HEAD" ]] || {
+            echo "Checkout mismatch: expected=$EXPECTED_HEAD observed=$observed_head" >&2
+            exit 1
+          }
+          printf 'head=%s\n' "$observed_head" >> "$GITHUB_OUTPUT"
+          printf 'ARTIFACT_SMOKE_SOURCE_HEAD=%s\n' "$observed_head"
+
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer:v2
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Validate package metadata
+        run: composer validate --strict
+
+      - name: Seed unmanaged stale vendor sentinel
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p vendor/.gnm-stale-vendor-sentinel
+          printf 'must-not-survive-production-package\n' > vendor/.gnm-stale-vendor-sentinel/unmanaged.txt
+
+      - name: Build production ZIP with shared builder
+        id: package
+        run: bash tools/build-production-package.sh
+
+      - name: Prove stale vendor content is eliminated
+        shell: bash
+        env:
+          ZIP_NAME: ${{ steps.package.outputs.zip_name }}
+          CHECKSUM_NAME: ${{ steps.package.outputs.checksum_name }}
+        run: |
+          set -euo pipefail
+
+          sentinel='vendor/.gnm-stale-vendor-sentinel/unmanaged.txt'
+          stage="dist/gravity-notification-manager"
+          zip_path="dist/$ZIP_NAME"
+
+          test ! -e "$sentinel" || {
+            echo "Stale unmanaged vendor sentinel survived production dependency rebuild: $sentinel" >&2
+            exit 1
+          }
+          test ! -e "$stage/$sentinel" || {
+            echo "Stale unmanaged vendor sentinel survived in staged production package: $stage/$sentinel" >&2
+            exit 1
+          }
+          if unzip -Z1 "$zip_path" | grep -Fq "gravity-notification-manager/$sentinel"; then
+            echo "Stale unmanaged vendor sentinel survived in production ZIP." >&2
+            exit 1
+          fi
+
+          test -f "$stage/vendor/autoload.php"
+          test -f "$stage/src/Migration/ProductionRuntime.php"
+          test -f "$stage/src/Admin/AdminController.php"
+          test -f "$stage/src/Support/NoSendGuard.php"
+          (
+            cd dist
+            sha256sum -c "$CHECKSUM_NAME"
+          )
+
+          printf 'T-PKG-STALE-VENDOR-02=PASS\n'
+
+      - name: Install wp-env dependencies
+        run: npm ci
+
+      - name: Install and activate the generated ZIP
+        env:
+          GNM_PLUGIN_ZIP: ${{ github.workspace }}/dist/${{ steps.package.outputs.zip_name }}
+          GNM_PLUGIN_SHA256: ${{ steps.package.outputs.zip_sha }}
+          GNM_PLUGIN_VERSION: ${{ steps.package.outputs.version }}
+          GNM_REPOSITORY_HEAD: ${{ steps.source.outputs.head }}
+          GNM_WP_VERSION: ${{ env.WP_VERSION }}
+          GNM_PHP_VERSION: ${{ env.PHP_VERSION }}
+          ARTIFACT_SMOKE_EVIDENCE: ${{ github.workspace }}/artifact-smoke-evidence/generated.txt
+        run: bash tests/Integration/ArtifactRuntime/run.sh
+
+      - name: Upload generated artifact smoke evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: artifact-install-smoke-generated-${{ steps.source.outputs.head }}
+          path: |
+            dist/${{ steps.package.outputs.zip_name }}
+            dist/${{ steps.package.outputs.checksum_name }}
+            artifact-smoke-evidence/generated.txt
+          if-no-files-found: warn
+          compression-level: 0
+          retention-days: 30
+
+  published-base-release:
+    name: Published base release ZIP / WordPress 7.0 / PHP 8.2
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      WP_VERSION: '7.0'
+      PHP_VERSION: '8.2'
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout PR harness with full history and tags
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Resolve release exactly bound to the PR base Head
+        id: release
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          git fetch --tags --force origin
+          plugin_source="$(git show "$BASE_SHA:gravityflow-sms-ippanel.php")"
+          version="$(printf '%s\n' "$plugin_source" | grep -m1 -E '^[[:space:]]*\*[[:space:]]*Version:' | sed -E 's/.*Version:[[:space:]]*//; s/[[:space:]]+$//')"
+          tag="v$version"
+          tag_commit="$(git rev-parse "$tag^{commit}")"
+
+          [[ "$tag_commit" == "$BASE_SHA" ]] || {
+            echo "Release tag $tag does not resolve to PR base Head: tag=$tag_commit base=$BASE_SHA" >&2
+            exit 1
+          }
+
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null
+          zip_name="gravity-notification-manager-${version}.zip"
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          printf 'zip_name=%s\n' "$zip_name" >> "$GITHUB_OUTPUT"
+          printf 'source_head=%s\n' "$BASE_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Download exact published release assets and verify checksum
+        id: artifact
+        shell: bash
+        env:
+          TAG_NAME: ${{ steps.release.outputs.tag }}
+          ZIP_NAME: ${{ steps.release.outputs.zip_name }}
+        run: |
+          set -euo pipefail
+          rm -rf published-release
+          mkdir -p published-release
+          gh release download "$TAG_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir published-release \
+            --pattern "$ZIP_NAME" \
+            --pattern "$ZIP_NAME.sha256"
+
+          cd published-release
+          test -s "$ZIP_NAME"
+          test -s "$ZIP_NAME.sha256"
+          sha256sum -c "$ZIP_NAME.sha256"
+          zip_sha="$(sha256sum "$ZIP_NAME" | awk '{print $1}')"
+          printf 'zip_sha=%s\n' "$zip_sha" >> "$GITHUB_OUTPUT"
+          printf 'PUBLISHED_RELEASE_ARTIFACT=%s sha256=%s tag=%s\n' "$ZIP_NAME" "$zip_sha" "$TAG_NAME"
+
+      - name: Install wp-env dependencies
+        run: npm ci
+
+      - name: Install and activate the exact published release ZIP
+        env:
+          GNM_PLUGIN_ZIP: ${{ github.workspace }}/published-release/${{ steps.release.outputs.zip_name }}
+          GNM_PLUGIN_SHA256: ${{ steps.artifact.outputs.zip_sha }}
+          GNM_PLUGIN_VERSION: ${{ steps.release.outputs.version }}
+          GNM_REPOSITORY_HEAD: ${{ steps.release.outputs.source_head }}
+          GNM_WP_VERSION: ${{ env.WP_VERSION }}
+          GNM_PHP_VERSION: ${{ env.PHP_VERSION }}
+          ARTIFACT_SMOKE_EVIDENCE: ${{ github.workspace }}/artifact-smoke-evidence/published-base-release.txt
+        run: bash tests/Integration/ArtifactRuntime/run.sh
+
+      - name: Upload published release smoke evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: artifact-install-smoke-published-${{ steps.release.outputs.tag }}
+          path: artifact-smoke-evidence/published-base-release.txt
+          if-no-files-found: warn
+          retention-days: 30
+
+  published-release:
+    name: Published release ZIP / WordPress 7.0 / PHP 8.2
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      WP_VERSION: '7.0'
+      PHP_VERSION: '8.2'
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout exact released source for the smoke harness
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Validate release workflow identity before release download
+        id: release
+        shell: bash
+        env:
+          WORKFLOW_EVENT: ${{ github.event.workflow_run.event }}
+          TAG_NAME: ${{ github.event.workflow_run.head_branch }}
+          SOURCE_HEAD: ${{ github.event.workflow_run.head_sha }}
+        run: bash tools/validate-release-workflow-run-identity.sh
+
+      - name: Download exact published release assets and verify checksum
+        id: artifact
+        shell: bash
+        env:
+          TAG_NAME: ${{ steps.release.outputs.tag }}
+          ZIP_NAME: ${{ steps.release.outputs.zip_name }}
+        run: |
+          set -euo pipefail
+          rm -rf published-release
+          mkdir -p published-release
+          gh release download "$TAG_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir published-release \
+            --pattern "$ZIP_NAME" \
+            --pattern "$ZIP_NAME.sha256"
+
+          cd published-release
+          test -s "$ZIP_NAME"
+          test -s "$ZIP_NAME.sha256"
+          sha256sum -c "$ZIP_NAME.sha256"
+          zip_sha="$(sha256sum "$ZIP_NAME" | awk '{print $1}')"
+          printf 'zip_sha=%s\n' "$zip_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Install wp-env dependencies
+        run: npm ci
+
+      - name: Install and activate the exact published release ZIP
+        env:
+          GNM_PLUGIN_ZIP: ${{ github.workspace }}/published-release/${{ steps.release.outputs.zip_name }}
+          GNM_PLUGIN_SHA256: ${{ steps.artifact.outputs.zip_sha }}
+          GNM_PLUGIN_VERSION: ${{ steps.release.outputs.version }}
+          GNM_REPOSITORY_HEAD: ${{ steps.release.outputs.source_head }}
+          GNM_WP_VERSION: ${{ env.WP_VERSION }}
+          GNM_PHP_VERSION: ${{ env.PHP_VERSION }}
+          ARTIFACT_SMOKE_EVIDENCE: ${{ github.workspace }}/artifact-smoke-evidence/published-release.txt
+        run: bash tests/Integration/ArtifactRuntime/run.sh
+
+      - name: Upload published release smoke evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: artifact-install-smoke-release-${{ steps.release.outputs.tag }}
+          path: artifact-smoke-evidence/published-release.txt
+          if-no-files-found: warn
+          retention-days: 30

@@ -21,10 +21,10 @@ jobs:
     permissions:
       contents: read
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      zip_name: ${{ steps.version.outputs.zip_name }}
-      checksum_name: ${{ steps.version.outputs.checksum_name }}
-      artifact_name: ${{ steps.version.outputs.artifact_name }}
+      version: ${{ steps.package.outputs.version }}
+      zip_name: ${{ steps.package.outputs.zip_name }}
+      checksum_name: ${{ steps.package.outputs.checksum_name }}
+      artifact_name: ${{ steps.package.outputs.artifact_name }}
 
     steps:
       - name: Checkout exact triggering source
@@ -127,15 +127,7 @@ jobs:
             version="$tag_version"
           fi
 
-          zip_name="gravity-notification-manager-${version}.zip"
-          checksum_name="${zip_name}.sha256"
-          artifact_name="gravity-notification-manager-${version}-installable"
-
           printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
-          printf 'zip_name=%s\n' "$zip_name" >> "$GITHUB_OUTPUT"
-          printf 'checksum_name=%s\n' "$checksum_name" >> "$GITHUB_OUTPUT"
-          printf 'artifact_name=%s\n' "$artifact_name" >> "$GITHUB_OUTPUT"
-
           printf 'PACKAGE_VERSION=%s\n' "$version"
 
       - name: Validate Composer metadata
@@ -154,234 +146,19 @@ jobs:
           composer phpcompat
           bash tools/validate-wu09-retirement.sh
 
-      - name: Build production Composer autoloader
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf vendor
-          composer install \
-            --no-dev \
-            --prefer-dist \
-            --optimize-autoloader \
-            --no-interaction \
-            --no-progress
-
-          test -f vendor/autoload.php
-          test ! -e vendor/bin/phpunit
-          test ! -d vendor/phpunit
-          test ! -d vendor/phpstan
-          test ! -d vendor/squizlabs
-          test ! -d vendor/wp-coding-standards
-
-      - name: Stage production plugin files
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          stage='dist/gravity-notification-manager'
-          rm -rf dist
-          mkdir -p "$stage"
-
-          cp gravityflow-sms-ippanel.php uninstall.php "$stage/"
-          cp -a src includes languages vendor "$stage/"
-          mkdir -p "$stage/assets"
-          cp -a assets/admin "$stage/assets/admin"
-
-          # These two files are repository-era legacy autoloader guidance; the
-          # production package is Composer-autoloaded exclusively.
-          rm -f "$stage/includes/Autoloader.php" "$stage/includes/autoloader_mapping.txt"
-
-      - name: Validate staged production package
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          stage='dist/gravity-notification-manager'
-          entrypoint="$stage/gravityflow-sms-ippanel.php"
-
-          test -f "$entrypoint"
-          test -f "$stage/uninstall.php"
-          test -f "$stage/vendor/autoload.php"
-          test -f "$stage/src/Migration/ProductionRuntime.php"
-          test -f "$stage/src/Admin/AdminController.php"
-          test -f "$stage/assets/admin/gnm-admin.css"
-          test -d "$stage/languages"
-          test -d "$stage/includes/Lifecycle"
-
-          grep -Fq 'ProductionRuntime::boot();' "$entrypoint"
-
-          if grep -n -E 'GFSMS.*Core.*Bootstrap' "$entrypoint"; then
-            echo 'Retired GFSMS\\Core\\Bootstrap is referenced by the packaged entrypoint.' >&2
-            exit 1
-          fi
-          if grep -R -n -E --include='*.php' 'GFSMS.*Core.*Bootstrap' "$stage"; then
-            echo 'Retired GFSMS\\Core\\Bootstrap is referenced by the generated package.' >&2
-            exit 1
-          fi
-          test ! -e "$stage/includes/Core/Bootstrap.php"
-
-          php -r '
-            $root = $argv[1];
-            require $root . "/vendor/autoload.php";
-            foreach ([
-                "GravityNotify\\Migration\\ProductionRuntime",
-                "GravityNotify\\Admin\\AdminController",
-            ] as $class) {
-                if (!class_exists($class, true)) {
-                    fwrite(STDERR, "Packaged Composer autoloader cannot resolve {$class}.\n");
-                    exit(1);
-                }
-            }
-          ' "$stage"
-
-      - name: Create installable ZIP
+      - name: Build and validate production package with shared builder
+        id: package
         env:
-          ZIP_NAME: ${{ steps.version.outputs.zip_name }}
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          stage='dist/gravity-notification-manager'
-          archive="$GITHUB_WORKSPACE/dist/$ZIP_NAME"
-          source_date_epoch="$(git show -s --format=%ct HEAD)"
-
-          find "$stage" -exec touch -d "@$source_date_epoch" {} +
-
-          (
-            cd dist
-            find gravity-notification-manager -type f -print | LC_ALL=C sort > "$RUNNER_TEMP/release-files.txt"
-            zip -X -q "$archive" -@ < "$RUNNER_TEMP/release-files.txt"
-          )
-
-          test -s "$archive"
-
-      - name: Verify actual ZIP and extracted artifact
-        env:
-          ZIP_NAME: ${{ steps.version.outputs.zip_name }}
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          zip_path="dist/$ZIP_NAME"
-          listing="$RUNNER_TEMP/release-zip-list.txt"
-          extracted="$RUNNER_TEMP/release-extracted"
-          plugin_root='gravity-notification-manager'
-
-          unzip -tq "$zip_path"
-          unzip -Z1 "$zip_path" | tee "$listing"
-
-          mapfile -t top_levels < <(cut -d/ -f1 "$listing" | sed '/^$/d' | LC_ALL=C sort -u)
-          if (( ${#top_levels[@]} != 1 )) || [[ "${top_levels[0]}" != "$plugin_root" ]]; then
-            echo "ZIP must contain exactly one top-level directory named $plugin_root." >&2
-            exit 1
-          fi
-
-          required_paths=(
-            "$plugin_root/gravityflow-sms-ippanel.php"
-            "$plugin_root/uninstall.php"
-            "$plugin_root/vendor/autoload.php"
-            "$plugin_root/src/Migration/ProductionRuntime.php"
-            "$plugin_root/src/Admin/AdminController.php"
-            "$plugin_root/assets/admin/gnm-admin.css"
-          )
-          for required in "${required_paths[@]}"; do
-            grep -Fxq "$required" "$listing" || {
-              echo "Required ZIP entry missing: $required" >&2
-              exit 1
-            }
-          done
-
-          forbidden_prefixes=(
-            "$plugin_root/.git/"
-            "$plugin_root/.github/"
-            "$plugin_root/tests/"
-            "$plugin_root/tools/"
-            "$plugin_root/docs/"
-            "$plugin_root/node_modules/"
-            "$plugin_root/coverage/"
-            "$plugin_root/.wp-env.runtime/"
-          )
-          for forbidden in "${forbidden_prefixes[@]}"; do
-            if grep -Fq "$forbidden" "$listing"; then
-              echo "Forbidden development path present in ZIP: $forbidden" >&2
-              exit 1
-            fi
-          done
-
-          forbidden_files=(
-            "$plugin_root/composer.json"
-            "$plugin_root/composer.lock"
-            "$plugin_root/package.json"
-            "$plugin_root/package-lock.json"
-            "$plugin_root/phpunit.xml.dist"
-            "$plugin_root/phpstan.neon.dist"
-            "$plugin_root/phpstan-stubs.php"
-            "$plugin_root/phpcs.xml"
-            "$plugin_root/phpcompat.xml"
-            "$plugin_root/.wp-env.json"
-            "$plugin_root/AGENTS.md"
-            "$plugin_root/README.md"
-            "$plugin_root/.gitignore"
-            "$plugin_root/.gitattributes"
-            "$plugin_root/includes/Autoloader.php"
-            "$plugin_root/includes/autoloader_mapping.txt"
-          )
-          for forbidden in "${forbidden_files[@]}"; do
-            if grep -Fxq "$forbidden" "$listing"; then
-              echo "Forbidden repository-only file present in ZIP: $forbidden" >&2
-              exit 1
-            fi
-          done
-
-          rm -rf "$extracted"
-          mkdir -p "$extracted"
-          unzip -q "$zip_path" -d "$extracted"
-          extracted_root="$extracted/$plugin_root"
-
-          test -f "$extracted_root/gravityflow-sms-ippanel.php"
-          test -f "$extracted_root/vendor/autoload.php"
-          test -f "$extracted_root/src/Migration/ProductionRuntime.php"
-          test ! -e "$extracted_root/tests"
-          test ! -e "$extracted_root/.github"
-          test ! -e "$extracted_root/includes/Core/Bootstrap.php"
-
-          if grep -R -n -E --include='*.php' 'GFSMS.*Core.*Bootstrap' "$extracted_root"; then
-            echo 'Retired GFSMS\\Core\\Bootstrap is referenced by the extracted package.' >&2
-            exit 1
-          fi
-
-          php -r '
-            $root = $argv[1];
-            require $root . "/vendor/autoload.php";
-            foreach ([
-                "GravityNotify\\Migration\\ProductionRuntime",
-                "GravityNotify\\Admin\\AdminController",
-            ] as $class) {
-                if (!class_exists($class, true)) {
-                    fwrite(STDERR, "Extracted package autoloader cannot resolve {$class}.\n");
-                    exit(1);
-                }
-            }
-          ' "$extracted_root"
-
-      - name: Generate SHA-256 checksum
-        env:
-          ZIP_NAME: ${{ steps.version.outputs.zip_name }}
-          CHECKSUM_NAME: ${{ steps.version.outputs.checksum_name }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd dist
-          sha256sum "$ZIP_NAME" > "$CHECKSUM_NAME"
-          sha256sum -c "$CHECKSUM_NAME"
+          GNM_PACKAGE_VERSION: ${{ steps.version.outputs.version }}
+        run: bash tools/build-production-package.sh
 
       - name: Upload validated build artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: ${{ steps.version.outputs.artifact_name }}
+          name: ${{ steps.package.outputs.artifact_name }}
           path: |
-            dist/${{ steps.version.outputs.zip_name }}
-            dist/${{ steps.version.outputs.checksum_name }}
+            dist/${{ steps.package.outputs.zip_name }}
+            dist/${{ steps.package.outputs.checksum_name }}
           if-no-files-found: error
           compression-level: 0
           retention-days: 30
