@@ -18,7 +18,11 @@ final class I18nRealRuntimeTest extends WP_UnitTestCase {
 
 	private const DOMAIN = 'gravity-notification-manager';
 
-	/** @var callable|null */
+	/**
+	 * Request-scoped locale filter.
+	 *
+	 * @var callable|null
+	 */
 	private $locale_filter = null;
 
 	/** Restore global translation state after each assertion. */
@@ -45,8 +49,8 @@ final class I18nRealRuntimeTest extends WP_UnitTestCase {
 			)
 		);
 
-		self::assertSame( 'نمای کلی', __( 'Overview', self::DOMAIN ) );
-		self::assertSame( 'ذخیره تنظیمات', __( 'Save Settings', self::DOMAIN ) );
+		self::assertSame( 'نمای کلی', __( 'Overview', 'gravity-notification-manager' ) );
+		self::assertSame( 'ذخیره تنظیمات', __( 'Save Settings', 'gravity-notification-manager' ) );
 		self::assertTrue( is_textdomain_loaded( self::DOMAIN ) );
 	}
 
@@ -61,8 +65,8 @@ final class I18nRealRuntimeTest extends WP_UnitTestCase {
 			dirname( GFSMS_PLUGIN_BASENAME ) . '/languages'
 		);
 
-		self::assertSame( 'Overview', __( 'Overview', self::DOMAIN ) );
-		self::assertSame( 'Save Settings', __( 'Save Settings', self::DOMAIN ) );
+		self::assertSame( 'Overview', __( 'Overview', 'gravity-notification-manager' ) );
+		self::assertSame( 'Save Settings', __( 'Save Settings', 'gravity-notification-manager' ) );
 	}
 
 	/**
