@@ -1,0 +1,456 @@
+name: Build and Publish Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gravity-notification-manager-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Validate and build installable plugin ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      zip_name: ${{ steps.version.outputs.zip_name }}
+      checksum_name: ${{ steps.version.outputs.checksum_name }}
+      artifact_name: ${{ steps.version.outputs.artifact_name }}
+
+    steps:
+      - name: Checkout exact triggering source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          observed_commit="$(git rev-parse HEAD)"
+
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            [[ "$GITHUB_REF" == refs/tags/v*.*.* ]] || {
+              echo "Release push is not a matching version tag: $GITHUB_REF" >&2
+              exit 1
+            }
+
+            tagged_commit="$(git rev-parse "${GITHUB_REF}^{commit}")"
+            ref_object="$(git rev-parse "$GITHUB_REF")"
+
+            if [[ "$observed_commit" != "$tagged_commit" ]]; then
+              echo "Checkout is not the commit referenced by $GITHUB_REF." >&2
+              exit 1
+            fi
+
+            if [[ "$GITHUB_SHA" != "$tagged_commit" && "$GITHUB_SHA" != "$ref_object" ]]; then
+              echo "GitHub event SHA does not identify the triggering tag or its commit." >&2
+              exit 1
+            fi
+          else
+            if [[ "$observed_commit" != "$GITHUB_SHA" ]]; then
+              echo "Manual build did not check out the exact triggering commit." >&2
+              exit 1
+            fi
+          fi
+
+          printf 'SOURCE_IDENTITY=PASS ref=%s event_sha=%s commit=%s\n' \
+            "$GITHUB_REF" "$GITHUB_SHA" "$observed_commit"
+
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate source metadata and resolve version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          plugin_file='gravityflow-sms-ippanel.php'
+          semver_re='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$'
+
+          header_version="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Version:' "$plugin_file" | sed -E 's/.*Version:[[:space:]]*//; s/[[:space:]]+$//')"
+          constant_version="$(grep -m1 "define( 'GFSMS_PLUGIN_VERSION'" "$plugin_file" | sed -E "s/.*'GFSMS_PLUGIN_VERSION',[[:space:]]*'([^']+)'.*/\1/")"
+          requires_php="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Requires PHP:' "$plugin_file" | sed -E 's/.*Requires PHP:[[:space:]]*//; s/[[:space:]]+$//')"
+          requires_wp="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Requires at least:' "$plugin_file" | sed -E 's/.*Requires at least:[[:space:]]*//; s/[[:space:]]+$//')"
+          composer_php="$(php -r '$c=json_decode(file_get_contents("composer.json"), true, 512, JSON_THROW_ON_ERROR); echo $c["require"]["php"] ?? "";')"
+
+          [[ -n "$header_version" && "$header_version" == "$constant_version" ]] || {
+            echo "Plugin header Version and GFSMS_PLUGIN_VERSION disagree." >&2
+            exit 1
+          }
+          [[ "$header_version" =~ $semver_re ]] || {
+            echo "Plugin version is not valid SemVer: $header_version" >&2
+            exit 1
+          }
+          [[ "$requires_php" == '8.2' ]] || {
+            echo "Expected plugin Requires PHP: 8.2, found: $requires_php" >&2
+            exit 1
+          }
+          [[ "$requires_wp" == '7.0' ]] || {
+            echo "Expected plugin Requires at least: 7.0, found: $requires_wp" >&2
+            exit 1
+          }
+          [[ "$composer_php" == '>=8.2' ]] || {
+            echo "Expected Composer PHP requirement >=8.2, found: $composer_php" >&2
+            exit 1
+          }
+
+          version="$header_version"
+          if [[ "$GITHUB_EVENT_NAME" == 'push' ]]; then
+            tag="$GITHUB_REF_NAME"
+            tag_version="${tag#v}"
+            [[ "$tag" == v* && "$tag_version" =~ $semver_re ]] || {
+              echo "Tag is not a valid v-prefixed SemVer tag: $tag" >&2
+              exit 1
+            }
+            [[ "$tag_version" == "$header_version" ]] || {
+              echo "Tag version $tag_version does not match plugin version $header_version." >&2
+              exit 1
+            }
+            version="$tag_version"
+          fi
+
+          zip_name="gravity-notification-manager-${version}.zip"
+          checksum_name="${zip_name}.sha256"
+          artifact_name="gravity-notification-manager-${version}-installable"
+
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+          printf 'zip_name=%s\n' "$zip_name" >> "$GITHUB_OUTPUT"
+          printf 'checksum_name=%s\n' "$checksum_name" >> "$GITHUB_OUTPUT"
+          printf 'artifact_name=%s\n' "$artifact_name" >> "$GITHUB_OUTPUT"
+
+          printf 'PACKAGE_VERSION=%s\n' "$version"
+
+      - name: Validate Composer metadata
+        run: composer validate --strict
+
+      - name: Install locked development dependencies for verification
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run release-relevant repository verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer test
+          composer lint
+          composer stan
+          composer phpcompat
+          bash tools/validate-wu09-retirement.sh
+
+      - name: Build production Composer autoloader
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf vendor
+          composer install \
+            --no-dev \
+            --prefer-dist \
+            --optimize-autoloader \
+            --no-interaction \
+            --no-progress
+
+          test -f vendor/autoload.php
+          test ! -e vendor/bin/phpunit
+          test ! -d vendor/phpunit
+          test ! -d vendor/phpstan
+          test ! -d vendor/squizlabs
+          test ! -d vendor/wp-coding-standards
+
+      - name: Stage production plugin files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          stage='dist/gravity-notification-manager'
+          rm -rf dist
+          mkdir -p "$stage"
+
+          cp gravityflow-sms-ippanel.php uninstall.php "$stage/"
+          cp -a src includes languages vendor "$stage/"
+          mkdir -p "$stage/assets"
+          cp -a assets/admin "$stage/assets/admin"
+
+          # These two files are repository-era legacy autoloader guidance; the
+          # production package is Composer-autoloaded exclusively.
+          rm -f "$stage/includes/Autoloader.php" "$stage/includes/autoloader_mapping.txt"
+
+      - name: Validate staged production package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          stage='dist/gravity-notification-manager'
+          entrypoint="$stage/gravityflow-sms-ippanel.php"
+
+          test -f "$entrypoint"
+          test -f "$stage/uninstall.php"
+          test -f "$stage/vendor/autoload.php"
+          test -f "$stage/src/Migration/ProductionRuntime.php"
+          test -f "$stage/src/Admin/AdminController.php"
+          test -f "$stage/assets/admin/gnm-admin.css"
+          test -d "$stage/languages"
+          test -d "$stage/includes/Lifecycle"
+
+          grep -Fq 'ProductionRuntime::boot();' "$entrypoint"
+
+          if grep -n -E 'GFSMS.*Core.*Bootstrap' "$entrypoint"; then
+            echo 'Retired GFSMS\\Core\\Bootstrap is referenced by the packaged entrypoint.' >&2
+            exit 1
+          fi
+          if grep -R -n -E --include='*.php' 'GFSMS.*Core.*Bootstrap' "$stage"; then
+            echo 'Retired GFSMS\\Core\\Bootstrap is referenced by the generated package.' >&2
+            exit 1
+          fi
+          test ! -e "$stage/includes/Core/Bootstrap.php"
+
+          php -r '
+            $root = $argv[1];
+            require $root . "/vendor/autoload.php";
+            foreach ([
+                "GravityNotify\\Migration\\ProductionRuntime",
+                "GravityNotify\\Admin\\AdminController",
+            ] as $class) {
+                if (!class_exists($class, true)) {
+                    fwrite(STDERR, "Packaged Composer autoloader cannot resolve {$class}.\n");
+                    exit(1);
+                }
+            }
+          ' "$stage"
+
+      - name: Create installable ZIP
+        env:
+          ZIP_NAME: ${{ steps.version.outputs.zip_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          stage='dist/gravity-notification-manager'
+          archive="$GITHUB_WORKSPACE/dist/$ZIP_NAME"
+          source_date_epoch="$(git show -s --format=%ct HEAD)"
+
+          find "$stage" -exec touch -d "@$source_date_epoch" {} +
+
+          (
+            cd dist
+            find gravity-notification-manager -type f -print | LC_ALL=C sort > "$RUNNER_TEMP/release-files.txt"
+            zip -X -q "$archive" -@ < "$RUNNER_TEMP/release-files.txt"
+          )
+
+          test -s "$archive"
+
+      - name: Verify actual ZIP and extracted artifact
+        env:
+          ZIP_NAME: ${{ steps.version.outputs.zip_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          zip_path="dist/$ZIP_NAME"
+          listing="$RUNNER_TEMP/release-zip-list.txt"
+          extracted="$RUNNER_TEMP/release-extracted"
+          plugin_root='gravity-notification-manager'
+
+          unzip -tq "$zip_path"
+          unzip -Z1 "$zip_path" | tee "$listing"
+
+          mapfile -t top_levels < <(cut -d/ -f1 "$listing" | sed '/^$/d' | LC_ALL=C sort -u)
+          if (( ${#top_levels[@]} != 1 )) || [[ "${top_levels[0]}" != "$plugin_root" ]]; then
+            echo "ZIP must contain exactly one top-level directory named $plugin_root." >&2
+            exit 1
+          fi
+
+          required_paths=(
+            "$plugin_root/gravityflow-sms-ippanel.php"
+            "$plugin_root/uninstall.php"
+            "$plugin_root/vendor/autoload.php"
+            "$plugin_root/src/Migration/ProductionRuntime.php"
+            "$plugin_root/src/Admin/AdminController.php"
+            "$plugin_root/assets/admin/gnm-admin.css"
+          )
+          for required in "${required_paths[@]}"; do
+            grep -Fxq "$required" "$listing" || {
+              echo "Required ZIP entry missing: $required" >&2
+              exit 1
+            }
+          done
+
+          forbidden_prefixes=(
+            "$plugin_root/.git/"
+            "$plugin_root/.github/"
+            "$plugin_root/tests/"
+            "$plugin_root/tools/"
+            "$plugin_root/docs/"
+            "$plugin_root/node_modules/"
+            "$plugin_root/coverage/"
+            "$plugin_root/.wp-env.runtime/"
+          )
+          for forbidden in "${forbidden_prefixes[@]}"; do
+            if grep -Fq "$forbidden" "$listing"; then
+              echo "Forbidden development path present in ZIP: $forbidden" >&2
+              exit 1
+            fi
+          done
+
+          forbidden_files=(
+            "$plugin_root/composer.json"
+            "$plugin_root/composer.lock"
+            "$plugin_root/package.json"
+            "$plugin_root/package-lock.json"
+            "$plugin_root/phpunit.xml.dist"
+            "$plugin_root/phpstan.neon.dist"
+            "$plugin_root/phpstan-stubs.php"
+            "$plugin_root/phpcs.xml"
+            "$plugin_root/phpcompat.xml"
+            "$plugin_root/.wp-env.json"
+            "$plugin_root/AGENTS.md"
+            "$plugin_root/README.md"
+            "$plugin_root/.gitignore"
+            "$plugin_root/.gitattributes"
+            "$plugin_root/includes/Autoloader.php"
+            "$plugin_root/includes/autoloader_mapping.txt"
+          )
+          for forbidden in "${forbidden_files[@]}"; do
+            if grep -Fxq "$forbidden" "$listing"; then
+              echo "Forbidden repository-only file present in ZIP: $forbidden" >&2
+              exit 1
+            fi
+          done
+
+          rm -rf "$extracted"
+          mkdir -p "$extracted"
+          unzip -q "$zip_path" -d "$extracted"
+          extracted_root="$extracted/$plugin_root"
+
+          test -f "$extracted_root/gravityflow-sms-ippanel.php"
+          test -f "$extracted_root/vendor/autoload.php"
+          test -f "$extracted_root/src/Migration/ProductionRuntime.php"
+          test ! -e "$extracted_root/tests"
+          test ! -e "$extracted_root/.github"
+          test ! -e "$extracted_root/includes/Core/Bootstrap.php"
+
+          if grep -R -n -E --include='*.php' 'GFSMS.*Core.*Bootstrap' "$extracted_root"; then
+            echo 'Retired GFSMS\\Core\\Bootstrap is referenced by the extracted package.' >&2
+            exit 1
+          fi
+
+          php -r '
+            $root = $argv[1];
+            require $root . "/vendor/autoload.php";
+            foreach ([
+                "GravityNotify\\Migration\\ProductionRuntime",
+                "GravityNotify\\Admin\\AdminController",
+            ] as $class) {
+                if (!class_exists($class, true)) {
+                    fwrite(STDERR, "Extracted package autoloader cannot resolve {$class}.\n");
+                    exit(1);
+                }
+            }
+          ' "$extracted_root"
+
+      - name: Generate SHA-256 checksum
+        env:
+          ZIP_NAME: ${{ steps.version.outputs.zip_name }}
+          CHECKSUM_NAME: ${{ steps.version.outputs.checksum_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum "$ZIP_NAME" > "$CHECKSUM_NAME"
+          sha256sum -c "$CHECKSUM_NAME"
+
+      - name: Upload validated build artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.version.outputs.artifact_name }}
+          path: |
+            dist/${{ steps.version.outputs.zip_name }}
+            dist/${{ steps.version.outputs.checksum_name }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+  publish:
+    name: Publish GitHub Release assets
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download validated build artifact
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: ${{ needs.build.outputs.artifact_name }}
+          path: release-assets
+
+      - name: Revalidate release asset identity
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          ZIP_NAME: ${{ needs.build.outputs.zip_name }}
+          CHECKSUM_NAME: ${{ needs.build.outputs.checksum_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          expected_version="${GITHUB_REF_NAME#v}"
+          [[ "$expected_version" == "$VERSION" ]] || {
+            echo "Release tag/package version mismatch: tag=$expected_version package=$VERSION" >&2
+            exit 1
+          }
+          [[ "$ZIP_NAME" == "gravity-notification-manager-${VERSION}.zip" ]]
+          [[ "$CHECKSUM_NAME" == "${ZIP_NAME}.sha256" ]]
+
+          cd release-assets
+          test -s "$ZIP_NAME"
+          test -s "$CHECKSUM_NAME"
+          sha256sum -c "$CHECKSUM_NAME"
+
+          listing="$RUNNER_TEMP/publish-zip-list.txt"
+          unzip -Z1 "$ZIP_NAME" > "$listing"
+          mapfile -t top_levels < <(cut -d/ -f1 "$listing" | sed '/^$/d' | LC_ALL=C sort -u)
+          if (( ${#top_levels[@]} != 1 )) || [[ "${top_levels[0]}" != 'gravity-notification-manager' ]]; then
+            echo 'Release ZIP top-level directory identity is invalid.' >&2
+            exit 1
+          fi
+
+      - name: Publish immutable GitHub Release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+          ZIP_NAME: ${{ needs.build.outputs.zip_name }}
+          CHECKSUM_NAME: ${{ needs.build.outputs.checksum_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG_NAME already exists; refusing to mutate or overwrite an existing production release." >&2
+            exit 1
+          fi
+
+          gh release create "$TAG_NAME" \
+            "release-assets/$ZIP_NAME" \
+            "release-assets/$CHECKSUM_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --generate-notes \
+            --title "$TAG_NAME"
