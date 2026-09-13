@@ -99,7 +99,7 @@ final class OperationalPresentationTest extends TestCase {
 
 		$optimistic = $context['presentation']->retry_notice_for_result( $unresolved, ManualRetryHandler::RESULT_SUCCESS, 7 );
 		self::assertStringContainsString( 'could not be confirmed', $optimistic );
-		self::assertStringNotContainsString( 'now confirms RESOLVED', $optimistic );
+		self::assertStringNotContainsString( 'now confirms', $optimistic );
 
 		$unresolved_notice = $context['presentation']->retry_notice_for_result( $unresolved, ManualRetryHandler::RESULT_UNRESOLVED, 7 );
 		self::assertStringContainsString( 'Attention Required remains active', $unresolved_notice );
@@ -107,7 +107,8 @@ final class OperationalPresentationTest extends TestCase {
 		$this->record( $context['manager'], 10, 5, 7, AttemptStatus::SUCCESS, true, DeliveryStateManager::EXECUTION_MANUAL_RETRY );
 		$resolved        = $context['reader']->read_entry( 10 );
 		$resolved_notice = $context['presentation']->retry_notice_for_result( $resolved, ManualRetryHandler::RESULT_SUCCESS, 7 );
-		self::assertStringContainsString( 'now confirms RESOLVED', $resolved_notice );
+		self::assertStringContainsString( 'now confirms', $resolved_notice );
+		self::assertStringContainsString( '<bdi dir="ltr">RESOLVED</bdi>', $resolved_notice );
 
 		$failure_notice = $context['presentation']->retry_notice_for_result( $unresolved, ManualRetryHandler::ERROR_STATE, 7 );
 		self::assertStringContainsString( 'persisted state transition was not confirmed', $failure_notice );
