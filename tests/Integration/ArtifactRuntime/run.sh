@@ -10,6 +10,7 @@ PLUGIN_ENTRYPOINT="$PLUGIN_SLUG/gravityflow-sms-ippanel.php"
 
 : "${GNM_PLUGIN_ZIP:?GNM_PLUGIN_ZIP is required}"
 : "${GNM_PLUGIN_SHA256:?GNM_PLUGIN_SHA256 is required}"
+: "${GNM_PLUGIN_VERSION:?GNM_PLUGIN_VERSION is required}"
 : "${GNM_REPOSITORY_HEAD:?GNM_REPOSITORY_HEAD is required}"
 
 GNM_WP_VERSION="${GNM_WP_VERSION:-7.0}"
@@ -20,7 +21,12 @@ if [[ ! "$GNM_REPOSITORY_HEAD" =~ ^[0-9a-f]{40}$ ]]; then
   exit 1
 fi
 
-for command in docker node npm unzip sha256sum realpath; do
+if [[ ! "$GNM_PLUGIN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
+  echo "GNM_PLUGIN_VERSION is not a valid supported package version: $GNM_PLUGIN_VERSION" >&2
+  exit 1
+fi
+
+for command in docker node npm unzip sha256sum realpath php; do
   command -v "$command" >/dev/null 2>&1 || {
     echo "Required command is unavailable: $command" >&2
     exit 1
@@ -37,6 +43,12 @@ ZIP_NAME="$(basename "$ZIP_PATH")"
 ZIP_DIR="$(dirname "$ZIP_PATH")"
 EXPECTED_SHA="${GNM_PLUGIN_SHA256,,}"
 ACTUAL_SHA="$(sha256sum "$ZIP_PATH" | awk '{print $1}')"
+EXPECTED_ZIP_NAME="$PLUGIN_SLUG-$GNM_PLUGIN_VERSION.zip"
+
+if [[ "$ZIP_NAME" != "$EXPECTED_ZIP_NAME" ]]; then
+  echo "Artifact filename/version mismatch: expected=$EXPECTED_ZIP_NAME actual=$ZIP_NAME" >&2
+  exit 1
+fi
 
 if [[ ! "$EXPECTED_SHA" =~ ^[0-9a-f]{64}$ ]]; then
   echo 'GNM_PLUGIN_SHA256 must be a SHA-256 hex digest.' >&2
@@ -138,16 +150,17 @@ wp_env run cli sha256sum "/var/www/html/wp-content/artifacts/$ZIP_NAME" | grep -
 wp_env run cli wp plugin install "/var/www/html/wp-content/artifacts/$ZIP_NAME" --activate
 wp_env run cli wp plugin is-active "$PLUGIN_SLUG"
 
-wp_env run cli wp eval '
+wp_env run cli env GNM_EXPECTED_PLUGIN_VERSION="$GNM_PLUGIN_VERSION" wp eval '
   $root = WP_PLUGIN_DIR . "/gravity-notification-manager";
   $entrypoint = $root . "/gravityflow-sms-ippanel.php";
+  $expectedVersion = getenv("GNM_EXPECTED_PLUGIN_VERSION");
 
   if (!is_file($entrypoint) || !is_file($root . "/vendor/autoload.php")) {
       fwrite(STDERR, "Installed production plugin files are incomplete.\n");
       exit(1);
   }
 
-  if (!defined("GFSMS_PLUGIN_VERSION") || GFSMS_PLUGIN_VERSION !== "3.2.0") {
+  if (!defined("GFSMS_PLUGIN_VERSION") || GFSMS_PLUGIN_VERSION !== $expectedVersion) {
       fwrite(STDERR, "Installed plugin entrypoint did not boot the expected version.\n");
       exit(1);
   }
@@ -193,6 +206,7 @@ wp_env run cli wp eval '
 cat > "$EVIDENCE_FILE" <<EOF
 ARTIFACT_INSTALL_SMOKE=PASS
 REPOSITORY_HEAD=$GNM_REPOSITORY_HEAD
+PLUGIN_VERSION=$GNM_PLUGIN_VERSION
 ZIP_NAME=$ZIP_NAME
 ZIP_SHA256=$ACTUAL_SHA
 WORDPRESS_VERSION=$WP_VERSION_OBSERVED
