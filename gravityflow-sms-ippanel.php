@@ -1,10 +1,10 @@
 <?php
 /**
- * Plugin Name: Gravity Flow SMS Notifier with IPPanel
- * Description: Sends SMS notifications for Gravity Flow workflow events and Gravity Forms submissions through IPPanel.
+ * Plugin Name: Gravity Notification Manager
+ * Description: Native multi-channel notifications for Gravity Forms and Gravity Flow.
  * Version: 3.2.0
  * Author: Reza Hashemi Hosseini
- * Text Domain: gfsms
+ * Text Domain: gravity-notification-manager
  * Domain Path: /languages
  * Requires PHP: 8.2
  * Requires at least: 7.0
@@ -32,7 +32,7 @@ if ( ! defined( 'GFSMS_PLUGIN_SLUG' ) ) {
 	define( 'GFSMS_PLUGIN_SLUG', 'gfsms' );
 }
 if ( ! defined( 'GFSMS_TEXT_DOMAIN' ) ) {
-	define( 'GFSMS_TEXT_DOMAIN', 'gfsms' );
+	define( 'GFSMS_TEXT_DOMAIN', 'gravity-notification-manager' );
 }
 if ( ! defined( 'GFSMS_CAPABILITY' ) ) {
 	define( 'GFSMS_CAPABILITY', 'manage_gfsms' );
@@ -44,6 +44,16 @@ if ( ! defined( 'GFSMS_SETTINGS_OPTION' ) ) {
 	define( 'GFSMS_SETTINGS_OPTION', 'gfsms_settings' );
 }
 
+// Register the canonical bundled translation path at init so WordPress can use
+// the current request/admin user locale through its native JIT i18n machinery.
+add_action( 'init', static function (): void {
+	load_plugin_textdomain(
+		'gravity-notification-manager',
+		false,
+		dirname( GFSMS_PLUGIN_BASENAME ) . '/languages'
+	);
+} );
+
 // ---------------------------------------------------------------------------
 // Composer autoloader
 // ---------------------------------------------------------------------------
@@ -52,7 +62,7 @@ if ( file_exists( GFSMS_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 } else {
 	add_action( 'admin_notices', static function (): void {
 		echo '<div class="notice notice-error"><p>';
-		esc_html_e( 'Gravity Flow SMS Notifier: Composer autoloader not found. Please run `composer install` in the plugin directory.', 'gfsms' );
+		esc_html_e( 'Gravity Notification Manager: Composer autoloader not found. Please run `composer install` in the plugin directory.', 'gravity-notification-manager' );
 		echo '</p></div>';
 	} );
 	return; // stop the plugin if autoloader is missing

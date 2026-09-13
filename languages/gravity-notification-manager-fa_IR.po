@@ -1,0 +1,407 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Gravity Notification Manager 3.2.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-13 00:00+0000\n"
+"PO-Revision-Date: 2026-09-13 00:00+0000\n"
+"Last-Translator: Gravity Notification Manager\n"
+"Language-Team: Persian\n"
+"Language: fa_IR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Domain: gravity-notification-manager\n"
+
+msgid "%s — Gravity Notification Manager"
+msgstr "%s — Gravity Notification Manager"
+
+msgid "Activate a supported Gravity Flow installation, then use Check Again."
+msgstr "یک نصب پشتیبانی‌شده Gravity Flow را فعال کنید و سپس «بررسی دوباره» را بزنید."
+
+msgid "at"
+msgstr "در"
+
+msgid "At least one persisted notification target is malformed or untrusted."
+msgstr "حداقل یک مقصد اعلان ذخیره‌شده نامعتبر یا غیرقابل‌اعتماد است."
+
+msgid "Attempt status:"
+msgstr "وضعیت تلاش:"
+
+msgid "attempts:"
+msgstr "تلاش‌ها:"
+
+msgid "Attention Required"
+msgstr "نیازمند رسیدگی"
+
+msgid "Attention Required:"
+msgstr "نیازمند رسیدگی:"
+
+msgid "Available"
+msgstr "دردسترس"
+
+msgid "Bale"
+msgstr "بله"
+
+msgid "Bale bot token"
+msgstr "توکن ربات بله"
+
+msgid "Channel"
+msgstr "کانال"
+
+msgid "Channel readiness"
+msgstr "آمادگی کانال‌ها"
+
+msgid "Check Again"
+msgstr "بررسی دوباره"
+
+msgid "Compatible SMS fallback"
+msgstr "مسیر جایگزین سازگار SMS"
+
+msgid "Condition"
+msgstr "شرط"
+
+msgid "Configuration warning"
+msgstr "هشدار پیکربندی"
+
+msgid "Configured"
+msgstr "پیکربندی‌شده"
+
+msgid "Configured for the normal Gravity Forms Feed lifecycle on submission."
+msgstr "برای چرخه عادی Feed در Gravity Forms هنگام ثبت فرم پیکربندی شده است."
+
+msgid "Configured in Gravity Flow Step “%s”."
+msgstr "در مرحله Gravity Flow با نام «%s» پیکربندی شده است."
+
+msgid "Create or enable a Gravity Notification Manager Feed in Gravity Forms. If dependencies are unavailable, check Help & Diagnostics."
+msgstr "یک Feed مربوط به Gravity Notification Manager را در Gravity Forms بسازید یا فعال کنید. اگر وابستگی‌ها دردسترس نیستند، بخش راهنما و عیب‌یابی را بررسی کنید."
+
+msgid "Detected Points"
+msgstr "نقاط شناسایی‌شده"
+
+msgid "Disabled"
+msgstr "غیرفعال"
+
+msgid "Enable the Feed in Gravity Forms when this notification should run."
+msgstr "اگر این اعلان باید اجرا شود، Feed را در Gravity Forms فعال کنید."
+
+msgid "Entry field"
+msgstr "فیلد Entry"
+
+msgid "Environment"
+msgstr "محیط"
+
+msgid "Fallback"
+msgstr "مسیر جایگزین"
+
+msgid "Fallback Policy"
+msgstr "سیاست مسیر جایگزین"
+
+msgid "Feed"
+msgstr "Feed"
+
+msgid "Feed %d"
+msgstr "Feed %d"
+
+msgid "Feed configuration is incomplete: %s."
+msgstr "پیکربندی Feed کامل نیست: %s."
+
+msgid "Feed Name"
+msgstr "نام Feed"
+
+msgid "Feed/Flow"
+msgstr "Feed / Flow"
+
+msgid "Final state"
+msgstr "وضعیت نهایی"
+
+msgid "Fixed target"
+msgstr "مقصد ثابت"
+
+msgid "Form %d"
+msgstr "فرم %d"
+
+msgid "GNM Feed Step"
+msgstr "مرحله Feed افزونه GNM"
+
+msgid "Gravity Flow"
+msgstr "Gravity Flow"
+
+msgid "Gravity Flow assignee"
+msgstr "مسئول Gravity Flow"
+
+msgid "Gravity Flow is unavailable, so workflow placement cannot be verified."
+msgstr "Gravity Flow دردسترس نیست؛ بنابراین محل قرارگیری در گردش‌کار قابل بررسی نیست."
+
+msgid "Gravity Forms"
+msgstr "Gravity Forms"
+
+msgid "Gravity Notification Manager"
+msgstr "Gravity Notification Manager"
+
+msgid "Gravity Notification Manager Retry"
+msgstr "تلاش مجدد Gravity Notification Manager"
+
+msgid "Gravity Notification Manager: Composer autoloader not found. Please run `composer install` in the plugin directory."
+msgstr "Gravity Notification Manager: بارگذار Composer پیدا نشد. لطفاً دستور `composer install` را در پوشه افزونه اجرا کنید."
+
+msgid "GravityView"
+msgstr "GravityView"
+
+msgid "Help & Diagnostics"
+msgstr "راهنما و عیب‌یابی"
+
+msgid "Invalid Notification Point identifiers."
+msgstr "شناسه‌های نقطه اعلان نامعتبر هستند."
+
+msgid "IPPanel"
+msgstr "IPPanel"
+
+msgid "IPPanel API key"
+msgstr "کلید API آی‌پی‌پنل"
+
+msgid "Last execution:"
+msgstr "آخرین اجرا:"
+
+msgid "Message"
+msgstr "پیام"
+
+msgid "Native multi-channel notifications for Gravity Forms and Gravity Flow."
+msgstr "اعلان‌های بومی چندکاناله برای Gravity Forms و Gravity Flow."
+
+msgid "Native WordPress settings for approved greenfield provider configuration. Saving does not send messages or migrate legacy values."
+msgstr "تنظیمات بومی وردپرس برای پیکربندی تأییدشده ارائه‌دهندگان جدید. ذخیره‌سازی هیچ پیامی ارسال نمی‌کند و مقادیر قدیمی را مهاجرت نمی‌دهد."
+
+msgid "Needs Setup"
+msgstr "نیازمند تنظیم"
+
+msgid "Next action:"
+msgstr "اقدام بعدی:"
+
+msgid "No"
+msgstr "خیر"
+
+msgid "No fallback"
+msgstr "بدون مسیر جایگزین"
+
+msgid "No notification delivery state has been recorded for this Entry yet."
+msgstr "هنوز هیچ وضعیت تحویل اعلانی برای این Entry ثبت نشده است."
+
+msgid "No notification Feeds detected"
+msgstr "هیچ Feed اعلانی شناسایی نشد"
+
+msgid "No provider attempt was recorded for the last execution."
+msgstr "برای آخرین اجرا هیچ تلاش ارائه‌دهنده‌ای ثبت نشده است."
+
+msgid "No topology change is required. Use Check Again after workflow edits."
+msgstr "تغییری در ساختار لازم نیست. پس از ویرایش گردش‌کار، «بررسی دوباره» را اجرا کنید."
+
+msgid "No workflow Step is required unless this notification must run at a workflow position."
+msgstr "تا زمانی که این اعلان نباید در محل مشخصی از گردش‌کار اجرا شود، مرحله گردش‌کار لازم نیست."
+
+msgid "Not Applicable"
+msgstr "قابل اعمال نیست"
+
+msgid "Not configured"
+msgstr "پیکربندی نشده"
+
+msgid "Not detected"
+msgstr "شناسایی نشد"
+
+msgid "Notification Delivery"
+msgstr "تحویل اعلان"
+
+msgid "Notification delivery state is unavailable for this Entry."
+msgstr "وضعیت تحویل اعلان برای این Entry دردسترس نیست."
+
+msgid "Notification Manager"
+msgstr "مدیریت اعلان‌ها"
+
+msgid "Notification Point was not found."
+msgstr "نقطه اعلان پیدا نشد."
+
+msgid "Notification Points"
+msgstr "نقاط اعلان"
+
+msgid "Notification Rule"
+msgstr "قانون اعلان"
+
+msgid "Notification state is malformed or untrusted; it is not treated as resolved."
+msgstr "وضعیت اعلان نامعتبر یا غیرقابل‌اعتماد است و حل‌شده در نظر گرفته نمی‌شود."
+
+msgid "One or more Notification Points need operator setup. GNM will not repair workflow topology automatically."
+msgstr "یک یا چند نقطه اعلان به تنظیم اپراتور نیاز دارند. GNM ساختار گردش‌کار را به‌صورت خودکار تغییر یا تعمیر نمی‌کند."
+
+msgid "Open Forms → %s → Settings → Workflow and activate this Step or correct the intended placement, then use Check Again. GNM will not activate or change Steps automatically."
+msgstr "در Forms، فرم «%s» را باز کنید و به Settings → Workflow بروید. این مرحله را فعال یا محل موردنظر را اصلاح کنید، سپس «بررسی دوباره» را بزنید. GNM مراحل را خودکار فعال یا تغییر نمی‌دهد."
+
+msgid "Open Forms → %s → Settings → Workflow and keep this Feed selected only at the intended notification position. GNM will not change Steps automatically."
+msgstr "در Forms، فرم «%s» را باز کنید و به Settings → Workflow بروید. این Feed را فقط در محل موردنظر اعلان انتخاب‌شده نگه دارید. GNM مراحل را به‌صورت خودکار تغییر نمی‌دهد."
+
+msgid "Open Forms → %s → Settings → Workflow. Add a Gravity Notification Manager Feed Step at the intended position, select this Feed, and save. GNM will not insert or reorder Steps."
+msgstr "در Forms، فرم «%s» را باز کنید و به Settings → Workflow بروید. در محل موردنظر یک Gravity Notification Manager Feed Step اضافه کنید، این Feed را انتخاب و ذخیره کنید. GNM مرحله‌ای را خودکار اضافه یا جابه‌جا نمی‌کند."
+
+msgid "Open Gravity Flow"
+msgstr "باز کردن Gravity Flow"
+
+msgid "Open Gravity Forms Entry Detail"
+msgstr "باز کردن جزئیات Entry در Gravity Forms"
+
+msgid "Open this Gravity Forms notification Feed and complete the listed settings, then save it."
+msgstr "این Feed اعلانی را در Gravity Forms باز کنید، تنظیمات فهرست‌شده را کامل کنید و سپس ذخیره کنید."
+
+msgid "Operational configuration health from current Feed and Flow truth."
+msgstr "وضعیت سلامت پیکربندی بر اساس داده واقعی فعلی Feed و Flow."
+
+msgid "Overview"
+msgstr "نمای کلی"
+
+msgid "Persisted notification state is malformed or untrusted. It is not treated as resolved, and Retry is unavailable until valid state exists."
+msgstr "وضعیت ذخیره‌شده اعلان نامعتبر یا غیرقابل‌اعتماد است. این وضعیت حل‌شده در نظر گرفته نمی‌شود و تا ایجاد وضعیت معتبر، تلاش مجدد دردسترس نیست."
+
+msgid "PHP"
+msgstr "PHP"
+
+msgid "Point checks"
+msgstr "بررسی نقاط"
+
+msgid "Privacy-safe, side-effect-free facts. No provider request is made by this screen."
+msgstr "اطلاعات این صفحه بدون افشای داده خصوصی و بدون اثر جانبی است. از این صفحه هیچ درخواستی به ارائه‌دهنده ارسال نمی‌شود."
+
+msgid "Provider configuration"
+msgstr "پیکربندی ارائه‌دهندگان"
+
+msgid "Read-only guidance and verification. Gravity Flow remains the workflow topology authority."
+msgstr "راهنمایی و بررسی فقط‌خواندنی است. Gravity Flow همچنان مرجع ساختار گردش‌کار است."
+
+msgid "Recipient Source"
+msgstr "منبع گیرنده"
+
+msgid "Recipient Source Value"
+msgstr "مقدار منبع گیرنده"
+
+msgid "Resolve missing dependencies first, then review Notification Points for exact workflow guidance. Diagnostics never include credentials, recipients, Entry contents, or raw provider responses."
+msgstr "ابتدا وابستگی‌های مفقود را برطرف کنید، سپس برای راهنمای دقیق گردش‌کار نقاط اعلان را بررسی کنید. عیب‌یابی هرگز شامل اطلاعات محرمانه، گیرندگان، محتوای Entry یا پاسخ خام ارائه‌دهنده نیست."
+
+msgid "Retry completed and authoritative Entry Meta now confirms"
+msgstr "تلاش مجدد انجام شد و Entry Meta معتبر اکنون این وضعیت را تأیید می‌کند:"
+
+msgid "Retry completed successfully."
+msgstr "تلاش مجدد با موفقیت انجام شد."
+
+msgid "Retry completed without confirmed resolution. Attention Required remains active."
+msgstr "تلاش مجدد انجام شد، اما حل‌شدن تأیید نشد. وضعیت «نیازمند رسیدگی» همچنان فعال است."
+
+msgid "Retry completed, but delivery resolution is not confirmed."
+msgstr "تلاش مجدد انجام شد، اما نتیجه نهایی تحویل تأیید نشده است."
+
+msgid "Retry eligibility"
+msgstr "امکان تلاش مجدد"
+
+msgid "Retry is synchronous and may contact the configured external channel."
+msgstr "تلاش مجدد همگام است و ممکن است با کانال خارجی پیکربندی‌شده ارتباط برقرار کند."
+
+msgid "Retry notification now"
+msgstr "اکنون اعلان را دوباره ارسال کن"
+
+msgid "Retry requires a POST request."
+msgstr "تلاش مجدد به درخواست POST نیاز دارد."
+
+msgid "Retry result could not be confirmed from current authoritative Entry Meta."
+msgstr "نتیجه تلاش مجدد از Entry Meta معتبر فعلی قابل تأیید نبود."
+
+msgid "Retry transport may have run, but a persisted state transition was not confirmed. Do not infer delivery resolution."
+msgstr "ممکن است انتقال تلاش مجدد اجرا شده باشد، اما تغییر وضعیت ذخیره‌شده تأیید نشده است. حل‌شدن تحویل را نتیجه‌گیری نکنید."
+
+msgid "Review Notification Points"
+msgstr "بررسی نقاط اعلان"
+
+msgid "Safe next actions"
+msgstr "اقدام‌های بعدی امن"
+
+msgid "Save Settings"
+msgstr "ذخیره تنظیمات"
+
+msgid "Settings"
+msgstr "تنظیمات"
+
+msgid "SMS"
+msgstr "SMS"
+
+msgid "SMS Providers / IPPanel"
+msgstr "ارائه‌دهندگان SMS / IPPanel"
+
+msgid "SMS sender number (E.164)"
+msgstr "شماره فرستنده SMS (E.164)"
+
+msgid "State is malformed or untrusted."
+msgstr "وضعیت نامعتبر یا غیرقابل‌اعتماد است."
+
+msgid "State is malformed or untrusted. Attention Required; Retry unavailable."
+msgstr "وضعیت نامعتبر یا غیرقابل‌اعتماد است. نیازمند رسیدگی است و تلاش مجدد دردسترس نیست."
+
+msgid "Stored credentials are never echoed back into this page or diagnostics."
+msgstr "اطلاعات محرمانه ذخیره‌شده هرگز در این صفحه یا بخش عیب‌یابی نمایش داده نمی‌شوند."
+
+msgid "Stored — Enter a new value to replace"
+msgstr "ذخیره شده — برای جایگزینی، مقدار جدید وارد کنید"
+
+msgid "The Entry ID is invalid."
+msgstr "شناسه Entry نامعتبر است."
+
+msgid "The Feed ID is invalid."
+msgstr "شناسه Feed نامعتبر است."
+
+msgid "The matching Gravity Flow Step “%s” is inactive."
+msgstr "مرحله متناظر Gravity Flow با نام «%s» غیرفعال است."
+
+msgid "The requested Gravity Forms Entry could not be found."
+msgstr "Entry درخواستی Gravity Forms پیدا نشد."
+
+msgid "The requested notification Feed is invalid or unavailable."
+msgstr "Feed اعلانی درخواستی نامعتبر است یا دردسترس نیست."
+
+msgid "The Retry request could not be completed."
+msgstr "درخواست تلاش مجدد کامل نشد."
+
+msgid "The Retry request could not be verified. Reload the page and try again."
+msgstr "درخواست تلاش مجدد قابل تأیید نبود. صفحه را دوباره بارگذاری کنید و مجدداً تلاش کنید."
+
+msgid "This Feed is selected by multiple GNM workflow Steps."
+msgstr "این Feed توسط چند مرحله گردش‌کار GNM انتخاب شده است."
+
+msgid "This Feed needs Gravity Flow assignee context but is not selected by a GNM workflow Step."
+msgstr "این Feed به زمینه مسئول Gravity Flow نیاز دارد، اما توسط هیچ مرحله گردش‌کار GNM انتخاب نشده است."
+
+msgid "This notification Feed is disabled."
+msgstr "این Feed اعلانی غیرفعال است."
+
+msgid "This notification is not currently eligible for Retry, or its updated state could not be confirmed."
+msgstr "این اعلان در حال حاضر واجد شرایط تلاش مجدد نیست یا وضعیت به‌روزشده آن قابل تأیید نیست."
+
+msgid "Unavailable"
+msgstr "دردسترس نیست"
+
+msgid "Unavailable / Disabled"
+msgstr "دردسترس نیست / غیرفعال"
+
+msgid "Unnamed notification Feed"
+msgstr "Feed اعلانی بدون نام"
+
+msgid "WordPress"
+msgstr "وردپرس"
+
+msgid "WordPress role"
+msgstr "نقش وردپرس"
+
+msgid "WordPress user"
+msgstr "کاربر وردپرس"
+
+msgid "Yes"
+msgstr "بله"
+
+msgid "You are not allowed to manage Gravity Notification Manager."
+msgstr "شما اجازه مدیریت Gravity Notification Manager را ندارید."
+
+msgid "You are not allowed to retry this notification."
+msgstr "شما اجازه تلاش مجدد برای این اعلان را ندارید."

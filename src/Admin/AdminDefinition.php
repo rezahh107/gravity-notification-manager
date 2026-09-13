@@ -28,19 +28,19 @@ final class AdminDefinition {
 		return array(
 			array(
 				'slug'  => self::ROOT_SLUG,
-				'title' => 'Overview',
+				'title' => __( 'Overview', 'gravity-notification-manager' ),
 			),
 			array(
 				'slug'  => self::POINTS_SLUG,
-				'title' => 'Notification Points',
+				'title' => __( 'Notification Points', 'gravity-notification-manager' ),
 			),
 			array(
 				'slug'  => self::SETTINGS_SLUG,
-				'title' => 'Settings',
+				'title' => __( 'Settings', 'gravity-notification-manager' ),
 			),
 			array(
 				'slug'  => self::DIAGNOSTICS_SLUG,
-				'title' => 'Help & Diagnostics',
+				'title' => __( 'Help & Diagnostics', 'gravity-notification-manager' ),
 			),
 		);
 	}

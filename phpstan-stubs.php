@@ -24,6 +24,7 @@ final class Gravity_Flow_Steps {
 function plugin_dir_path( string $file ): string { return $file; }
 function plugin_dir_url( string $file ): string { return $file; }
 function plugin_basename( string $file ): string { return $file; }
+function load_plugin_textdomain( string $domain, string|false $deprecated = false, string|false $plugin_rel_path = false ): bool { return true; }
 function add_action( string $hook_name, mixed $callback, int $priority = 10, int $accepted_args = 1 ): bool { return true; }
 function remove_action( string $hook_name, mixed $callback, int $priority = 10 ): bool { return true; }
 function esc_html_e( string $text, string $domain = 'default' ): void {}

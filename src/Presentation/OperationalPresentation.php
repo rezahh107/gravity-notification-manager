@@ -128,7 +128,7 @@ final class OperationalPresentation {
 		}
 
 		$meta_boxes['gravity_notify_delivery'] = array(
-			'title'    => 'Notification Delivery',
+			'title'    => __( 'Notification Delivery', 'gravity-notification-manager' ),
 			'callback' => array( $this, 'render_entry_detail_meta_box' ),
 			'context'  => 'side',
 		);
@@ -209,7 +209,7 @@ final class OperationalPresentation {
 		$entry_id = $this->positive_identifier( $entry['id'] ?? null );
 		$form_id  = $this->positive_identifier( $form['id'] ?? null );
 		if ( null === $entry_id ) {
-			return '<p>Notification delivery state is unavailable for this Entry.</p>';
+			return '<p>' . $this->escape_html( __( 'Notification delivery state is unavailable for this Entry.', 'gravity-notification-manager' ) ) . '</p>';
 		}
 
 		$model = $this->reader->read_entry( $entry_id );
@@ -217,13 +217,13 @@ final class OperationalPresentation {
 		$html .= $this->retry_notice_html( $model );
 
 		if ( DeliveryStateReadResult::MISSING === $model['read_status'] ) {
-			$html .= '<p>No notification delivery state has been recorded for this Entry yet.</p>';
+			$html .= '<p>' . $this->escape_html( __( 'No notification delivery state has been recorded for this Entry yet.', 'gravity-notification-manager' ) ) . '</p>';
 			$html .= '</div>';
 			return $html;
 		}
 
 		if ( DeliveryStateReadResult::MALFORMED === $model['read_status'] && empty( $model['targets'] ) ) {
-			$html .= '<p><strong>Attention Required:</strong> persisted notification state is malformed or untrusted. It is not treated as resolved, and Retry is unavailable until valid state exists.</p>';
+			$html .= '<p><strong>' . $this->escape_html( __( 'Attention Required:', 'gravity-notification-manager' ) ) . '</strong> ' . $this->escape_html( __( 'Persisted notification state is malformed or untrusted. It is not treated as resolved, and Retry is unavailable until valid state exists.', 'gravity-notification-manager' ) ) . '</p>';
 			$html .= '</div>';
 			return $html;
 		}
@@ -233,7 +233,7 @@ final class OperationalPresentation {
 		}
 
 		if ( DeliveryStateReadResult::MALFORMED === $model['read_status'] ) {
-			$html .= '<p><strong>Attention Required:</strong> at least one persisted notification target is malformed or untrusted.</p>';
+			$html .= '<p><strong>' . $this->escape_html( __( 'Attention Required:', 'gravity-notification-manager' ) ) . '</strong> ' . $this->escape_html( __( 'At least one persisted notification target is malformed or untrusted.', 'gravity-notification-manager' ) ) . '</p>';
 		}
 
 		$html .= '</div>';
@@ -324,10 +324,10 @@ final class OperationalPresentation {
 	 */
 	public function attention_card_html( array $model, string $entry_detail_url ): string {
 		$html  = '<div class="gnm-attention-card">';
-		$html .= '<p><strong>Attention Required</strong></p>';
+		$html .= '<p><strong>' . $this->escape_html( __( 'Attention Required', 'gravity-notification-manager' ) ) . '</strong></p>';
 
 		if ( DeliveryStateReadResult::MALFORMED === ( $model['read_status'] ?? null ) && empty( $model['targets'] ) ) {
-			$html .= '<p>Notification state is malformed or untrusted; it is not treated as resolved.</p>';
+			$html .= '<p>' . $this->escape_html( __( 'Notification state is malformed or untrusted; it is not treated as resolved.', 'gravity-notification-manager' ) ) . '</p>';
 		} else {
 			foreach ( $model['targets'] ?? array() as $target ) {
 				if ( true !== ( $target['attention_required'] ?? false ) ) {
@@ -338,7 +338,7 @@ final class OperationalPresentation {
 		}
 
 		if ( '' !== $entry_detail_url ) {
-			$html .= '<p><a class="button" href="' . $this->escape_attr( $entry_detail_url ) . '">Open Gravity Forms Entry Detail</a></p>';
+			$html .= '<p><a class="button" href="' . $this->escape_attr( $entry_detail_url ) . '">' . $this->escape_html( __( 'Open Gravity Forms Entry Detail', 'gravity-notification-manager' ) ) . '</a></p>';
 		}
 
 		$html .= '</div>';
@@ -414,32 +414,32 @@ final class OperationalPresentation {
 		}
 
 		if ( true !== ( $target['trusted'] ?? false ) ) {
-			return '<section class="gnm-delivery-target"><p><strong>Feed <bdi dir="ltr">#' . $this->escape_html( (string) $feed_id ) . '</bdi>:</strong> state is malformed or untrusted. Attention Required; Retry unavailable.</p></section>';
+			return '<section class="gnm-delivery-target"><p><strong>' . $this->escape_html( __( 'Feed', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">#' . $this->escape_html( (string) $feed_id ) . '</bdi>:</strong> ' . $this->escape_html( __( 'State is malformed or untrusted. Attention Required; Retry unavailable.', 'gravity-notification-manager' ) ) . '</p></section>';
 		}
 
 		$target_form_id = $this->positive_identifier( $target['form_id'] ?? null );
 		$effective_form = null !== $form_id ? $form_id : $target_form_id;
-		$name           = '' !== (string) $target['feed_name'] ? (string) $target['feed_name'] : 'Unnamed notification Feed';
-		$attention      = true === $target['attention_required'] ? 'Yes' : 'No';
+		$name           = '' !== (string) $target['feed_name'] ? (string) $target['feed_name'] : __( 'Unnamed notification Feed', 'gravity-notification-manager' );
+		$attention      = true === $target['attention_required'] ? __( 'Yes', 'gravity-notification-manager' ) : __( 'No', 'gravity-notification-manager' );
 		$last           = is_array( $target['last_execution'] ?? null ) ? $target['last_execution'] : null;
 
 		$html  = '<section class="gnm-delivery-target">';
 		$html .= '<h4>' . $this->escape_html( $name ) . ' <bdi dir="ltr">#' . $this->escape_html( (string) $feed_id ) . '</bdi></h4>';
 		$html .= '<dl>';
-		$html .= '<dt>Channel</dt><dd><bdi dir="ltr">' . $this->escape_html( (string) $target['channel'] ) . '</bdi></dd>';
-		$html .= '<dt>Final state</dt><dd><bdi dir="ltr">' . $this->escape_html( (string) $target['final_status'] ) . '</bdi></dd>';
-		$html .= '<dt>Attention Required</dt><dd>' . $attention . '</dd>';
-		$html .= '<dt>Retry eligibility</dt><dd><bdi dir="ltr">' . $this->escape_html( (string) $target['retry_eligibility'] ) . '</bdi></dd>';
+		$html .= '<dt>' . $this->escape_html( __( 'Channel', 'gravity-notification-manager' ) ) . '</dt><dd><bdi dir="ltr">' . $this->escape_html( (string) $target['channel'] ) . '</bdi></dd>';
+		$html .= '<dt>' . $this->escape_html( __( 'Final state', 'gravity-notification-manager' ) ) . '</dt><dd><bdi dir="ltr">' . $this->escape_html( (string) $target['final_status'] ) . '</bdi></dd>';
+		$html .= '<dt>' . $this->escape_html( __( 'Attention Required', 'gravity-notification-manager' ) ) . '</dt><dd>' . $this->escape_html( $attention ) . '</dd>';
+		$html .= '<dt>' . $this->escape_html( __( 'Retry eligibility', 'gravity-notification-manager' ) ) . '</dt><dd><bdi dir="ltr">' . $this->escape_html( (string) $target['retry_eligibility'] ) . '</bdi></dd>';
 		$html .= '</dl>';
 
 		if ( null !== $last ) {
 			$statuses = isset( $last['attempt_statuses'] ) && is_array( $last['attempt_statuses'] )
 				? implode( ', ', $last['attempt_statuses'] )
 				: '';
-			$html .= '<p>Last execution: <bdi dir="ltr">' . $this->escape_html( (string) $last['type'] ) . '</bdi> at <bdi dir="ltr">' . $this->escape_html( (string) $last['timestamp'] ) . '</bdi>.</p>';
+			$html .= '<p>' . $this->escape_html( __( 'Last execution:', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">' . $this->escape_html( (string) $last['type'] ) . '</bdi> ' . $this->escape_html( __( 'at', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">' . $this->escape_html( (string) $last['timestamp'] ) . '</bdi>.</p>';
 			$html .= '' !== $statuses
-				? '<p>Attempt status: <bdi dir="ltr">' . $this->escape_html( $statuses ) . '</bdi></p>'
-				: '<p>No provider attempt was recorded for the last execution.</p>';
+				? '<p>' . $this->escape_html( __( 'Attempt status:', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">' . $this->escape_html( $statuses ) . '</bdi></p>'
+				: '<p>' . $this->escape_html( __( 'No provider attempt was recorded for the last execution.', 'gravity-notification-manager' ) ) . '</p>';
 		}
 
 		if ( null !== $effective_form && $this->retry_control_eligible( $target, $entry_id, $effective_form ) ) {
@@ -495,8 +495,8 @@ final class OperationalPresentation {
 		$html .= '<input type="hidden" name="entry_id" value="' . $this->escape_attr( (string) $entry_id ) . '" />';
 		$html .= '<input type="hidden" name="feed_id" value="' . $this->escape_attr( (string) $feed_id ) . '" />';
 		$html .= '<input type="hidden" name="_wpnonce" value="' . $this->escape_attr( $nonce ) . '" />';
-		$html .= '<button type="submit" class="button">Retry notification now</button>';
-		$html .= '<p class="description">Retry is synchronous and may contact the configured external channel.</p>';
+		$html .= '<button type="submit" class="button">' . $this->escape_html( __( 'Retry notification now', 'gravity-notification-manager' ) ) . '</button>';
+		$html .= '<p class="description">' . $this->escape_html( __( 'Retry is synchronous and may contact the configured external channel.', 'gravity-notification-manager' ) ) . '</p>';
 		$html .= '</form>';
 		return $html;
 	}
@@ -514,19 +514,19 @@ final class OperationalPresentation {
 		}
 
 		if ( true !== ( $target['trusted'] ?? false ) ) {
-			return '<p>Feed <bdi dir="ltr">#' . $this->escape_html( (string) $feed_id ) . '</bdi>: state is malformed or untrusted.</p>';
+			return '<p>' . $this->escape_html( __( 'Feed', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">#' . $this->escape_html( (string) $feed_id ) . '</bdi>: ' . $this->escape_html( __( 'State is malformed or untrusted.', 'gravity-notification-manager' ) ) . '</p>';
 		}
 
 		$last     = is_array( $target['last_execution'] ?? null ) ? $target['last_execution'] : null;
 		$statuses = null !== $last && isset( $last['attempt_statuses'] ) && is_array( $last['attempt_statuses'] )
 			? implode( ', ', $last['attempt_statuses'] )
 			: '';
-		$name     = '' !== (string) $target['feed_name'] ? (string) $target['feed_name'] : 'Unnamed notification Feed';
+		$name     = '' !== (string) $target['feed_name'] ? (string) $target['feed_name'] : __( 'Unnamed notification Feed', 'gravity-notification-manager' );
 
 		$html  = '<p><strong>' . $this->escape_html( $name ) . '</strong> <bdi dir="ltr">#' . $this->escape_html( (string) $feed_id ) . '</bdi> — ';
 		$html .= '<bdi dir="ltr">' . $this->escape_html( (string) $target['channel'] ) . '</bdi> — ';
 		$html .= '<bdi dir="ltr">' . $this->escape_html( (string) $target['final_status'] ) . '</bdi>';
-		$html .= '' !== $statuses ? ' — attempts: <bdi dir="ltr">' . $this->escape_html( $statuses ) . '</bdi>' : '';
+		$html .= '' !== $statuses ? ' — ' . $this->escape_html( __( 'attempts:', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">' . $this->escape_html( $statuses ) . '</bdi>' : '';
 		$html .= '</p>';
 		return $html;
 	}
@@ -562,20 +562,20 @@ final class OperationalPresentation {
 			&& true === ( $target['trusted'] ?? false )
 			&& DeliveryStateManager::FINAL_RESOLVED === ( $target['final_status'] ?? null )
 			&& false === ( $target['attention_required'] ?? true ) ) {
-			return '<div class="notice notice-success inline"><p>Retry completed and authoritative Entry Meta now confirms RESOLVED.</p></div>';
+			return '<div class="notice notice-success inline"><p>' . $this->escape_html( __( 'Retry completed and authoritative Entry Meta now confirms', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">RESOLVED</bdi>.</p></div>';
 		}
 
 		if ( ManualRetryHandler::RESULT_UNRESOLVED === $result
 			&& is_array( $target )
 			&& true === ( $target['attention_required'] ?? false ) ) {
-			return '<div class="notice notice-warning inline"><p>Retry completed without confirmed resolution. Attention Required remains active.</p></div>';
+			return '<div class="notice notice-warning inline"><p>' . $this->escape_html( __( 'Retry completed without confirmed resolution. Attention Required remains active.', 'gravity-notification-manager' ) ) . '</p></div>';
 		}
 
 		if ( ManualRetryHandler::ERROR_STATE === $result ) {
-			return '<div class="notice notice-error inline"><p>Retry transport may have run, but a persisted state transition was not confirmed. Do not infer delivery resolution.</p></div>';
+			return '<div class="notice notice-error inline"><p>' . $this->escape_html( __( 'Retry transport may have run, but a persisted state transition was not confirmed. Do not infer delivery resolution.', 'gravity-notification-manager' ) ) . '</p></div>';
 		}
 
-		return '<div class="notice notice-warning inline"><p>Retry result could not be confirmed from current authoritative Entry Meta.</p></div>';
+		return '<div class="notice notice-warning inline"><p>' . $this->escape_html( __( 'Retry result could not be confirmed from current authoritative Entry Meta.', 'gravity-notification-manager' ) ) . '</p></div>';
 	}
 
 	/**

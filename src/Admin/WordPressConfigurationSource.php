@@ -41,9 +41,11 @@ final class WordPressConfigurationSource implements ConfigurationSourceInterface
 			if ( null === $id ) {
 				continue;
 			}
-			$result[] = array(
+			/* translators: %d: Gravity Forms form ID. */
+			$fallback_title = sprintf( __( 'Form %d', 'gravity-notification-manager' ), $id );
+			$result[]       = array(
 				'id'    => $id,
-				'title' => is_scalar( $form['title'] ?? null ) ? (string) $form['title'] : 'Form ' . $id,
+				'title' => is_scalar( $form['title'] ?? null ) ? (string) $form['title'] : $fallback_title,
 			);
 		}
 
@@ -115,7 +117,7 @@ final class WordPressConfigurationSource implements ConfigurationSourceInterface
 			$active  = method_exists( $step, 'is_active' ) && (bool) $step->is_active();
 			$placements[] = array(
 				'step_id'   => null === $step_id ? 0 : $step_id,
-				'step_name' => is_scalar( $name ) && '' !== trim( (string) $name ) ? trim( (string) $name ) : 'GNM Feed Step',
+				'step_name' => is_scalar( $name ) && '' !== trim( (string) $name ) ? trim( (string) $name ) : __( 'GNM Feed Step', 'gravity-notification-manager' ),
 				'feed_ids'  => $selected,
 				'active'    => $active,
 			);

@@ -42,7 +42,9 @@ final class PointInspector {
 			if ( $form_id < 1 ) {
 				continue;
 			}
-			$points = array_merge( $points, $this->for_form( $form_id, (string) ( $form['title'] ?? 'Form ' . $form_id ) ) );
+			/* translators: %d: Gravity Forms form ID. */
+			$default_title = sprintf( __( 'Form %d', 'gravity-notification-manager' ), $form_id );
+			$points        = array_merge( $points, $this->for_form( $form_id, (string) ( $form['title'] ?? $default_title ) ) );
 		}
 		return $points;
 	}
@@ -59,7 +61,8 @@ final class PointInspector {
 			return null;
 		}
 
-		$form_title = 'Form ' . $form_id;
+		/* translators: %d: Gravity Forms form ID. */
+		$form_title = sprintf( __( 'Form %d', 'gravity-notification-manager' ), $form_id );
 		foreach ( $this->source->forms() as $form ) {
 			if ( (int) ( $form['id'] ?? 0 ) === $form_id ) {
 				$form_title = (string) ( $form['title'] ?? $form_title );
@@ -107,34 +110,36 @@ final class PointInspector {
 
 			if ( ! self::is_active( $feed['is_active'] ?? true ) ) {
 				$point['state']       = PointStatus::DISABLED;
-				$point['detail']      = 'This notification Feed is disabled.';
-				$point['next_action'] = 'Enable the Feed in Gravity Forms when this notification should run.';
+				$point['detail']      = __( 'This notification Feed is disabled.', 'gravity-notification-manager' );
+				$point['next_action'] = __( 'Enable the Feed in Gravity Forms when this notification should run.', 'gravity-notification-manager' );
 				$points[]             = $point;
 				continue;
 			}
 
 			$missing = $this->missing_rule_fields( $rule );
 			if ( ! empty( $missing ) ) {
-				$point['state']       = PointStatus::NEEDS_SETUP;
-				$point['detail']      = 'Feed configuration is incomplete: ' . implode( ', ', $missing ) . '.';
-				$point['next_action'] = 'Open this Gravity Forms notification Feed and complete the listed settings, then save it.';
+				$point['state'] = PointStatus::NEEDS_SETUP;
+				/* translators: %s: comma-separated list of missing notification Feed settings. */
+				$point['detail']      = sprintf( __( 'Feed configuration is incomplete: %s.', 'gravity-notification-manager' ), implode( ', ', $missing ) );
+				$point['next_action'] = __( 'Open this Gravity Forms notification Feed and complete the listed settings, then save it.', 'gravity-notification-manager' );
 				$points[]             = $point;
 				continue;
 			}
 
 			if ( null === $placements ) {
 				$point['state']       = PointStatus::NOT_APPLICABLE;
-				$point['detail']      = 'Gravity Flow is unavailable, so workflow placement cannot be verified.';
-				$point['next_action'] = 'Activate a supported Gravity Flow installation, then use Check Again.';
+				$point['detail']      = __( 'Gravity Flow is unavailable, so workflow placement cannot be verified.', 'gravity-notification-manager' );
+				$point['next_action'] = __( 'Activate a supported Gravity Flow installation, then use Check Again.', 'gravity-notification-manager' );
 				$points[]             = $point;
 				continue;
 			}
 
 			$matches = $this->placements_for_feed( $placements, $feed_id );
 			if ( count( $matches ) > 1 ) {
-				$point['state']       = PointStatus::NEEDS_SETUP;
-				$point['detail']      = 'This Feed is selected by multiple GNM workflow Steps.';
-				$point['next_action'] = 'Open Forms → ' . $form_title . ' → Settings → Workflow and keep this Feed selected only at the intended notification position. GNM will not change Steps automatically.';
+				$point['state']  = PointStatus::NEEDS_SETUP;
+				$point['detail'] = __( 'This Feed is selected by multiple GNM workflow Steps.', 'gravity-notification-manager' );
+				/* translators: %s: Gravity Forms form title. */
+				$point['next_action'] = sprintf( __( 'Open Forms → %s → Settings → Workflow and keep this Feed selected only at the intended notification position. GNM will not change Steps automatically.', 'gravity-notification-manager' ), $form_title );
 				$points[]             = $point;
 				continue;
 			}
@@ -143,16 +148,19 @@ final class PointInspector {
 				$point['state']          = PointStatus::NEEDS_SETUP;
 				$point['flow_step_id']   = $matches[0]['step_id'];
 				$point['flow_step_name'] = $matches[0]['step_name'];
-				$point['detail']         = 'The matching Gravity Flow Step “' . $matches[0]['step_name'] . '” is inactive.';
-				$point['next_action']    = 'Open Forms → ' . $form_title . ' → Settings → Workflow and activate this Step or correct the intended placement, then use Check Again. GNM will not activate or change Steps automatically.';
-				$points[]                = $point;
+				/* translators: %s: Gravity Flow step name. */
+				$point['detail'] = sprintf( __( 'The matching Gravity Flow Step “%s” is inactive.', 'gravity-notification-manager' ), $matches[0]['step_name'] );
+				/* translators: %s: Gravity Forms form title. */
+				$point['next_action'] = sprintf( __( 'Open Forms → %s → Settings → Workflow and activate this Step or correct the intended placement, then use Check Again. GNM will not activate or change Steps automatically.', 'gravity-notification-manager' ), $form_title );
+				$points[]             = $point;
 				continue;
 			}
 
 			if ( FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE === $rule['recipient_source_type'] && empty( $matches ) ) {
-				$point['state']       = PointStatus::NEEDS_SETUP;
-				$point['detail']      = 'This Feed needs Gravity Flow assignee context but is not selected by a GNM workflow Step.';
-				$point['next_action'] = 'Open Forms → ' . $form_title . ' → Settings → Workflow. Add a Gravity Notification Manager Feed Step at the intended position, select this Feed, and save. GNM will not insert or reorder Steps.';
+				$point['state']  = PointStatus::NEEDS_SETUP;
+				$point['detail'] = __( 'This Feed needs Gravity Flow assignee context but is not selected by a GNM workflow Step.', 'gravity-notification-manager' );
+				/* translators: %s: Gravity Forms form title. */
+				$point['next_action'] = sprintf( __( 'Open Forms → %s → Settings → Workflow. Add a Gravity Notification Manager Feed Step at the intended position, select this Feed, and save. GNM will not insert or reorder Steps.', 'gravity-notification-manager' ), $form_title );
 				$points[]             = $point;
 				continue;
 			}
@@ -161,11 +169,12 @@ final class PointInspector {
 			if ( 1 === count( $matches ) ) {
 				$point['flow_step_id']   = $matches[0]['step_id'];
 				$point['flow_step_name'] = $matches[0]['step_name'];
-				$point['detail']         = 'Configured in Gravity Flow Step “' . $matches[0]['step_name'] . '”.';
-				$point['next_action']    = 'No topology change is required. Use Check Again after workflow edits.';
+				/* translators: %s: Gravity Flow step name. */
+				$point['detail']      = sprintf( __( 'Configured in Gravity Flow Step “%s”.', 'gravity-notification-manager' ), $matches[0]['step_name'] );
+				$point['next_action'] = __( 'No topology change is required. Use Check Again after workflow edits.', 'gravity-notification-manager' );
 			} else {
-				$point['detail']      = 'Configured for the normal Gravity Forms Feed lifecycle on submission.';
-				$point['next_action'] = 'No workflow Step is required unless this notification must run at a workflow position.';
+				$point['detail']      = __( 'Configured for the normal Gravity Forms Feed lifecycle on submission.', 'gravity-notification-manager' );
+				$point['next_action'] = __( 'No workflow Step is required unless this notification must run at a workflow position.', 'gravity-notification-manager' );
 			}
 			$points[] = $point;
 		}
@@ -184,11 +193,13 @@ final class PointInspector {
 	 */
 	private function base_point( int $form_id, string $form_title, int $feed_id, array $rule ): array {
 		$name = trim( (string) ( $rule['feedName'] ?? '' ) );
+		/* translators: %d: Gravity Notification Manager Feed ID. */
+		$default_name = sprintf( __( 'Feed %d', 'gravity-notification-manager' ), $feed_id );
 		return array(
 			'form_id'        => $form_id,
 			'form_title'     => $form_title,
 			'feed_id'        => $feed_id,
-			'feed_name'      => '' === $name ? 'Feed ' . $feed_id : $name,
+			'feed_name'      => '' === $name ? $default_name : $name,
 			'channel'        => strtoupper( (string) ( $rule['channel'] ?? '' ) ),
 			'fallback'       => (string) ( $rule['fallback_policy'] ?? FeedRuleSchema::FALLBACK_NONE ),
 			'state'          => PointStatus::NEEDS_SETUP,
@@ -208,22 +219,22 @@ final class PointInspector {
 	private function missing_rule_fields( array $rule ): array {
 		$missing = array();
 		if ( '' === trim( (string) ( $rule['feedName'] ?? '' ) ) ) {
-			$missing[] = 'Feed Name';
+			$missing[] = __( 'Feed Name', 'gravity-notification-manager' );
 		}
 		if ( '' === trim( (string) ( $rule['message'] ?? '' ) ) ) {
-			$missing[] = 'Message';
+			$missing[] = __( 'Message', 'gravity-notification-manager' );
 		}
 		if ( ! in_array( (string) ( $rule['channel'] ?? '' ), FeedRuleSchema::channels(), true ) ) {
-			$missing[] = 'Channel';
+			$missing[] = __( 'Channel', 'gravity-notification-manager' );
 		}
 		$recipient_type = (string) ( $rule['recipient_source_type'] ?? '' );
 		if ( ! in_array( $recipient_type, FeedRuleSchema::recipient_source_types(), true ) ) {
-			$missing[] = 'Recipient Source';
+			$missing[] = __( 'Recipient Source', 'gravity-notification-manager' );
 		} elseif ( FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE !== $recipient_type && '' === trim( (string) ( $rule['recipient_source_value'] ?? '' ) ) ) {
-			$missing[] = 'Recipient Source Value';
+			$missing[] = __( 'Recipient Source Value', 'gravity-notification-manager' );
 		}
 		if ( ! in_array( (string) ( $rule['fallback_policy'] ?? '' ), FeedRuleSchema::fallback_policies(), true ) ) {
-			$missing[] = 'Fallback Policy';
+			$missing[] = __( 'Fallback Policy', 'gravity-notification-manager' );
 		}
 		return $missing;
 	}

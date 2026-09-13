@@ -37,6 +37,6 @@ final class NotificationFeedStep extends \Gravity_Flow_Step_Feed_Add_On {
 	 * @return string
 	 */
 	public function get_label() {
-		return 'Gravity Notification Manager';
+		return __( 'Gravity Notification Manager', 'gravity-notification-manager' );
 	}
 }

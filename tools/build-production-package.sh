@@ -40,6 +40,16 @@ SEMVER_RE='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\+[0-9A-Za
   fail "expected plugin Requires at least: 7.0, found: $REQUIRES_WP"
 [[ "$COMPOSER_PHP" == '>=8.2' ]] ||
   fail "expected Composer PHP requirement >=8.2, found: $COMPOSER_PHP"
+grep -Fq 'Plugin Name: Gravity Notification Manager' "$PLUGIN_FILE" ||
+  fail 'canonical Gravity Notification Manager plugin name is missing'
+grep -Fq 'Text Domain: gravity-notification-manager' "$PLUGIN_FILE" ||
+  fail 'canonical gravity-notification-manager text domain is missing'
+grep -Fq 'Domain Path: /languages' "$PLUGIN_FILE" ||
+  fail 'canonical plugin language path is missing'
+test -s languages/gravity-notification-manager-fa_IR.po ||
+  fail 'canonical Persian PO catalog is missing or empty'
+test -s languages/gravity-notification-manager-fa_IR.mo ||
+  fail 'canonical Persian MO catalog is missing or empty'
 
 VERSION="$HEADER_VERSION"
 if [[ -n "$EXPECTED_VERSION" && "$EXPECTED_VERSION" != "$VERSION" ]]; then
@@ -85,7 +95,9 @@ for required in \
   "$STAGE/src/Migration/ProductionRuntime.php" \
   "$STAGE/src/Admin/AdminController.php" \
   "$STAGE/src/Support/NoSendGuard.php" \
-  "$STAGE/assets/admin/gnm-admin.css"; do
+  "$STAGE/assets/admin/gnm-admin.css" \
+  "$STAGE/languages/gravity-notification-manager-fa_IR.po" \
+  "$STAGE/languages/gravity-notification-manager-fa_IR.mo"; do
   test -f "$required" || fail "required staged production file is missing: $required"
 done
 
@@ -155,6 +167,8 @@ REQUIRED_ZIP_PATHS=(
   "$PLUGIN_ROOT/src/Admin/AdminController.php"
   "$PLUGIN_ROOT/src/Support/NoSendGuard.php"
   "$PLUGIN_ROOT/assets/admin/gnm-admin.css"
+  "$PLUGIN_ROOT/languages/gravity-notification-manager-fa_IR.po"
+  "$PLUGIN_ROOT/languages/gravity-notification-manager-fa_IR.mo"
 )
 for required in "${REQUIRED_ZIP_PATHS[@]}"; do
   grep -Fxq "$required" "$LISTING" || fail "required ZIP entry missing: $required"
@@ -209,6 +223,10 @@ test -f "$EXTRACTED_ROOT/vendor/autoload.php" ||
   fail 'extracted package Composer autoloader is missing'
 test -f "$EXTRACTED_ROOT/src/Migration/ProductionRuntime.php" ||
   fail 'extracted ProductionRuntime is missing'
+test -s "$EXTRACTED_ROOT/languages/gravity-notification-manager-fa_IR.po" ||
+  fail 'extracted canonical Persian PO catalog is missing or empty'
+test -s "$EXTRACTED_ROOT/languages/gravity-notification-manager-fa_IR.mo" ||
+  fail 'extracted canonical Persian MO catalog is missing or empty'
 test ! -e "$EXTRACTED_ROOT/tests" ||
   fail 'tests directory is present in extracted production package'
 test ! -e "$EXTRACTED_ROOT/.github" ||
