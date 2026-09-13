@@ -21,6 +21,23 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  contract-tests:
+    name: Packaging / release identity contracts
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact target source with full history and tags
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Execute packaging and release identity contract controls
+        run: bash tests/Integration/ArtifactRuntime/contracts.sh
+
   generated-artifact:
     name: Generated ZIP / WordPress 7.0 / PHP 8.2
     if: github.event_name != 'workflow_run'
@@ -69,71 +86,52 @@ jobs:
       - name: Validate package metadata
         run: composer validate --strict
 
-      - name: Build production Composer autoloader
-        run: >-
-          composer install
-          --no-dev
-          --prefer-dist
-          --optimize-autoloader
-          --no-interaction
-          --no-progress
-
-      - name: Build the production ZIP exactly from packaged files
-        id: package
+      - name: Seed unmanaged stale vendor sentinel
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p vendor/.gnm-stale-vendor-sentinel
+          printf 'must-not-survive-production-package\n' > vendor/.gnm-stale-vendor-sentinel/unmanaged.txt
 
-          plugin_file='gravityflow-sms-ippanel.php'
-          version="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Version:' "$plugin_file" | sed -E 's/.*Version:[[:space:]]*//; s/[[:space:]]+$//')"
-          constant_version="$(grep -m1 "define( 'GFSMS_PLUGIN_VERSION'" "$plugin_file" | sed -E "s/.*'GFSMS_PLUGIN_VERSION',[[:space:]]*'([^']+)'.*/\1/")"
-          requires_php="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Requires PHP:' "$plugin_file" | sed -E 's/.*Requires PHP:[[:space:]]*//; s/[[:space:]]+$//')"
-          requires_wp="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Requires at least:' "$plugin_file" | sed -E 's/.*Requires at least:[[:space:]]*//; s/[[:space:]]+$//')"
+      - name: Build production ZIP with shared builder
+        id: package
+        run: bash tools/build-production-package.sh
 
-          [[ "$version" == "$constant_version" ]]
-          [[ "$requires_php" == '8.2' ]]
-          [[ "$requires_wp" == '7.0' ]]
+      - name: Prove stale vendor content is eliminated
+        shell: bash
+        env:
+          ZIP_NAME: ${{ steps.package.outputs.zip_name }}
+          CHECKSUM_NAME: ${{ steps.package.outputs.checksum_name }}
+        run: |
+          set -euo pipefail
 
-          zip_name="gravity-notification-manager-${version}.zip"
-          checksum_name="${zip_name}.sha256"
-          stage='dist/gravity-notification-manager'
-          rm -rf dist
-          mkdir -p "$stage"
+          sentinel='vendor/.gnm-stale-vendor-sentinel/unmanaged.txt'
+          stage="dist/gravity-notification-manager"
+          zip_path="dist/$ZIP_NAME"
 
-          cp gravityflow-sms-ippanel.php uninstall.php "$stage/"
-          cp -a src includes languages vendor "$stage/"
-          mkdir -p "$stage/assets"
-          cp -a assets/admin "$stage/assets/admin"
-          rm -f "$stage/includes/Autoloader.php" "$stage/includes/autoloader_mapping.txt"
+          test ! -e "$sentinel" || {
+            echo "Stale unmanaged vendor sentinel survived production dependency rebuild: $sentinel" >&2
+            exit 1
+          }
+          test ! -e "$stage/$sentinel" || {
+            echo "Stale unmanaged vendor sentinel survived in staged production package: $stage/$sentinel" >&2
+            exit 1
+          }
+          if unzip -Z1 "$zip_path" | grep -Fq "gravity-notification-manager/$sentinel"; then
+            echo "Stale unmanaged vendor sentinel survived in production ZIP." >&2
+            exit 1
+          fi
 
           test -f "$stage/vendor/autoload.php"
           test -f "$stage/src/Migration/ProductionRuntime.php"
           test -f "$stage/src/Admin/AdminController.php"
           test -f "$stage/src/Support/NoSendGuard.php"
-          test ! -e "$stage/includes/Core/Bootstrap.php"
-
-          if grep -R -n -E --include='*.php' 'GFSMS.*Core.*Bootstrap' "$stage"; then
-            echo 'Retired GFSMS\\Core\\Bootstrap is referenced by the generated package.' >&2
-            exit 1
-          fi
-
-          source_date_epoch="$(git show -s --format=%ct HEAD)"
-          find "$stage" -exec touch -d "@$source_date_epoch" {} +
           (
             cd dist
-            find gravity-notification-manager -type f -print | LC_ALL=C sort > "$RUNNER_TEMP/artifact-smoke-release-files.txt"
-            zip -X -q "$zip_name" -@ < "$RUNNER_TEMP/artifact-smoke-release-files.txt"
-            sha256sum "$zip_name" > "$checksum_name"
-            sha256sum -c "$checksum_name"
+            sha256sum -c "$CHECKSUM_NAME"
           )
 
-          unzip -tq "dist/$zip_name"
-          zip_sha="$(sha256sum "dist/$zip_name" | awk '{print $1}')"
-          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
-          printf 'zip_name=%s\n' "$zip_name" >> "$GITHUB_OUTPUT"
-          printf 'checksum_name=%s\n' "$checksum_name" >> "$GITHUB_OUTPUT"
-          printf 'zip_sha=%s\n' "$zip_sha" >> "$GITHUB_OUTPUT"
-          printf 'GENERATED_ZIP=%s sha256=%s source_head=%s\n' "$zip_name" "$zip_sha" "$(git rev-parse HEAD)"
+          printf 'T-PKG-STALE-VENDOR-02=PASS\n'
 
       - name: Install wp-env dependencies
         run: npm ci
@@ -264,6 +262,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
       startsWith(github.event.workflow_run.head_branch, 'v')
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -286,28 +285,14 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - name: Bind release identity to the triggering workflow
+      - name: Validate release workflow identity before release download
         id: release
         shell: bash
         env:
+          WORKFLOW_EVENT: ${{ github.event.workflow_run.event }}
           TAG_NAME: ${{ github.event.workflow_run.head_branch }}
           SOURCE_HEAD: ${{ github.event.workflow_run.head_sha }}
-        run: |
-          set -euo pipefail
-
-          version="${TAG_NAME#v}"
-          header_version="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Version:' gravityflow-sms-ippanel.php | sed -E 's/.*Version:[[:space:]]*//; s/[[:space:]]+$//')"
-          [[ "$version" == "$header_version" ]] || {
-            echo "Release workflow tag/source version mismatch: tag=$version source=$header_version" >&2
-            exit 1
-          }
-          [[ "$(git rev-parse HEAD)" == "$SOURCE_HEAD" ]]
-
-          zip_name="gravity-notification-manager-${version}.zip"
-          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
-          printf 'tag=%s\n' "$TAG_NAME" >> "$GITHUB_OUTPUT"
-          printf 'zip_name=%s\n' "$zip_name" >> "$GITHUB_OUTPUT"
-          printf 'source_head=%s\n' "$SOURCE_HEAD" >> "$GITHUB_OUTPUT"
+        run: bash tools/validate-release-workflow-run-identity.sh
 
       - name: Download exact published release assets and verify checksum
         id: artifact
@@ -326,6 +311,8 @@ jobs:
             --pattern "$ZIP_NAME.sha256"
 
           cd published-release
+          test -s "$ZIP_NAME"
+          test -s "$ZIP_NAME.sha256"
           sha256sum -c "$ZIP_NAME.sha256"
           zip_sha="$(sha256sum "$ZIP_NAME" | awk '{print $1}')"
           printf 'zip_sha=%s\n' "$zip_sha" >> "$GITHUB_OUTPUT"
