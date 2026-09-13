@@ -114,7 +114,7 @@ php -r '
 export WP_ENV_HOME="$RUNTIME_DIR/wp-env-home"
 
 wp_env() {
-  npx --no-install wp-env "$@" --config="$CONFIG_FILE"
+  npx --no-install wp-env --config="$CONFIG_FILE" "$@"
 }
 
 cleanup() {
