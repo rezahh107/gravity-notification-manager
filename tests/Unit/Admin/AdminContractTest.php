@@ -23,7 +23,7 @@ final class AdminContractTest extends TestCase {
 	/** Provider Manager extends the established IA without changing the capability boundary. */
 	public function test_information_architecture_includes_provider_manager_with_native_capability(): void {
 		self::assertSame(
-			array( 'Overview', 'Notification Points', 'Providers & Senders', 'Settings', 'Advisor', 'Help & Diagnostics' ),
+			array( 'Overview', 'Notification Points', 'SMS Providers / IPPanel', 'Settings', 'Advisor', 'Help & Diagnostics' ),
 			array_column( AdminDefinition::navigation_surfaces(), 'title' )
 		);
 		self::assertSame( 'manage_options', AdminDefinition::CAPABILITY );
