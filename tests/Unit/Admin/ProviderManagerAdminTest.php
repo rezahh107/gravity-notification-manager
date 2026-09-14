@@ -24,7 +24,7 @@ final class ProviderManagerAdminTest extends TestCase {
 		self::assertStringContainsString( 'ProviderManagerAdmin::boot()', $entrypoint );
 		self::assertStringContainsString( 'add_submenu_page(', $source );
 		self::assertStringContainsString( 'AdminDefinition::PROVIDERS_SLUG', $source );
-		self::assertStringContainsString( "esc_html__( 'Providers & Senders', 'gravity-notification-manager' )", $source );
+		self::assertStringContainsString( "esc_html__( 'SMS Providers / IPPanel', 'gravity-notification-manager' )", $source );
 	}
 
 	/** Real SMS tests exist only behind an explicit admin-post action with capability and nonce guards. */
@@ -69,7 +69,7 @@ final class ProviderManagerAdminTest extends TestCase {
 	/** No speculative sender-line discovery endpoint or implicit refresh action is present. */
 	public function test_sender_line_discovery_is_not_fabricated(): void {
 		$source = $this->source();
-		self::assertStringContainsString( 'no current documented enumeration contract was established', $source );
+		self::assertStringContainsString( 'Sender-line discovery is intentionally absent', $source );
 		self::assertStringNotContainsString( 'fetch_lines', $source );
 		self::assertStringNotContainsString( 'sender_lines', $source );
 		self::assertStringNotContainsString( 'wp_remote_get(', $source );
