@@ -50,8 +50,10 @@ if [[ ! "$PLUGIN_VERSION" =~ $SEMVER_RE ]]; then
 fi
 
 TAG_NAME="v$PLUGIN_VERSION"
+ZIP_NAME="gravity-notification-manager-$PLUGIN_VERSION.zip"
 emit_output version "$PLUGIN_VERSION"
 emit_output tag "$TAG_NAME"
+emit_output zip_name "$ZIP_NAME"
 emit_output source_head "$BASE_SHA"
 
 if ! TAG_COMMIT="$(git rev-parse --verify "refs/tags/$TAG_NAME^{commit}" 2>/dev/null)"; then
