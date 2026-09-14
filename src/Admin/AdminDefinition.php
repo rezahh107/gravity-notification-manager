@@ -7,30 +7,26 @@
 
 namespace GravityNotify\Admin;
 
-/**
- * Defines the GNM information architecture and capability boundary.
- */
+/** Defines the GNM information architecture and capability boundary. */
 final class AdminDefinition {
 
-	public const CAPABILITY = 'manage_options';
-	public const ROOT_SLUG = 'gravity-notification-manager';
-	public const POINTS_SLUG = 'gravity-notification-manager-points';
-	public const PROVIDERS_SLUG = 'gravity-notification-manager-providers';
-	public const SETTINGS_SLUG = 'gravity-notification-manager-settings';
-	public const ADVISOR_SLUG = 'gravity-notification-manager-advisor';
-	public const DIAGNOSTICS_SLUG = 'gravity-notification-manager-diagnostics';
-	public const CHECK_ACTION = 'gravity_notify_check_point';
-	public const TEST_BALE_ACTION = 'gravity_notify_test_bale';
+	public const CAPABILITY               = 'manage_options';
+	public const ROOT_SLUG                = 'gravity-notification-manager';
+	public const POINTS_SLUG              = 'gravity-notification-manager-points';
+	public const PROVIDERS_SLUG           = 'gravity-notification-manager-providers';
+	public const LOGS_SLUG                = 'gravity-notification-manager-operational-log';
+	public const SETTINGS_SLUG            = 'gravity-notification-manager-settings';
+	public const ADVISOR_SLUG             = 'gravity-notification-manager-advisor';
+	public const DIAGNOSTICS_SLUG         = 'gravity-notification-manager-diagnostics';
+	public const CHECK_ACTION             = 'gravity_notify_check_point';
+	public const TEST_BALE_ACTION         = 'gravity_notify_test_bale';
 	public const PROVIDER_TEST_SMS_ACTION = 'gravity_notify_provider_manager_test_sms';
 
-	/**
-	 * Return the established core surfaces owned by AdminController.
-	 *
-	 * Provider Manager is intentionally registered by its focused controller so the
-	 * former fixed-five assumption does not constrain the product information architecture.
-	 *
-	 * @return array<int, array{slug:string,title:string}>
-	 */
+		/**
+		 * Surfaces.
+		 *
+		 * @return array Return value.
+		 */
 	public static function surfaces(): array {
 		return array(
 			array(
@@ -56,7 +52,11 @@ final class AdminDefinition {
 		);
 	}
 
-	/** Return the directly discoverable SMS Provider Manager / sender surface. */
+		/**
+		 * Provider surface.
+		 *
+		 * @return array Return value.
+		 */
 	public static function provider_surface(): array {
 		return array(
 			'slug'  => self::PROVIDERS_SLUG,
@@ -64,14 +64,26 @@ final class AdminDefinition {
 		);
 	}
 
-	/**
-	 * Return the current complete navigation contract in intended display order.
-	 *
-	 * @return array<int, array{slug:string,title:string}>
-	 */
+		/**
+		 * Log surface.
+		 *
+		 * @return array Return value.
+		 */
+	public static function log_surface(): array {
+		return array(
+			'slug'  => self::LOGS_SLUG,
+			'title' => __( 'Operational Log', 'gravity-notification-manager' ),
+		);
+	}
+
+		/**
+		 * Navigation surfaces.
+		 *
+		 * @return array Return value.
+		 */
 	public static function navigation_surfaces(): array {
 		$surfaces = self::surfaces();
-		array_splice( $surfaces, 2, 0, array( self::provider_surface() ) );
+		array_splice( $surfaces, 2, 0, array( self::provider_surface(), self::log_surface() ) );
 		return $surfaces;
 	}
 }

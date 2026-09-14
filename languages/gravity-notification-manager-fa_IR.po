@@ -567,3 +567,111 @@ msgstr "موارد مرکزی «نیازمند رسیدگی» همچنان در 
 
 msgid "GravityView is not currently detected. Advisor does not create a replacement case dashboard; use Gravity Forms Entry Detail as the independent status and Retry fallback until the site’s GravityView / Elementor Attention Required presentation is available."
 msgstr "GravityView در حال حاضر شناسایی نشده است. مشاور داشبورد جایگزین برای پرونده‌ها نمی‌سازد؛ تا زمانی که نمایش «نیازمند رسیدگی» سایت در GravityView / Elementor دردسترس شود، از جزئیات Entry در Gravity Forms به‌عنوان مسیر مستقل وضعیت و تلاش مجدد استفاده کنید."
+
+msgid "Operational Log"
+msgstr "گزارش عملیاتی"
+
+msgid "Observational evidence for outbound attempts. Gravity Forms Entry Meta remains delivery-state and Retry authority."
+msgstr "شواهد مشاهده‌ای تلاش‌های خروجی. Entry Meta در Gravity Forms همچنان مرجع وضعیت تحویل و تلاش مجدد است."
+
+msgid "Operational log channel"
+msgstr "کانال گزارش عملیاتی"
+
+msgid "SMS log"
+msgstr "گزارش SMS"
+
+msgid "Bale log"
+msgstr "گزارش بله"
+
+msgid "Status"
+msgstr "وضعیت"
+
+msgid "All statuses"
+msgstr "همه وضعیت‌ها"
+
+msgid "Success"
+msgstr "موفق"
+
+msgid "Failed"
+msgstr "ناموفق"
+
+msgid "Ambiguous / warning"
+msgstr "مبهم / هشدار"
+
+msgid "Skipped"
+msgstr "اجرا نشد"
+
+msgid "Execution"
+msgstr "اجرا"
+
+msgid "All executions"
+msgstr "همه اجراها"
+
+msgid "Normal send"
+msgstr "ارسال عادی"
+
+msgid "TEST"
+msgstr "آزمون"
+
+msgid "Retry"
+msgstr "تلاش مجدد"
+
+msgid "Trace ID"
+msgstr "شناسه رهگیری"
+
+msgid "Filter log"
+msgstr "فیلتر گزارش"
+
+msgid "No matching operational records were found."
+msgstr "هیچ رکورد عملیاتی مطابقی پیدا نشد."
+
+msgid "Time"
+msgstr "زمان"
+
+msgid "Result"
+msgstr "نتیجه"
+
+msgid "Provider / Source"
+msgstr "ارائه‌دهنده / منبع"
+
+msgid "Route"
+msgstr "مسیر"
+
+msgid "Diagnostic"
+msgstr "عیب‌یابی"
+
+msgid "Trace"
+msgstr "رهگیری"
+
+msgid "Debug"
+msgstr "عیب‌یابی"
+
+msgid "Reference:"
+msgstr "شناسه مرجع:"
+
+msgid "Debug report copied."
+msgstr "گزارش عیب‌یابی کپی شد."
+
+msgid "Copy LLM Debug Report"
+msgstr "کپی گزارش عیب‌یابی LLM"
+
+msgid "Form"
+msgstr "فرم"
+
+msgid "Entry"
+msgstr "Entry"
+
+msgid "Sender"
+msgstr "فرستنده"
+
+msgid "Destination"
+msgstr "مقصد"
+
+msgid "Ambiguous"
+msgstr "مبهم"
+
+msgid "Unknown"
+msgstr "نامشخص"
+
+msgid "You do not have permission to access this page."
+msgstr "شما اجازه دسترسی به این صفحه را ندارید."

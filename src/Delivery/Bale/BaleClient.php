@@ -13,30 +13,28 @@ use GravityNotify\Delivery\Http\HttpResponse;
 use GravityNotify\Delivery\Http\HttpTransportInterface;
 use JsonException;
 
-/**
- * Synchronous Bale sendMessage client using the injected HTTP seam.
- */
+/** Synchronous Bale sendMessage client using the injected HTTP seam. */
 final class BaleClient implements BaleChannelInterface {
 
 	/**
-	 * Bot token.
+	 * Stored value.
 	 *
 	 * @var string
 	 */
 	private string $token;
-
 	/**
-	 * Injected HTTP seam.
+	 * Stored value.
 	 *
 	 * @var HttpTransportInterface
 	 */
 	private HttpTransportInterface $http;
 
 	/**
-	 * Create the outbound client.
+	 * Construct the object.
 	 *
-	 * @param string                 $token Bot token.
-	 * @param HttpTransportInterface $http  Injected HTTP seam.
+	 * @param string                 $token Value.
+	 * @param HttpTransportInterface $http Value.
+	 * @throws \InvalidArgumentException When supplied data is invalid.
 	 */
 	public function __construct( string $token, HttpTransportInterface $http ) {
 		$this->token = $token;
@@ -44,10 +42,10 @@ final class BaleClient implements BaleChannelInterface {
 	}
 
 	/**
-	 * Send one documented sendMessage request.
+	 * Send.
 	 *
-	 * @param BaleRequest $request Normalized Bale request.
-	 * @return AttemptResult
+	 * @param BaleRequest $request Value.
+	 * @return AttemptResult Return value.
 	 */
 	public function send( BaleRequest $request ): AttemptResult {
 		try {
@@ -66,72 +64,65 @@ final class BaleClient implements BaleChannelInterface {
 		$response = $this->http->post(
 			'https://tapi.bale.ai/bot' . $this->token . '/sendMessage',
 			array(
-				'headers' => array(
-					'Content-Type' => 'application/json',
-				),
+				'headers' => array( 'Content-Type' => 'application/json' ),
 				'body'    => $body,
 				'timeout' => 15,
 			)
 		);
-
 		return $this->classify_response( $response );
 	}
 
 	/**
-	 * Classify using the documented ok/result/error_code contract.
+	 * Classify response.
 	 *
-	 * @param HttpResponse $response HTTP response.
-	 * @return AttemptResult
+	 * @param HttpResponse $response Value.
+	 * @return AttemptResult Return value.
 	 */
 	private function classify_response( HttpResponse $response ): AttemptResult {
 		if ( $response->is_transport_error() ) {
 			return $this->result( AttemptStatus::AMBIGUOUS, array(), 'transport_error' );
 		}
-
-		if ( 200 > $response->status_code() || 300 <= $response->status_code() ) {
-			return $this->result( AttemptStatus::FAILED, array(), 'http_rejection' );
+		$status = $response->status_code();
+		if ( 200 > $status || 300 <= $status ) {
+			return $this->result( AttemptStatus::FAILED, array(), 'http_rejection', $status );
 		}
-
 		try {
 			$decoded = json_decode( $response->body(), true, 512, JSON_THROW_ON_ERROR );
 		} catch ( JsonException $exception ) {
 			unset( $exception );
-			return $this->result( AttemptStatus::AMBIGUOUS, array(), 'malformed_response' );
+			return $this->result( AttemptStatus::AMBIGUOUS, array(), 'malformed_response', $status );
 		}
-
 		if ( ! is_array( $decoded ) ) {
-			return $this->result( AttemptStatus::AMBIGUOUS, array(), 'malformed_response' );
+			return $this->result( AttemptStatus::AMBIGUOUS, array(), 'malformed_response', $status );
 		}
-
 		if ( false === ( $decoded['ok'] ?? null ) && isset( $decoded['error_code'] ) ) {
-			return $this->result( AttemptStatus::FAILED, array(), 'api_rejection' );
+			return $this->result( AttemptStatus::FAILED, array(), 'api_rejection', $status );
 		}
-
 		$result = $decoded['result'] ?? null;
-
 		if ( true === ( $decoded['ok'] ?? null ) && is_array( $result ) && isset( $result['message_id'] ) && ( is_int( $result['message_id'] ) || is_string( $result['message_id'] ) ) ) {
-			return $this->result( AttemptStatus::SUCCESS, array( (string) $result['message_id'] ), 'accepted' );
+			return $this->result( AttemptStatus::SUCCESS, array( (string) $result['message_id'] ), 'accepted', $status );
 		}
-
-		return $this->result( AttemptStatus::AMBIGUOUS, array(), 'acceptance_unestablished' );
+		return $this->result( AttemptStatus::AMBIGUOUS, array(), 'acceptance_unestablished', $status );
 	}
 
-	/**
-	 * Create one safe Bale attempt result.
-	 *
-	 * @param string             $status     Attempt status.
-	 * @param array<int, string> $references Safe documented message references.
-	 * @param string             $diagnostic Safe diagnostic.
-	 * @return AttemptResult
-	 */
-	private function result( string $status, array $references, string $diagnostic ): AttemptResult {
+		/**
+		 * Result.
+		 *
+		 * @param string   $status Value.
+		 * @param array    $references Value.
+		 * @param string   $diagnostic Value.
+		 * @param int|null $http_status Value.
+		 * @return AttemptResult Return value.
+		 */
+	private function result( string $status, array $references, string $diagnostic, ?int $http_status = null ): AttemptResult {
 		return new AttemptResult(
 			$status,
 			'bale',
 			null,
 			null,
 			$references,
-			$diagnostic
+			$diagnostic,
+			$http_status
 		);
 	}
 }

@@ -14,6 +14,7 @@ use GravityNotify\Delivery\Sms\SmsProviderRegistry;
 use GravityNotify\Delivery\SynchronousDispatcher;
 use GravityNotify\GravityForms\NotificationFeedAddOn;
 use GravityNotify\GravityForms\NotificationFeedProcessor;
+use GravityNotify\Observability\OperationalLogger;
 use GravityNotify\Provider\SmsProviderManager;
 use GravityNotify\Recipient\Native\GravityFlowAssigneeReader;
 use GravityNotify\Recipient\Native\GravityFormsEntryFieldReader;
@@ -21,29 +22,29 @@ use GravityNotify\Recipient\Native\WordPressUserDirectory;
 use GravityNotify\Recipient\RecipientResolver;
 use GravityNotify\Support\NoSendGuard;
 
-/**
- * Enables the greenfield runtime only when every active GNM Feed is cutover-authorized.
- */
+/** Enables the greenfield runtime only when every active GNM Feed is cutover-authorized. */
 final class ProductionRuntime {
 
-	/** Register the supported Gravity Forms add-on bootstrap hook. */
+	/**
+	 * Boot.
+	 */
 	public static function boot(): void {
 		if ( function_exists( 'add_action' ) ) {
 			add_action( 'gform_loaded', array( self::class, 'register' ), 5 );
 		}
 	}
 
-	/** Register and configure the production Feed Add-On fail-closed. */
+	/**
+	 * Register.
+	 */
 	public static function register(): void {
 		self::register_with_endpoint( null );
 	}
 
 	/**
-	 * Register the production composition against one test-only loopback endpoint.
+	 * Register with test ippanel endpoint.
 	 *
-	 * This seam is unavailable unless the automated no-send guard is active.
-	 *
-	 * @param string $endpoint Local IPPanel simulator send endpoint.
+	 * @param string $endpoint Value.
 	 */
 	public static function register_with_test_ippanel_endpoint( string $endpoint ): void {
 		NoSendGuard::assert_test_loopback_http_url( $endpoint );
@@ -51,9 +52,9 @@ final class ProductionRuntime {
 	}
 
 	/**
-	 * Register and configure with the selected provider endpoint.
+	 * Register with endpoint.
 	 *
-	 * @param string|null $test_endpoint Test-only loopback endpoint or production default.
+	 * @param string|null $test_endpoint Value.
 	 */
 	private static function register_with_endpoint( ?string $test_endpoint ): void {
 		if ( ! class_exists( '\\GFForms' ) || ! method_exists( '\\GFForms', 'include_addon_framework' ) ) {
@@ -73,10 +74,10 @@ final class ProductionRuntime {
 	}
 
 	/**
-	 * Compose the existing synchronous greenfield processor.
+	 * Processor.
 	 *
-	 * @param string|null $test_endpoint Test-only loopback IPPanel endpoint.
-	 * @return NotificationFeedProcessor
+	 * @param string|null $test_endpoint Value.
+	 * @return NotificationFeedProcessor Return value.
 	 */
 	private static function processor( ?string $test_endpoint = null ): NotificationFeedProcessor {
 		$settings         = Settings::read();
@@ -92,15 +93,16 @@ final class ProductionRuntime {
 		return new NotificationFeedProcessor(
 			$resolver,
 			new SynchronousDispatcher( new SmsProviderRegistry( $providers ), $bale ),
-			$provider_manager->configured_sender( SmsProviderManager::IPPANEL )
+			$provider_manager->configured_sender( SmsProviderManager::IPPANEL ),
+			OperationalLogger::production()
 		);
 	}
 
 	/**
-	 * Require explicit cutover authority for every active GNM Feed.
+	 * All active feeds authorized.
 	 *
-	 * @param NotificationFeedAddOn $add_on Registered GNM Feed Add-On.
-	 * @return bool
+	 * @param NotificationFeedAddOn $add_on Value.
+	 * @return bool Return value.
 	 */
 	private static function all_active_feeds_authorized( NotificationFeedAddOn $add_on ): bool {
 		if ( ! class_exists( '\\GFAPI' ) ) {

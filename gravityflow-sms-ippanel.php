@@ -44,8 +44,6 @@ if ( ! defined( 'GFSMS_SETTINGS_OPTION' ) ) {
 	define( 'GFSMS_SETTINGS_OPTION', 'gfsms_settings' );
 }
 
-// Register the canonical bundled translation path at init so WordPress can use
-// the current request/admin user locale through its native JIT i18n machinery.
 add_action( 'init', static function (): void {
 	load_plugin_textdomain(
 		'gravity-notification-manager',
@@ -54,9 +52,6 @@ add_action( 'init', static function (): void {
 	);
 } );
 
-// ---------------------------------------------------------------------------
-// Composer autoloader
-// ---------------------------------------------------------------------------
 if ( file_exists( GFSMS_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 	require_once GFSMS_PLUGIN_DIR . 'vendor/autoload.php';
 } else {
@@ -65,17 +60,19 @@ if ( file_exists( GFSMS_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 		esc_html_e( 'Gravity Notification Manager: Composer autoloader not found. Please run `composer install` in the plugin directory.', 'gravity-notification-manager' );
 		echo '</p></div>';
 	} );
-	return; // stop the plugin if autoloader is missing
+	return;
 }
 
 // ---------------------------------------------------------------------------
-// Greenfield admin foundation, provider administration, and notification runtime.
-// WU-09 retired the legacy GFSMS sender/queue runtime. Migration state remains
-// readable for authorization/history, but no legacy runtime guard or migration
-// rollback controller is booted after retirement.
+// Greenfield observability, admin foundation, provider administration, and
+// notification runtime. Observability is evidence-only and never a delivery
+// or Retry authority. The retired GFSMS sender/queue/logger runtime is not booted.
 // ---------------------------------------------------------------------------
 if ( ! defined( 'GRAVITY_NOTIFY_PLUGIN_URL' ) ) {
 	define( 'GRAVITY_NOTIFY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+}
+if ( class_exists( '\\GravityNotify\\Observability\\OperationalLogInstaller' ) ) {
+	\GravityNotify\Observability\OperationalLogInstaller::boot();
 }
 if ( class_exists( '\\GravityNotify\\Admin\\AdminController' ) ) {
 	\GravityNotify\Admin\AdminController::boot();
@@ -83,15 +80,19 @@ if ( class_exists( '\\GravityNotify\\Admin\\AdminController' ) ) {
 if ( class_exists( '\\GravityNotify\\Admin\\ProviderManagerAdmin' ) ) {
 	\GravityNotify\Admin\ProviderManagerAdmin::boot();
 }
+if ( class_exists( '\\GravityNotify\\Admin\\OperationalLogAdmin' ) ) {
+	\GravityNotify\Admin\OperationalLogAdmin::boot();
+}
 if ( class_exists( '\\GravityNotify\\Migration\\ProductionRuntime' ) ) {
 	\GravityNotify\Migration\ProductionRuntime::boot();
 }
 
 // ---------------------------------------------------------------------------
 // Activation / deactivation / uninstall hooks.
-// Historical settings/log lifecycle is retained for WU-10 policy cleanup; it
-// is not part of notification delivery and cannot boot the retired sender.
+// Historical settings/log lifecycle remains only for compatibility/cleanup and
+// cannot boot the retired sender. Greenfield operational schema is independent.
 // ---------------------------------------------------------------------------
 register_activation_hook( GFSMS_PLUGIN_FILE, [ '\\GFSMS\\Lifecycle\\Activator', 'activate' ] );
+register_activation_hook( GFSMS_PLUGIN_FILE, [ '\\GravityNotify\\Observability\\OperationalLogInstaller', 'activate' ] );
 register_deactivation_hook( GFSMS_PLUGIN_FILE, [ '\\GFSMS\\Lifecycle\\Deactivator', 'deactivate' ] );
 register_uninstall_hook( GFSMS_PLUGIN_FILE, [ '\\GFSMS\\Lifecycle\\Uninstaller', 'uninstall' ] );

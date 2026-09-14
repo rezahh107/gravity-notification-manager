@@ -13,6 +13,7 @@ declare( strict_types = 1 );
 namespace GFSMS\Lifecycle;
 
 use GFSMS\Logging\Logger;
+use GravityNotify\Observability\OperationalLogInstaller;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -43,5 +44,7 @@ final class Uninstaller {
 		$wpdb->query(
 			$wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table_name ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		);
+
+		OperationalLogInstaller::uninstall();
 	}
 }

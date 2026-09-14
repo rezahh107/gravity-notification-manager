@@ -51,6 +51,8 @@ function dbDelta( string|array $queries = '', bool $execute = true ): array { re
 function current_time( string $type, bool $gmt = false ): int|string { return 0; }
 function wp_json_encode( mixed $value, int $flags = 0, int $depth = 512 ): string|false { return json_encode( $value, $flags, $depth ); }
 function esc_html__( string $text, string $domain = 'default' ): string { return $text; }
+function esc_attr__( string $text, string $domain = 'default' ): string { return $text; }
+function selected( mixed $selected, mixed $current = true, bool $display = true ): string { return ''; }
 function esc_url( string $url, ?array $protocols = null, string $_context = 'display' ): string { return $url; }
 function admin_url( string $path = '', string $scheme = 'admin' ): string { return $path; }
 function settings_fields( string $option_group ): void {}
