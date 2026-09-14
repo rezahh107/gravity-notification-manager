@@ -13,7 +13,7 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Registers and renders exactly the bounded WU-06 admin surfaces.
+ * Registers and renders the bounded GNM admin surfaces.
  */
 final class AdminController {
 
@@ -51,7 +51,7 @@ final class AdminController {
 	}
 
 	/**
-	 * Register exactly Overview / Notification Points / Settings / Help & Diagnostics.
+	 * Register exactly Overview / Notification Points / Settings / Advisor / Help & Diagnostics.
 	 *
 	 * @return void
 	 */
@@ -75,6 +75,7 @@ final class AdminController {
 			$callback = match ( $surface['slug'] ) {
 				AdminDefinition::POINTS_SLUG      => 'render_points',
 				AdminDefinition::SETTINGS_SLUG    => 'render_settings',
+				AdminDefinition::ADVISOR_SLUG     => 'render_advisor',
 				AdminDefinition::DIAGNOSTICS_SLUG => 'render_diagnostics',
 				default                           => 'render_overview',
 			};
@@ -232,6 +233,37 @@ final class AdminController {
 		submit_button( __( 'Save Settings', 'gravity-notification-manager' ) );
 		echo '</form>';
 		self::render_provider_test_controls();
+		self::footer();
+	}
+
+	/**
+	 * Render the read-only task-oriented Advisor from current product truth.
+	 *
+	 * @return void
+	 */
+	public static function render_advisor(): void {
+		self::guard_capability();
+
+		$settings       = Settings::read();
+		$points         = ( new PointInspector( new WordPressConfigurationSource() ) )->all();
+		$flow_available = class_exists( '\\Gravity_Flow_API' );
+		$cards          = AdvisorModel::build(
+			Settings::readiness( $settings ),
+			$points,
+			class_exists( '\\GFForms' ),
+			$flow_available,
+			class_exists( '\\GravityView_Plugin' ) || class_exists( '\\GV\\Plugin' )
+		);
+
+		self::header(
+			__( 'Advisor', 'gravity-notification-manager' ),
+			__( 'Task-oriented guidance from current GNM configuration. Advisor reads existing state only; it does not send, retry, save settings, or change Gravity Flow topology.', 'gravity-notification-manager' )
+		);
+		echo '<div class="gnm-grid">';
+		foreach ( $cards as $card ) {
+			self::render_advisor_card( $card, $flow_available );
+		}
+		echo '</div>';
 		self::footer();
 	}
 
@@ -502,6 +534,63 @@ final class AdminController {
 	 */
 	private static function provider_test_notice_key( int $user_id ): string {
 		return 'gravity_notify_provider_test_notice_' . $user_id;
+	}
+
+	/**
+	 * Render one Advisor card using only read-only model data and navigation links.
+	 *
+	 * @param array<string, mixed> $card           Advisor card.
+	 * @param bool                 $flow_available Whether Flow navigation is supported.
+	 * @return void
+	 */
+	private static function render_advisor_card( array $card, bool $flow_available ): void {
+		echo '<article class="gnm-panel">';
+		echo '<h2>' . esc_html( (string) ( $card['question'] ?? '' ) ) . '</h2>';
+		echo '<p>' . esc_html( (string) ( $card['answer'] ?? '' ) ) . '</p>';
+
+		$flow_points = is_array( $card['flow_points'] ?? null ) ? $card['flow_points'] : array();
+		foreach ( $flow_points as $point ) {
+			$form_id   = (int) ( $point['form_id'] ?? 0 );
+			$flow_path = GravityFlowNavigation::relative_path( $form_id, $flow_available );
+			if ( null === $flow_path ) {
+				continue;
+			}
+			echo '<p><strong>' . esc_html( (string) ( $point['form_title'] ?? '' ) ) . '</strong> · ' . esc_html__( 'Feed', 'gravity-notification-manager' ) . ' <bdi class="gnm-ltr" dir="ltr">#' . esc_html( (string) ( $point['feed_id'] ?? '' ) ) . '</bdi> — <a href="' . esc_url( admin_url( $flow_path ) ) . '">' . esc_html__( 'Open Gravity Flow', 'gravity-notification-manager' ) . '</a></p>';
+		}
+
+		$points = is_array( $card['points'] ?? null ) ? $card['points'] : array();
+		foreach ( $points as $point ) {
+			echo '<section class="gnm-point">';
+			echo '<h3>' . esc_html( (string) ( $point['feed_name'] ?? '' ) ) . ' <bdi class="gnm-ltr" dir="ltr">#' . esc_html( (string) ( $point['feed_id'] ?? '' ) ) . '</bdi></h3>';
+			echo '<p><strong>' . esc_html__( 'Current detail:', 'gravity-notification-manager' ) . '</strong> ' . esc_html( (string) ( $point['detail'] ?? '' ) ) . '</p>';
+			echo '<p><strong>' . esc_html__( 'Next action:', 'gravity-notification-manager' ) . '</strong> ' . esc_html( (string) ( $point['next_action'] ?? '' ) ) . '</p>';
+			$flow_path = GravityFlowNavigation::relative_path( (int) ( $point['form_id'] ?? 0 ), $flow_available );
+			if ( null !== $flow_path ) {
+				echo '<p><a class="button" href="' . esc_url( admin_url( $flow_path ) ) . '">' . esc_html__( 'Open Gravity Flow', 'gravity-notification-manager' ) . '</a></p>';
+			}
+			echo '</section>';
+		}
+
+		$action_url = self::advisor_action_url( (string) ( $card['action'] ?? AdvisorModel::ACTION_NONE ) );
+		if ( '' !== $action_url && '' !== (string) ( $card['action_label'] ?? '' ) ) {
+			echo '<p><a class="button button-primary" href="' . esc_url( $action_url ) . '">' . esc_html( (string) $card['action_label'] ) . '</a></p>';
+		}
+		echo '</article>';
+	}
+
+	/**
+	 * Resolve one Advisor action to an existing GNM admin surface.
+	 *
+	 * @param string $action Advisor action identifier.
+	 * @return string
+	 */
+	private static function advisor_action_url( string $action ): string {
+		return match ( $action ) {
+			AdvisorModel::ACTION_SETTINGS    => self::admin_page_url( AdminDefinition::SETTINGS_SLUG ),
+			AdvisorModel::ACTION_POINTS      => self::admin_page_url( AdminDefinition::POINTS_SLUG ),
+			AdvisorModel::ACTION_DIAGNOSTICS => self::admin_page_url( AdminDefinition::DIAGNOSTICS_SLUG ),
+			default                          => '',
+		};
 	}
 
 	/**
