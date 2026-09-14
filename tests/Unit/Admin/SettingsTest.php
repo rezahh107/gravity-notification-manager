@@ -55,6 +55,21 @@ final class SettingsTest extends TestCase {
 		self::assertCount( 1, $second[ SmsProviderManager::CONFIG_KEY ] );
 	}
 
+	/** Read/normalization cannot persist the upgrade merely because a page/runtime was loaded. */
+	public function test_settings_read_path_is_side_effect_free(): void {
+		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/Settings.php' );
+		self::assertIsString( $source );
+		$start = strpos( $source, 'public static function read()' );
+		$end   = strpos( $source, 'public static function sanitize_option', false === $start ? 0 : $start );
+		self::assertIsInt( $start );
+		self::assertIsInt( $end );
+		$read = substr( $source, $start, $end - $start );
+		self::assertStringContainsString( 'get_option(', $read );
+		self::assertStringContainsString( 'normalize_stored(', $read );
+		self::assertStringNotContainsString( 'update_option(', $read );
+		self::assertStringNotContainsString( 'add_option(', $read );
+	}
+
 	/** Blank replacement preserves the secret while explicit nested enable state is honored. */
 	public function test_provider_submission_preserves_secret_and_can_disable_provider(): void {
 		$existing = Settings::normalize_stored(
