@@ -132,7 +132,11 @@ final class ProviderTestServiceTest extends TestCase {
 		self::assertStringNotContainsString( 'GFAPI', $source );
 	}
 
-	/** @return array<string, string> */
+	/**
+	 * Return configured test settings.
+	 *
+	 * @return array<string, string>
+	 */
 	private function settings(): array {
 		return array(
 			'ippanel_api_key' => 'test-api-key',
