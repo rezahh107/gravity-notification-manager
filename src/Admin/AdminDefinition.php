@@ -20,7 +20,6 @@ final class AdminDefinition {
 	public const ADVISOR_SLUG = 'gravity-notification-manager-advisor';
 	public const DIAGNOSTICS_SLUG = 'gravity-notification-manager-diagnostics';
 	public const CHECK_ACTION = 'gravity_notify_check_point';
-	public const TEST_SMS_ACTION = 'gravity_notify_test_sms';
 	public const TEST_BALE_ACTION = 'gravity_notify_test_bale';
 	public const PROVIDER_TEST_SMS_ACTION = 'gravity_notify_provider_manager_test_sms';
 
