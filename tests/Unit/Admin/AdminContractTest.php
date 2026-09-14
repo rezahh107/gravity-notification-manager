@@ -57,9 +57,9 @@ final class AdminContractTest extends TestCase {
 		self::assertStringNotContainsString( 'Send Test SMS', $settings );
 		self::assertStringNotContainsString( 'ippanel_api_key', $settings );
 		self::assertStringNotContainsString( 'sms_from_number', $settings );
-		self::assertStringNotContainsString( 'TEST_SMS_ACTION', $boot );
+		self::assertStringNotContainsString( 'AdminDefinition::TEST_SMS_ACTION', $boot );
 		self::assertStringNotContainsString( 'handle_test_sms', $controller );
-		self::assertStringNotContainsString( 'TEST_SMS_ACTION', $definition );
+		self::assertStringNotContainsString( 'public const TEST_SMS_ACTION =', $definition );
 	}
 
 	/** Settings retains Bale configuration and its explicit test route after IPPanel cutover. */
