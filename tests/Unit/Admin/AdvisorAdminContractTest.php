@@ -8,7 +8,6 @@
 namespace GravityNotify\Tests\Unit\Admin;
 
 use GravityNotify\Admin\AdminController;
-use GravityNotify\Admin\AdminDefinition;
 use GravityNotify\Admin\GravityFlowNavigation;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -41,12 +40,16 @@ final class AdvisorAdminContractTest extends TestCase {
 
 	/** Advisor rendering contains reads/navigation only and no operational mutation path. */
 	public function test_advisor_render_path_is_side_effect_free(): void {
-		$section = $this->method_section( 'public static function render_advisor', 'public static function render_diagnostics' );
+		$render   = $this->method_section( 'public static function render_advisor', 'public static function render_diagnostics' );
+		$renderer = $this->method_section( 'private static function render_advisor_card', 'private static function advisor_action_url' );
+		$section  = $render . $renderer;
 
-		self::assertStringContainsString( 'Settings::read()', $section );
-		self::assertStringContainsString( 'Settings::readiness( $settings )', $section );
-		self::assertStringContainsString( 'new PointInspector( new WordPressConfigurationSource() )', $section );
-		self::assertStringContainsString( 'AdvisorModel::build(', $section );
+		self::assertStringContainsString( 'Settings::read()', $render );
+		self::assertStringContainsString( 'Settings::readiness( $settings )', $render );
+		self::assertStringContainsString( 'new PointInspector( new WordPressConfigurationSource() )', $render );
+		self::assertStringContainsString( 'AdvisorModel::build(', $render );
+		self::assertStringNotContainsString( '<form', $renderer );
+		self::assertStringNotContainsString( 'admin-post.php', $renderer );
 		self::assertStringNotContainsString( 'ProviderTestService', $section );
 		self::assertStringNotContainsString( 'test_sms(', $section );
 		self::assertStringNotContainsString( 'test_bale(', $section );
@@ -91,7 +94,7 @@ final class AdvisorAdminContractTest extends TestCase {
 		self::assertIsString( $model );
 		self::assertIsString( $ops );
 		self::assertStringContainsString( 'Open the affected Gravity Forms Entry Detail', $model );
-		self::assertStringContainsString( "private function retry_form_html", $ops );
+		self::assertStringContainsString( 'private function retry_form_html', $ops );
 		self::assertStringContainsString( 'ManualRetryHandler::ACTION', $ops );
 		self::assertStringContainsString( 'entry_detail_url', $ops );
 	}
@@ -110,7 +113,11 @@ final class AdvisorAdminContractTest extends TestCase {
 		self::assertStringContainsString( 'register_entry_detail_meta_box', $ops );
 	}
 
-	/** @return string */
+	/**
+	 * Read the production admin controller source.
+	 *
+	 * @return string
+	 */
 	private function controller_source(): string {
 		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/AdminController.php' );
 		self::assertIsString( $source );
