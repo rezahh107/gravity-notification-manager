@@ -28,7 +28,10 @@ final class AdvisorAdminContractTest extends TestCase {
 		self::assertIsString( $definition );
 		self::assertStringContainsString( 'AdminController::boot()', $entrypoint );
 		self::assertStringContainsString( "AdminDefinition::ADVISOR_SLUG     => 'render_advisor'", $controller );
-		self::assertStringContainsString( "public const ADVISOR_SLUG = 'gravity-notification-manager-advisor';", $definition );
+		self::assertMatchesRegularExpression(
+			"/public\\s+const\\s+ADVISOR_SLUG\\s*=\\s*'gravity-notification-manager-advisor';/",
+			$definition
+		);
 		self::assertStringContainsString( "__( 'Advisor', 'gravity-notification-manager' )", $definition );
 	}
 
