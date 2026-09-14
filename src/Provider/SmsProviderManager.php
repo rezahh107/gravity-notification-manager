@@ -34,6 +34,8 @@ final class SmsProviderManager {
 	private array $providers;
 
 	/**
+	 * Create the provider manager from one settings snapshot.
+	 *
 	 * @param array<string, mixed> $settings Full GNM settings snapshot.
 	 */
 	public function __construct( array $settings ) {
@@ -77,9 +79,8 @@ final class SmsProviderManager {
 	/**
 	 * Sanitize a Settings API submission while preserving omitted responsibilities.
 	 *
-	 * The Provider Manager submits the nested shape. The old Settings UI may still
-	 * submit flat IPPanel field names during this compatibility batch; those inputs
-	 * are accepted as a migration alias but are never emitted as stored state.
+	 * The Provider Manager submits the nested shape. Flat IPPanel field names are
+	 * accepted as a bounded migration/input alias but are never emitted as stored state.
 	 *
 	 * @param array<string, mixed> $input    Raw submitted option value.
 	 * @param array<string, mixed> $existing Existing stored option state.
@@ -122,25 +123,41 @@ final class SmsProviderManager {
 	/**
 	 * Return one supported provider configuration.
 	 *
+	 * @param string $identifier Stable provider identifier.
 	 * @return array{enabled:bool,api_key:string,sender:string}|null
 	 */
 	public function configuration( string $identifier ): ?array {
 		return $this->providers[ $identifier ] ?? null;
 	}
 
-	/** Determine whether the provider is explicitly enabled. */
+	/**
+	 * Determine whether the provider is explicitly enabled.
+	 *
+	 * @param string $identifier Stable provider identifier.
+	 * @return bool
+	 */
 	public function enabled( string $identifier ): bool {
 		$config = $this->configuration( $identifier );
 		return null !== $config && $config['enabled'];
 	}
 
-	/** Determine whether the enabled provider has all required runtime configuration. */
+	/**
+	 * Determine whether the enabled provider has all required runtime configuration.
+	 *
+	 * @param string $identifier Stable provider identifier.
+	 * @return bool
+	 */
 	public function ready( string $identifier ): bool {
 		$config = $this->configuration( $identifier );
 		return null !== $config && $config['enabled'] && '' !== $config['api_key'] && '' !== $config['sender'];
 	}
 
-	/** Return a semantic readiness status without exposing credentials. */
+	/**
+	 * Return a semantic readiness status without exposing credentials.
+	 *
+	 * @param string $identifier Stable provider identifier.
+	 * @return string
+	 */
 	public function readiness_status( string $identifier ): string {
 		if ( ! $this->enabled( $identifier ) ) {
 			return 'DISABLED';
@@ -149,7 +166,12 @@ final class SmsProviderManager {
 		return $this->ready( $identifier ) ? 'CONFIGURED' : 'NEEDS_SETUP';
 	}
 
-	/** Return the configured sender for one provider. */
+	/**
+	 * Return the configured sender for one provider.
+	 *
+	 * @param string $identifier Stable provider identifier.
+	 * @return string
+	 */
 	public function configured_sender( string $identifier ): string {
 		$config = $this->configuration( $identifier );
 		return null === $config ? '' : $config['sender'];
@@ -179,8 +201,10 @@ final class SmsProviderManager {
 	/**
 	 * Construct one enabled supported provider through the same production path.
 	 *
+	 * @param string                 $identifier    Stable provider identifier.
 	 * @param HttpTransportInterface $http          WordPress-compatible HTTP transport.
 	 * @param string|null            $test_endpoint Optional no-send loopback seam.
+	 * @return SmsProviderInterface|null
 	 */
 	public function provider( string $identifier, HttpTransportInterface $http, ?string $test_endpoint = null ): ?SmsProviderInterface {
 		$config = $this->configuration( $identifier );
@@ -191,7 +215,12 @@ final class SmsProviderManager {
 		return new IPPanelProvider( $config['api_key'], $http, $test_endpoint );
 	}
 
-	/** Sanitize a bounded write-only provider secret. */
+	/**
+	 * Sanitize a bounded write-only provider secret.
+	 *
+	 * @param mixed $value Raw secret value.
+	 * @return string
+	 */
 	private static function secret( $value ): string {
 		if ( ! is_string( $value ) ) {
 			return '';
@@ -202,7 +231,12 @@ final class SmsProviderManager {
 		return is_string( $value ) ? substr( $value, 0, 512 ) : '';
 	}
 
-	/** Keep the existing IPPanel E.164 sender contract. */
+	/**
+	 * Keep the existing IPPanel E.164 sender contract.
+	 *
+	 * @param mixed $value Raw sender value.
+	 * @return string
+	 */
 	private static function sender( $value ): string {
 		if ( ! is_string( $value ) ) {
 			return '';
@@ -212,7 +246,12 @@ final class SmsProviderManager {
 		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value ) ? $value : '';
 	}
 
-	/** Parse the bounded WordPress checkbox/storage truth shapes. */
+	/**
+	 * Parse the bounded WordPress checkbox/storage truth shapes.
+	 *
+	 * @param mixed $value Raw enabled value.
+	 * @return bool
+	 */
 	private static function enabled_value( $value ): bool {
 		return true === $value || 1 === $value || '1' === $value || 'on' === $value || 'yes' === $value;
 	}
