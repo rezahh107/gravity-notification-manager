@@ -1,4 +1,5 @@
 name: PR23 Scope Cleanup
+# Re-run after decoupling the Advisor route contract from formatter spacing.
 
 on:
   push:
