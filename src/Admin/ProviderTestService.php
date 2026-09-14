@@ -43,8 +43,8 @@ final class ProviderTestService {
 	/**
 	 * Create a provider-test service around one settings snapshot and transport.
 	 *
-	 * @param array<string, mixed>  $settings Sanitized provider settings.
-	 * @param HttpTransportInterface $http    Existing transport seam.
+	 * @param array<string, mixed>   $settings Sanitized provider settings.
+	 * @param HttpTransportInterface $http     Existing transport seam.
 	 */
 	public function __construct( array $settings, HttpTransportInterface $http ) {
 		$this->settings = $settings;
