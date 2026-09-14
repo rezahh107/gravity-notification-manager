@@ -1,0 +1,123 @@
+name: PR23 Scoped PHPCS Repair v3
+
+on:
+  push:
+    branches:
+      - feat/operational-observability
+    paths:
+      - .github/workflows/pr23-phpcs-repair-v3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/operational-observability
+          fetch-depth: 0
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+      - name: Install locked dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Reproduce validated scoped repair
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import textwrap
+          workflow = Path('.github/workflows/pr23-phpcs-repair.yml').read_text()
+          block = workflow.split("python3 <<'PY'\n", 1)[1].split("\n          PY", 1)[0]
+          exec(compile(textwrap.dedent(block), 'pr23-doc-generator', 'exec'))
+          PY
+          python3 <<'PY'
+          from pathlib import Path
+          for path in (
+              Path('tests/Support/Lifecycle/OperationalUninstallWpdb.php'),
+              Path('tests/Support/Observability/OperationalStoreWpdbFake.php'),
+          ):
+              path.write_text(path.read_text().replace(' * wpdb', ' * Wpdb'))
+          fake = Path('tests/Support/Observability/OperationalStoreWpdbFake.php')
+          fake.write_text(fake.read_text().replace('@param mixed $args Value.', '@param mixed ...$args Value.'))
+          PY
+          php vendor/bin/phpcbf -q --standard=phpcs.xml \
+            src/GravityForms/NotificationFeedAddOn.php \
+            src/GravityForms/NotificationFeedProcessor.php \
+            src/Admin/ProviderTestService.php \
+            src/Admin/OperationalLogAdmin.php \
+            src/Admin/AdminDefinition.php \
+            src/Observability/OperationalContext.php \
+            src/Observability/OperationalEventStoreInterface.php \
+            src/Observability/LlmDebugReport.php \
+            src/Observability/WordPressOperationalEventStore.php \
+            src/Observability/OperationalLogInstaller.php \
+            src/Observability/OperationalLogger.php \
+            src/Observability/OperationalEvent.php \
+            src/Delivery/Sms/IPPanelProvider.php \
+            src/Delivery/AttemptResult.php \
+            src/Delivery/Bale/BaleClient.php \
+            src/Migration/ProductionRuntime.php \
+            tests/Support/Lifecycle/OperationalUninstallWpdb.php \
+            tests/Support/Observability/InMemoryOperationalEventStore.php \
+            tests/Support/Observability/OperationalStoreWpdbFake.php \
+            tests/Unit/Lifecycle/OperationalUninstallCleanupTest.php \
+            tests/Unit/GravityForms/OperationalFeedObservabilityTest.php \
+            tests/Unit/Admin/ProviderTestObservabilityTest.php \
+            tests/Unit/Admin/OperationalLogAdminContractTest.php \
+            tests/Unit/Observability/OperationalLogLocalizationTest.php \
+            tests/Unit/Observability/OperationalLoggerTest.php \
+            tests/Unit/Observability/WordPressOperationalEventStoreTest.php \
+            tests/Unit/Observability/LlmDebugReportTest.php || true
+      - name: Add the three remaining throw contracts
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          def add_throw(path_name, function_name, exception, reason):
+              path = Path(path_name)
+              text = path.read_text()
+              decl = re.search(r'(?m)^\t(?:public|protected|private)\s+(?:static\s+)?function\s+' + re.escape(function_name) + r'\s*\(', text)
+              if not decl:
+                  raise RuntimeError(f'Missing function {path_name}:{function_name}')
+              doc_end = text.rfind('*/', 0, decl.start())
+              doc_start = text.rfind('/**', 0, doc_end)
+              if doc_start < 0 or doc_end < 0 or text[doc_end + 2:decl.start()].strip():
+                  raise RuntimeError(f'Missing immediate docblock {path_name}:{function_name}')
+              doc = text[doc_start:doc_end + 2]
+              if '@throws' not in doc:
+                  insertion = f"\t * @throws {exception} {reason}.\n"
+                  doc = doc[:-2] + insertion + '\t */'
+                  text = text[:doc_start] + doc + text[doc_end + 2:]
+                  path.write_text(text)
+
+          add_throw('src/Observability/OperationalContext.php', 'validated_trace_id', '\\InvalidArgumentException', 'When the trace identifier is not UUIDv4')
+          add_throw('src/Observability/OperationalContext.php', 'new_trace_id', '\\Exception', 'When secure random bytes cannot be generated')
+          add_throw('src/Observability/OperationalEvent.php', 'timestamp', '\\InvalidArgumentException', 'When the timestamp format is invalid')
+          add_throw('src/Observability/OperationalEvent.php', 'trace_id', '\\InvalidArgumentException', 'When the trace identifier is not UUIDv4')
+          PY
+          php vendor/bin/phpcbf -q --standard=phpcs.xml src/Observability/OperationalContext.php src/Observability/OperationalEvent.php || true
+      - name: Validate final scoped repair
+        run: |
+          composer test:wu00
+          composer lint:wu00
+      - name: Remove temporary repair artifacts and commit
+        shell: bash
+        run: |
+          rm -f \
+            .github/workflows/pr23-phpcs-repair.yml \
+            .github/workflows/pr23-phpcs-repair-v2.yml \
+            .github/workflows/pr23-phpcs-repair-v3.yml \
+            .github/PR23_SCOPED_QUALIFICATION
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "style: satisfy observability coding standards"
+          git push origin HEAD:feat/operational-observability
