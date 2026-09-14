@@ -23,8 +23,8 @@ final class Settings {
 	 * Existing flat IPPanel values are normalized in-memory into the nested provider
 	 * shape so runtime delivery keeps working before any operator save. Reads remain
 	 * side-effect-free; nested storage is persisted only by an explicit Settings API
-	 * write. Compatibility aliases are returned in-memory for the pre-existing Settings
-	 * UI during this focused Provider Manager batch; aliases are never stored.
+	 * write. Compatibility aliases are returned in-memory for bounded legacy callers;
+	 * aliases are never stored.
 	 *
 	 * @return array<string, mixed>
 	 */
@@ -130,7 +130,12 @@ final class Settings {
 		return $settings;
 	}
 
-	/** Sanitize a bounded write-only secret value. */
+	/**
+	 * Sanitize a bounded write-only secret value.
+	 *
+	 * @param mixed $value Raw secret value.
+	 * @return string
+	 */
 	private static function secret( $value ): string {
 		if ( ! is_string( $value ) ) {
 			return '';
