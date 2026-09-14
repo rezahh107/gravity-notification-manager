@@ -83,6 +83,8 @@ final class ProviderManagerAdmin {
 	 * Render IPPanel configuration without contacting IPPanel.
 	 *
 	 * Network I/O occurs only in handle_test_sms() after capability + nonce checks.
+	 * Sender-line discovery is intentionally absent until an official enumeration
+	 * contract is established; the verified manual E.164 sender path remains available.
 	 */
 	public static function render(): void {
 		self::guard_capability();
@@ -98,18 +100,17 @@ final class ProviderManagerAdmin {
 			: $config;
 
 		echo '<div class="wrap gnm-admin"><header class="gnm-page-header">';
-		echo '<h1>' . esc_html__( 'Providers & Senders', 'gravity-notification-manager' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Configure supported SMS providers and sender lines. Saving this page never contacts the provider or sends a message.', 'gravity-notification-manager' ) . '</p></header>';
+		echo '<h1>' . esc_html__( 'SMS Providers / IPPanel', 'gravity-notification-manager' ) . '</h1>';
+		echo '<p>' . esc_html__( 'Saving settings does not send messages. Provider tests below send only when you explicitly submit a test action.', 'gravity-notification-manager' ) . '</p></header>';
 		self::render_test_notice();
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'options.php' ) ) . '" class="gnm-panel gnm-settings">';
 		settings_fields( Settings::GROUP );
-		echo '<div class="gnm-point__heading"><div><h2>' . esc_html__( 'IPPanel', 'gravity-notification-manager' ) . '</h2>';
-		echo '<p>' . esc_html__( 'IPPanel is the supported SMS provider in this batch.', 'gravity-notification-manager' ) . '</p></div>';
+		echo '<div class="gnm-point__heading"><div><h2>' . esc_html__( 'IPPanel', 'gravity-notification-manager' ) . '</h2></div>';
 		self::status_badge( $manager->readiness_status( SmsProviderManager::IPPANEL ) );
 		echo '</div>';
 
-		echo '<label class="gnm-field"><span>' . esc_html__( 'Enable IPPanel', 'gravity-notification-manager' ) . '</span>';
+		echo '<label class="gnm-field"><span>' . esc_html__( 'IPPanel', 'gravity-notification-manager' ) . '</span>';
 		echo '<input type="checkbox" name="' . esc_attr( Settings::OPTION ) . '[' . esc_attr( SmsProviderManager::CONFIG_KEY ) . '][' . esc_attr( SmsProviderManager::IPPANEL ) . '][enabled]" value="1"' . ( $config['enabled'] ? ' checked="checked"' : '' ) . '></label>';
 
 		$placeholder = '' !== $config['api_key']
@@ -120,7 +121,6 @@ final class ProviderManagerAdmin {
 
 		echo '<label class="gnm-field"><span>' . esc_html__( 'SMS sender number (E.164)', 'gravity-notification-manager' ) . '</span>';
 		echo '<input type="text" class="regular-text gnm-ltr" dir="ltr" name="' . esc_attr( Settings::OPTION ) . '[' . esc_attr( SmsProviderManager::CONFIG_KEY ) . '][' . esc_attr( SmsProviderManager::IPPANEL ) . '][sender]" value="' . esc_attr( $config['sender'] ) . '" placeholder="+982100000000" autocomplete="off"></label>';
-		echo '<p class="description">' . esc_html__( 'Enter a sender number assigned to this IPPanel account. Automatic sender-line discovery is not exposed because no current documented enumeration contract was established.', 'gravity-notification-manager' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Stored credentials are never echoed back into this page or diagnostics.', 'gravity-notification-manager' ) . '</p>';
 		submit_button( __( 'Save Settings', 'gravity-notification-manager' ) );
 		echo '</form>';
@@ -259,7 +259,7 @@ final class ProviderManagerAdmin {
 	/** Convert one safe diagnostic classification into localized operator guidance. */
 	private static function test_detail( string $diagnostic ): string {
 		return match ( $diagnostic ) {
-			'provider_not_configured' => __( 'IPPanel test could not run because the provider is disabled or its API key/sender number is not configured.', 'gravity-notification-manager' ),
+			'provider_not_configured' => __( 'Unavailable / Disabled', 'gravity-notification-manager' ),
 			'invalid_destination' => __( 'Enter a valid E.164 SMS destination.', 'gravity-notification-manager' ),
 			'invalid_test_request' => __( 'The test request could not be created safely.', 'gravity-notification-manager' ),
 			'accepted' => __( 'The provider accepted the test message.', 'gravity-notification-manager' ),
