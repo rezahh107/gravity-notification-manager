@@ -33,10 +33,16 @@ final class ProviderTestService {
 	 */
 	private array $settings;
 
-	/** Injected transport seam. */
+	/**
+	 * Injected transport seam.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
 	/**
+	 * Create a provider-test service around one settings snapshot and transport.
+	 *
 	 * @param array<string, mixed>  $settings Sanitized provider settings.
 	 * @param HttpTransportInterface $http    Existing transport seam.
 	 */
@@ -112,7 +118,12 @@ final class ProviderTestService {
 		return ( new BaleClient( $token, $this->http ) )->send( $request );
 	}
 
-	/** Check the existing IPPanel E.164 contract. */
+	/**
+	 * Check the existing IPPanel E.164 contract.
+	 *
+	 * @param string $value Candidate sender or destination.
+	 * @return bool
+	 */
 	private static function is_e164( string $value ): bool {
 		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value );
 	}
@@ -120,6 +131,7 @@ final class ProviderTestService {
 	/**
 	 * Validate the documented Bale chat identifier/username shapes conservatively.
 	 *
+	 * @param string $value Candidate Bale destination.
 	 * @return string|null
 	 */
 	private static function bale_destination( string $value ): ?string {
