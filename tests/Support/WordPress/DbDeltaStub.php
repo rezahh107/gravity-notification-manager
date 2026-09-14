@@ -12,7 +12,7 @@
  * @param bool         $execute Whether WordPress would execute the queries.
  * @return array<int, string> Empty result for the isolated installer test.
  */
-function dbDelta( string|array $queries = '', bool $execute = true ): array { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Intentional WordPress core test stub.
+function dbDelta( string|array $queries = '', bool $execute = true ): array { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound,WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid -- Intentional WordPress core test stub.
 	unset( $queries, $execute );
 	return array();
 }
