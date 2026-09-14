@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Gravity Notification Manager 3.2.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-13 00:00+0000\n"
-"PO-Revision-Date: 2026-09-13 00:00+0000\n"
+"PO-Revision-Date: 2026-09-14 00:00+0000\n"
 "Last-Translator: Gravity Notification Manager\n"
 "Language-Team: Persian\n"
 "Language: fa_IR\n"
@@ -46,6 +46,12 @@ msgstr "بله"
 msgid "Bale bot token"
 msgstr "توکن ربات بله"
 
+msgid "Bale test"
+msgstr "آزمون بله"
+
+msgid "Bale test could not run because the bot token is not configured."
+msgstr "آزمون بله قابل اجرا نبود زیرا توکن ربات پیکربندی نشده است."
+
 msgid "Channel"
 msgstr "کانال"
 
@@ -84,6 +90,12 @@ msgstr "غیرفعال"
 
 msgid "Enable the Feed in Gravity Forms when this notification should run."
 msgstr "اگر این اعلان باید اجرا شود، Feed را در Gravity Forms فعال کنید."
+
+msgid "Enter a valid Bale numeric chat ID or @channel username."
+msgstr "یک شناسه عددی چت بله یا نام کاربری کانال با @ وارد کنید."
+
+msgid "Enter a valid E.164 SMS destination."
+msgstr "یک مقصد SMS معتبر با قالب E.164 وارد کنید."
 
 msgid "Entry field"
 msgstr "فیلد Entry"
@@ -139,6 +151,9 @@ msgstr "Gravity Forms"
 msgid "Gravity Notification Manager"
 msgstr "Gravity Notification Manager"
 
+msgid "Gravity Notification Manager provider test message."
+msgstr "پیام آزمایشی ارائه‌دهنده Gravity Notification Manager."
+
 msgid "Gravity Notification Manager Retry"
 msgstr "تلاش مجدد Gravity Notification Manager"
 
@@ -157,8 +172,14 @@ msgstr "شناسه‌های نقطه اعلان نامعتبر هستند."
 msgid "IPPanel"
 msgstr "IPPanel"
 
+msgid "IPPanel / SMS test"
+msgstr "آزمون IPPanel / SMS"
+
 msgid "IPPanel API key"
 msgstr "کلید API آی‌پی‌پنل"
+
+msgid "IPPanel test could not run because the API key or sender number is not configured."
+msgstr "آزمون IPPanel قابل اجرا نبود زیرا کلید API یا شماره فرستنده پیکربندی نشده است."
 
 msgid "Last execution:"
 msgstr "آخرین اجرا:"
@@ -268,11 +289,20 @@ msgstr "بررسی نقاط"
 msgid "Privacy-safe, side-effect-free facts. No provider request is made by this screen."
 msgstr "اطلاعات این صفحه بدون افشای داده خصوصی و بدون اثر جانبی است. از این صفحه هیچ درخواستی به ارائه‌دهنده ارسال نمی‌شود."
 
+msgid "Provider acceptance could not be established safely."
+msgstr "پذیرش پیام توسط ارائه‌دهنده به‌صورت امن قابل اثبات نبود."
+
 msgid "Provider configuration"
 msgstr "پیکربندی ارائه‌دهندگان"
 
+msgid "Provider reference:"
+msgstr "شناسه مرجع ارائه‌دهنده:"
+
 msgid "Read-only guidance and verification. Gravity Flow remains the workflow topology authority."
 msgstr "راهنمایی و بررسی فقط‌خواندنی است. Gravity Flow همچنان مرجع ساختار گردش‌کار است."
+
+msgid "Real external send:"
+msgstr "ارسال واقعی خارجی:"
 
 msgid "Recipient Source"
 msgstr "منبع گیرنده"
@@ -282,6 +312,9 @@ msgstr "مقدار منبع گیرنده"
 
 msgid "Resolve missing dependencies first, then review Notification Points for exact workflow guidance. Diagnostics never include credentials, recipients, Entry contents, or raw provider responses."
 msgstr "ابتدا وابستگی‌های مفقود را برطرف کنید، سپس برای راهنمای دقیق گردش‌کار نقاط اعلان را بررسی کنید. عیب‌یابی هرگز شامل اطلاعات محرمانه، گیرندگان، محتوای Entry یا پاسخ خام ارائه‌دهنده نیست."
+
+msgid "Result: %s"
+msgstr "نتیجه: %s"
 
 msgid "Retry completed and authoritative Entry Meta now confirms"
 msgstr "تلاش مجدد انجام شد و Entry Meta معتبر اکنون این وضعیت را تأیید می‌کند:"
@@ -322,6 +355,15 @@ msgstr "اقدام‌های بعدی امن"
 msgid "Save Settings"
 msgstr "ذخیره تنظیمات"
 
+msgid "Saving settings does not send messages. Provider tests below send only when you explicitly submit a test action."
+msgstr "ذخیره تنظیمات پیامی ارسال نمی‌کند. آزمون‌های ارائه‌دهنده در ادامه فقط زمانی پیام می‌فرستند که شما صراحتاً اقدام آزمایشی را ارسال کنید."
+
+msgid "Send Test Bale Message"
+msgstr "ارسال پیام آزمایشی بله"
+
+msgid "Send Test SMS"
+msgstr "ارسال SMS آزمایشی"
+
 msgid "Settings"
 msgstr "تنظیمات"
 
@@ -346,6 +388,18 @@ msgstr "اطلاعات محرمانه ذخیره‌شده هرگز در این �
 msgid "Stored — Enter a new value to replace"
 msgstr "ذخیره شده — برای جایگزینی، مقدار جدید وارد کنید"
 
+msgid "Submitting this action sends one real Bale message through the configured bot."
+msgstr "با ارسال این اقدام، یک پیام واقعی بله از طریق ربات پیکربندی‌شده ارسال می‌شود."
+
+msgid "Submitting this action sends one real SMS through the configured IPPanel account."
+msgstr "با ارسال این اقدام، یک SMS واقعی از طریق حساب IPPanel پیکربندی‌شده ارسال می‌شود."
+
+msgid "Test Bale chat destination"
+msgstr "مقصد چت آزمایشی بله"
+
+msgid "Test SMS destination (E.164)"
+msgstr "مقصد SMS آزمایشی (E.164)"
+
 msgid "The Entry ID is invalid."
 msgstr "شناسه Entry نامعتبر است."
 
@@ -354,6 +408,15 @@ msgstr "شناسه Feed نامعتبر است."
 
 msgid "The matching Gravity Flow Step “%s” is inactive."
 msgstr "مرحله متناظر Gravity Flow با نام «%s» غیرفعال است."
+
+msgid "The provider accepted the test message."
+msgstr "ارائه‌دهنده پیام آزمایشی را پذیرفت."
+
+msgid "The provider rejected the test request."
+msgstr "ارائه‌دهنده درخواست آزمایشی را رد کرد."
+
+msgid "The provider test did not produce a recognized safe result."
+msgstr "آزمون ارائه‌دهنده نتیجه امن و شناخته‌شده‌ای تولید نکرد."
 
 msgid "The requested Gravity Forms Entry could not be found."
 msgstr "Entry درخواستی Gravity Forms پیدا نشد."
@@ -366,6 +429,9 @@ msgstr "درخواست تلاش مجدد کامل نشد."
 
 msgid "The Retry request could not be verified. Reload the page and try again."
 msgstr "درخواست تلاش مجدد قابل تأیید نبود. صفحه را دوباره بارگذاری کنید و مجدداً تلاش کنید."
+
+msgid "The test request could not be created safely."
+msgstr "درخواست آزمایشی به‌صورت امن قابل ساخت نبود."
 
 msgid "This Feed is selected by multiple GNM workflow Steps."
 msgstr "این Feed توسط چند مرحله گردش‌کار GNM انتخاب شده است."

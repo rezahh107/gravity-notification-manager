@@ -18,6 +18,8 @@ final class AdminDefinition {
 	public const SETTINGS_SLUG = 'gravity-notification-manager-settings';
 	public const DIAGNOSTICS_SLUG = 'gravity-notification-manager-diagnostics';
 	public const CHECK_ACTION = 'gravity_notify_check_point';
+	public const TEST_SMS_ACTION = 'gravity_notify_test_sms';
+	public const TEST_BALE_ACTION = 'gravity_notify_test_bale';
 
 	/**
 	 * Return exactly the approved four product surfaces.
