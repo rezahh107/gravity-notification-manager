@@ -35,6 +35,7 @@ function __( string $text, string $domain = 'default' ): string { return $text; 
 function apply_filters( string $hook_name, mixed $value, mixed ...$args ): mixed { return $value; }
 function wp_unslash( mixed $value ): mixed { return $value; }
 function get_option( string $option, mixed $default_value = false ): mixed { return $default_value; }
+function update_option( string $option, mixed $value, mixed $autoload = null ): bool { return true; }
 function rest_sanitize_boolean( mixed $value ): bool { return (bool) $value; }
 function esc_url_raw( string $url ): string { return $url; }
 function sanitize_textarea_field( string $value ): string { return $value; }
@@ -64,6 +65,7 @@ function wp_safe_redirect( string $location, int $status = 302, string $x_redire
 function esc_html( mixed $text ): string { return (string) $text; }
 function wp_nonce_field( mixed ...$args ): string { return ''; }
 function wp_remote_post( string $url, array $args = array() ): array|WP_Error { return array(); }
+function wp_remote_get( string $url, array $args = array() ): array|WP_Error { return array(); }
 function is_wp_error( mixed $thing ): bool { return $thing instanceof WP_Error; }
 function wp_remote_retrieve_response_code( array|WP_Error $response ): int|string { return 200; }
 function wp_remote_retrieve_body( array|WP_Error $response ): string { return ''; }

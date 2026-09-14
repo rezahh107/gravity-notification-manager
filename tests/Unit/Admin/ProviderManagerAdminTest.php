@@ -11,11 +11,11 @@ use GravityNotify\Admin\ProviderManagerAdmin;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-/** Proves explicit-only provider actions and side-effect-free rendering/saving boundaries. */
+/** Proves explicit-only provider actions and side-effect-free render/save boundaries. */
 final class ProviderManagerAdminTest extends TestCase {
 
 	/** Provider Manager is production-reachable and directly discoverable under GNM. */
-	public function test_provider_manager_is_booted_and_registers_a_direct_submenu(): void {
+	public function test_provider_manager_is_booted_and_registers_direct_sms_providers_submenu(): void {
 		$root       = dirname( __DIR__, 3 );
 		$entrypoint = file_get_contents( $root . '/gravityflow-sms-ippanel.php' );
 		$source     = $this->source();
@@ -24,25 +24,27 @@ final class ProviderManagerAdminTest extends TestCase {
 		self::assertStringContainsString( 'ProviderManagerAdmin::boot()', $entrypoint );
 		self::assertStringContainsString( 'add_submenu_page(', $source );
 		self::assertStringContainsString( 'AdminDefinition::PROVIDERS_SLUG', $source );
-		self::assertStringContainsString( "esc_html__( 'SMS Providers / IPPanel', 'gravity-notification-manager' )", $source );
+		self::assertStringContainsString( "esc_html__( 'SMS Providers', 'gravity-notification-manager' )", $source );
 	}
 
-	/** Provider Manager owns both IPPanel configuration controls and its production test action. */
-	public function test_provider_manager_contains_canonical_ippanel_configuration_and_test_controls(): void {
-		$source = $this->source();
-		self::assertStringContainsString( "esc_html__( 'IPPanel API key', 'gravity-notification-manager' )", $source );
-		self::assertStringContainsString( "esc_html__( 'SMS sender number (E.164)', 'gravity-notification-manager' )", $source );
-		self::assertStringContainsString( 'AdminDefinition::PROVIDER_TEST_SMS_ACTION', $source );
-		self::assertStringContainsString( 'ProviderTestService::production()->test_sms(', $source );
-	}
-
-	/** Real SMS tests exist only behind an explicit admin-post action with capability and nonce guards. */
-	public function test_real_send_action_is_explicit_and_guarded_before_service_execution(): void {
+	/** All approved providers and applicable explicit actions are represented. */
+	public function test_surface_exposes_all_approved_provider_types_and_actions(): void {
+		$manager = file_get_contents( dirname( __DIR__, 3 ) . '/src/Provider/SmsProviderManager.php' );
 		$source  = $this->source();
-		$section = $this->method_section( 'public static function handle_test_sms', 'private static function render_test_control' );
+		self::assertIsString( $manager );
+		foreach ( array( 'IPPanel', 'Melipayamak', 'SMS.ir', 'FarazSMS' ) as $label ) {
+			self::assertStringContainsString( "'label'", $manager );
+			self::assertStringContainsString( $label, $manager );
+		}
+		self::assertStringContainsString( 'AdminDefinition::PROVIDER_CHECK_CONNECTION_ACTION', $source );
+		self::assertStringContainsString( 'AdminDefinition::PROVIDER_DISCOVER_LINES_ACTION', $source );
+		self::assertStringContainsString( 'AdminDefinition::PROVIDER_TEST_SMS_ACTION', $source );
+		self::assertStringContainsString( "esc_html__( 'Real external send', 'gravity-notification-manager' )", $source );
+	}
 
-		self::assertStringContainsString( "admin_post_' . AdminDefinition::PROVIDER_TEST_SMS_ACTION", $source );
-		self::assertStringContainsString( 'Real external send:', $source );
+	/** Real tests exist only behind explicit admin-post action with capability and target nonce guards. */
+	public function test_real_send_action_is_explicit_and_guarded_before_service_execution(): void {
+		$section    = $this->method_section( 'public static function handle_test_sms', 'public static function handle_check_connection' );
 		$capability = strpos( $section, 'self::guard_capability();' );
 		$nonce      = strpos( $section, 'check_admin_referer(' );
 		$service    = strpos( $section, 'ProviderTestService::production()' );
@@ -53,7 +55,16 @@ final class ProviderManagerAdminTest extends TestCase {
 		self::assertLessThan( $service, $nonce );
 	}
 
-	/** Unauthorized direct action fails before reading the destination or touching a provider. */
+	/** Connection and discovery are separate explicit protected actions. */
+	public function test_connection_and_discovery_are_separate_explicit_actions(): void {
+		$source = $this->source();
+		self::assertStringContainsString( "admin_post_' . AdminDefinition::PROVIDER_CHECK_CONNECTION_ACTION", $source );
+		self::assertStringContainsString( "admin_post_' . AdminDefinition::PROVIDER_DISCOVER_LINES_ACTION", $source );
+		self::assertStringContainsString( 'ProviderConnectionService::production()->check(', $source );
+		self::assertStringContainsString( 'ProviderDiscoveryService::production()->discover(', $source );
+	}
+
+	/** Unauthorized direct action fails before request/provider work. */
 	public function test_provider_test_action_fails_closed_without_wordpress_authorization(): void {
 		$this->expectException( RuntimeException::class );
 		ProviderManagerAdmin::handle_test_sms();
@@ -64,27 +75,30 @@ final class ProviderManagerAdminTest extends TestCase {
 		$render   = $this->method_section( 'public static function render', 'public static function handle_test_sms' );
 		$settings = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/Settings.php' );
 		$manager  = file_get_contents( dirname( __DIR__, 3 ) . '/src/Provider/SmsProviderManager.php' );
-
 		self::assertIsString( $settings );
 		self::assertIsString( $manager );
 		self::assertStringNotContainsString( 'ProviderTestService::production()', $render );
-		self::assertStringNotContainsString( '->test_sms(', $render );
+		self::assertStringNotContainsString( 'ProviderConnectionService::production()', $render );
+		self::assertStringNotContainsString( 'ProviderDiscoveryService::production()', $render );
 		self::assertStringNotContainsString( 'wp_remote_', $render );
 		self::assertStringNotContainsString( 'WordPressHttpTransport', $settings );
 		self::assertStringNotContainsString( 'wp_remote_', $settings );
 		self::assertStringNotContainsString( '->send(', $manager );
 	}
 
-	/** No speculative sender-line discovery endpoint or implicit refresh action is present. */
-	public function test_sender_line_discovery_is_not_fabricated(): void {
-		$source = $this->source();
-		self::assertStringContainsString( 'Sender-line discovery is intentionally absent', $source );
-		self::assertStringNotContainsString( 'fetch_lines', $source );
-		self::assertStringNotContainsString( 'sender_lines', $source );
-		self::assertStringNotContainsString( 'wp_remote_get(', $source );
+	/** Failed discovery cannot erase a previously valid sender because persistence is success-gated. */
+	public function test_failed_discovery_does_not_persist_or_erase_sender(): void {
+		$section = $this->method_section( 'public static function handle_discover_lines', 'private static function render_provider_settings' );
+		self::assertStringContainsString( 'if ( $result->successful() )', $section );
+		self::assertStringContainsString( 'Settings::persist_discovered_lines(', $section );
+		$success = strpos( $section, 'if ( $result->successful() )' );
+		$persist = strpos( $section, 'Settings::persist_discovered_lines(' );
+		self::assertIsInt( $success );
+		self::assertIsInt( $persist );
+		self::assertLessThan( $persist, $success );
 	}
 
-	/** Provider Manager test results cannot write Feed/Retry/Entry Meta delivery history. */
+	/** TEST/provider-management paths cannot write Feed/Retry/Entry Meta delivery history. */
 	public function test_provider_manager_has_no_feed_retry_or_entry_meta_write_path(): void {
 		$source = $this->source();
 		self::assertStringNotContainsString( 'NotificationFeedProcessor', $source );
@@ -94,9 +108,9 @@ final class ProviderManagerAdminTest extends TestCase {
 		self::assertStringNotContainsString( 'GFAPI', $source );
 	}
 
-	/** Provider test notice persists only bounded status/diagnostic/reference facts. */
+	/** Result notices retain only safe status/diagnostic/reference/count evidence. */
 	public function test_result_notice_excludes_credentials_destination_and_raw_response(): void {
-		$store = $this->method_section( 'private static function store_test_notice', 'private static function safe_diagnostics' );
+		$store = $this->method_section( 'private static function store_test_notice', 'private static function store_connection_notice' );
 		self::assertStringContainsString( '$result->provider_references()', $store );
 		self::assertStringContainsString( '/^[A-Za-z0-9._:-]{1,128}$/D', $store );
 		self::assertStringNotContainsString( 'api_key', $store );
@@ -104,20 +118,12 @@ final class ProviderManagerAdminTest extends TestCase {
 		self::assertStringNotContainsString( 'body()', $store );
 	}
 
-	/** Read Provider Manager source. */
 	private function source(): string {
 		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/ProviderManagerAdmin.php' );
 		self::assertIsString( $source );
 		return $source;
 	}
 
-	/**
-	 * Extract one source interval without evaluating WordPress globals.
-	 *
-	 * @param string $start_marker Start marker.
-	 * @param string $end_marker   End marker.
-	 * @return string
-	 */
 	private function method_section( string $start_marker, string $end_marker ): string {
 		$source = $this->source();
 		$start  = strpos( $source, $start_marker );

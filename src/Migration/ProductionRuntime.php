@@ -93,7 +93,7 @@ final class ProductionRuntime {
 		return new NotificationFeedProcessor(
 			$resolver,
 			new SynchronousDispatcher( new SmsProviderRegistry( $providers ), $bale ),
-			$provider_manager->configured_sender( SmsProviderManager::IPPANEL ),
+			$provider_manager->primary_sender(),
 			OperationalLogger::production()
 		);
 	}

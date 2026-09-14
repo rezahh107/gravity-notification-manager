@@ -20,161 +20,92 @@ use GravityNotify\Observability\OperationalLogger;
 use GravityNotify\Provider\SmsProviderManager;
 use InvalidArgumentException;
 
-/**
- * Sends bounded configuration tests directly through existing production providers.
- *
- * This service intentionally does not use Feed processing, Retry, the dispatcher,
- * or delivery-state persistence. Observability is best-effort evidence only.
- */
+/** Tests production adapters directly without Feed/Retry/Entry-Meta side effects. */
 final class ProviderTestService {
 
-		/**
-		 * Stored value.
-		 *
-		 * @var array<string,
-		 */
+	/** @var array<string, mixed> */
 	private array $settings;
-	/**
-	 * Stored value.
-	 *
-	 * @var HttpTransportInterface
-	 */
 	private HttpTransportInterface $http;
-	/**
-	 * Stored value.
-	 *
-	 * @var OperationalLogger|null
-	 */
 	private ?OperationalLogger $operational_log;
 
-		/**
-		 * Construct the object.
-		 *
-		 * @param array                  $settings Value.
-		 * @param HttpTransportInterface $http Value.
-		 * @param OperationalLogger|null $operational_log Value.
-		 * @throws \InvalidArgumentException When supplied data is invalid.
-		 */
+	/**
+	 * @param array<string, mixed> $settings Settings snapshot.
+	 */
 	public function __construct( array $settings, HttpTransportInterface $http, ?OperationalLogger $operational_log = null ) {
 		$this->settings        = $settings;
 		$this->http            = $http;
 		$this->operational_log = $operational_log;
 	}
 
-	/**
-	 * Production.
-	 *
-	 * @return self Return value.
-	 */
 	public static function production(): self {
 		return new self( Settings::read(), new WordPressHttpTransport(), OperationalLogger::production() );
 	}
 
 	/**
-	 * Test sms.
+	 * Test one explicitly selected configured SMS provider.
 	 *
-	 * @param string $destination Value.
-	 * @param string $message Value.
-	 * @return AttemptResult Return value.
+	 * @param string $destination E.164 destination.
+	 * @param string $message     Test message.
+	 * @param string $provider_id Provider identifier.
 	 */
-	public function test_sms( string $destination, string $message ): AttemptResult {
+	public function test_sms( string $destination, string $message, string $provider_id = SmsProviderManager::IPPANEL ): AttemptResult {
 		$context  = new OperationalContext( OperationalContext::EXECUTION_TEST );
 		$manager  = new SmsProviderManager( $this->settings );
-		$from     = $manager->configured_sender( SmsProviderManager::IPPANEL );
-		$provider = $manager->provider( SmsProviderManager::IPPANEL, $this->http );
+		$sender   = $manager->configured_sender( $provider_id );
+		$provider = $manager->provider( $provider_id, $this->http );
 
-		if ( null === $provider || ! self::is_e164( $from ) ) {
-			return $this->observed_test_result(
+		if ( null === $provider ) {
+			return $this->observed(
 				$context,
-				$this->failure( 'sms', SmsProviderManager::IPPANEL, SmsCapability::PLAIN, 'provider_not_configured' ),
-				array( $destination ),
-				$from
+				$this->failure( 'sms', $provider_id, SmsCapability::PLAIN, 'provider_not_configured', $sender ),
+				array( $destination )
 			);
 		}
 
 		$destination = trim( $destination );
-		if ( ! self::is_e164( $destination ) ) {
-			return $this->observed_test_result(
+		if ( 1 !== preg_match( '/^\+[1-9][0-9]{1,14}$/D', $destination ) ) {
+			return $this->observed(
 				$context,
-				$this->failure( 'sms', SmsProviderManager::IPPANEL, SmsCapability::PLAIN, 'invalid_destination' ),
-				array( $destination ),
-				$from
+				$this->failure( 'sms', $provider_id, SmsCapability::PLAIN, 'invalid_destination', $sender ),
+				array( $destination )
 			);
 		}
 
 		try {
-			$request = SmsRequest::plain( SmsCapability::PLAIN, array( $destination ), $from, $message );
+			$request = SmsRequest::plain( SmsCapability::PLAIN, array( $destination ), $manager->primary_sender(), $message );
 		} catch ( InvalidArgumentException $exception ) {
 			unset( $exception );
-			return $this->observed_test_result(
+			return $this->observed(
 				$context,
-				$this->failure( 'sms', SmsProviderManager::IPPANEL, SmsCapability::PLAIN, 'invalid_test_request' ),
-				array( $destination ),
-				$from
+				$this->failure( 'sms', $provider_id, SmsCapability::PLAIN, 'invalid_test_request', $sender ),
+				array( $destination )
 			);
 		}
 
-		return $this->observed_test_result( $context, $provider->send( $request ), array( $destination ), $from );
+		return $this->observed( $context, $provider->send( $request ), array( $destination ) );
 	}
 
-	/**
-	 * Test bale.
-	 *
-	 * @param string $destination Value.
-	 * @param string $message Value.
-	 * @return AttemptResult Return value.
-	 */
+	/** Test Bale through its existing separate channel boundary. */
 	public function test_bale( string $destination, string $message ): AttemptResult {
 		$context = new OperationalContext( OperationalContext::EXECUTION_TEST );
 		$token   = $this->settings['bale_bot_token'] ?? '';
 		if ( ! is_string( $token ) || '' === $token ) {
-			return $this->observed_test_result(
-				$context,
-				$this->failure( 'bale', null, null, 'provider_not_configured' ),
-				array( $destination )
-			);
+			return $this->observed( $context, $this->failure( 'bale', null, null, 'provider_not_configured' ), array( $destination ) );
 		}
-
 		$destination = self::bale_destination( $destination );
 		if ( null === $destination ) {
-			return $this->observed_test_result(
-				$context,
-				$this->failure( 'bale', null, null, 'invalid_destination' ),
-				array()
-			);
+			return $this->observed( $context, $this->failure( 'bale', null, null, 'invalid_destination' ), array() );
 		}
-
 		try {
 			$request = new BaleRequest( $destination, $message );
 		} catch ( InvalidArgumentException $exception ) {
 			unset( $exception );
-			return $this->observed_test_result(
-				$context,
-				$this->failure( 'bale', null, null, 'invalid_test_request' ),
-				array( $destination )
-			);
+			return $this->observed( $context, $this->failure( 'bale', null, null, 'invalid_test_request' ), array( $destination ) );
 		}
-
-		$result = ( new BaleClient( $token, $this->http ) )->send( $request );
-		return $this->observed_test_result( $context, $result, array( $destination ) );
+		return $this->observed( $context, ( new BaleClient( $token, $this->http ) )->send( $request ), array( $destination ) );
 	}
 
-	/**
-	 * Is e164.
-	 *
-	 * @param string $value Value.
-	 * @return bool Return value.
-	 */
-	private static function is_e164( string $value ): bool {
-		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value );
-	}
-
-	/**
-	 * Bale destination.
-	 *
-	 * @param string $value Value.
-	 * @return string|null Return value.
-	 */
+	/** Validate a Bale numeric chat ID or @username. */
 	private static function bale_destination( string $value ): ?string {
 		$value = trim( $value );
 		if ( '' === $value || 128 < strlen( $value ) || 1 === preg_match( '/[\x00-\x20\x7F]/', $value ) ) {
@@ -186,36 +117,15 @@ final class ProviderTestService {
 		return 1 === preg_match( '/^@[A-Za-z0-9_]+$/D', $value ) ? $value : null;
 	}
 
-	/**
-	 * Failure.
-	 *
-	 * @param string      $channel Value.
-	 * @param string|null $provider_id Value.
-	 * @param string|null $capability Value.
-	 * @param string      $diagnostic Value.
-	 * @return AttemptResult Return value.
-	 */
-	private function failure( string $channel, ?string $provider_id, ?string $capability, string $diagnostic ): AttemptResult {
-		return new AttemptResult( AttemptStatus::FAILED, $channel, $provider_id, $capability, array(), $diagnostic );
+	/** Build a local failure result. */
+	private function failure( string $channel, ?string $provider, ?string $capability, string $diagnostic, ?string $sender = null ): AttemptResult {
+		return new AttemptResult( AttemptStatus::FAILED, $channel, $provider, $capability, array(), $diagnostic, null, $sender );
 	}
 
-		/**
-		 * Observed test result.
-		 *
-		 * @param OperationalContext $context Value.
-		 * @param AttemptResult      $result Value.
-		 * @param array              $destinations Value.
-		 * @param string|null        $sender Value.
-		 * @return AttemptResult Return value.
-		 */
-	private function observed_test_result(
-		OperationalContext $context,
-		AttemptResult $result,
-		array $destinations,
-		?string $sender = null
-	): AttemptResult {
+	/** Record the explicit TEST through the existing observability subsystem only. */
+	private function observed( OperationalContext $context, AttemptResult $result, array $destinations ): AttemptResult {
 		if ( null !== $this->operational_log ) {
-			$this->operational_log->record_attempt( $context, $result, $destinations, $sender, 1 );
+			$this->operational_log->record_attempt( $context, $result, $destinations, null, 1 );
 		}
 		return $result;
 	}

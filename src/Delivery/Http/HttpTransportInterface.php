@@ -7,9 +7,7 @@
 
 namespace GravityNotify\Delivery\Http;
 
-/**
- * Supports deterministic injected POST transport.
- */
+/** Supports deterministic injected synchronous HTTP transport. */
 interface HttpTransportInterface {
 
 	/**
@@ -20,4 +18,13 @@ interface HttpTransportInterface {
 	 * @return HttpResponse
 	 */
 	public function post( string $url, array $args ): HttpResponse;
+
+	/**
+	 * Perform one synchronous GET.
+	 *
+	 * @param string $url  Destination URL.
+	 * @param array  $args WordPress-compatible request arguments.
+	 * @return HttpResponse
+	 */
+	public function get( string $url, array $args ): HttpResponse;
 }
