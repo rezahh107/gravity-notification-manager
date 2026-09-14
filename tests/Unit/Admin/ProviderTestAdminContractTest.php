@@ -90,14 +90,24 @@ final class ProviderTestAdminContractTest extends TestCase {
 		self::assertStringContainsString( 'ProviderTestService::production()', $controller );
 	}
 
-	/** @return string */
+	/**
+	 * Read the current admin controller source.
+	 *
+	 * @return string
+	 */
 	private function controller_source(): string {
 		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/AdminController.php' );
 		self::assertIsString( $source );
 		return $source;
 	}
 
-	/** Extract one source interval without evaluating WordPress globals. */
+	/**
+	 * Extract one source interval without evaluating WordPress globals.
+	 *
+	 * @param string $start_marker Start marker.
+	 * @param string $end_marker   End marker.
+	 * @return string
+	 */
 	private function method_section( string $start_marker, string $end_marker ): string {
 		$source = $this->controller_source();
 		$start  = strpos( $source, $start_marker );
