@@ -17,7 +17,11 @@ use RuntimeException;
  */
 final class ProviderManagerAdmin {
 
-	/** Captured Provider Manager page hook for scoped assets. */
+	/**
+	 * Captured Provider Manager page hook for scoped assets.
+	 *
+	 * @var string
+	 */
 	private static string $screen_hook = '';
 
 	/** Register the Provider Manager surface and explicit real-send action. */
@@ -55,7 +59,12 @@ final class ProviderManagerAdmin {
 		}
 	}
 
-	/** Load the established GNM admin stylesheet only on Provider Manager. */
+	/**
+	 * Load the established GNM admin stylesheet only on Provider Manager.
+	 *
+	 * @param string $hook_suffix Current wp-admin hook suffix.
+	 * @return void
+	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
 		if ( '' === self::$screen_hook || self::$screen_hook !== $hook_suffix || ! function_exists( 'wp_enqueue_style' ) ) {
 			return;
@@ -198,7 +207,12 @@ final class ProviderManagerAdmin {
 		echo '</div>';
 	}
 
-	/** Store only privacy-safe provider result classifications/references. */
+	/**
+	 * Store only privacy-safe provider result classifications/references.
+	 *
+	 * @param AttemptResult $result Provider test result.
+	 * @return void
+	 */
 	private static function store_test_notice( AttemptResult $result ): void {
 		if ( ! function_exists( 'get_current_user_id' ) || ! function_exists( 'set_transient' ) ) {
 			return;
@@ -256,7 +270,12 @@ final class ProviderManagerAdmin {
 		);
 	}
 
-	/** Convert one safe diagnostic classification into localized operator guidance. */
+	/**
+	 * Convert one safe diagnostic classification into localized operator guidance.
+	 *
+	 * @param string $diagnostic Safe diagnostic identifier.
+	 * @return string
+	 */
 	private static function test_detail( string $diagnostic ): string {
 		return match ( $diagnostic ) {
 			'provider_not_configured' => __( 'Unavailable / Disabled', 'gravity-notification-manager' ),
@@ -274,7 +293,12 @@ final class ProviderManagerAdmin {
 		return AdminDefinition::PROVIDER_TEST_SMS_ACTION . '_' . SmsProviderManager::IPPANEL . '_' . AdminDefinition::PROVIDERS_SLUG;
 	}
 
-	/** Build the short-lived per-user result key. */
+	/**
+	 * Build the short-lived per-user result key.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return string
+	 */
 	private static function notice_key( int $user_id ): string {
 		return 'gravity_notify_provider_manager_test_' . $user_id;
 	}
@@ -284,7 +308,12 @@ final class ProviderManagerAdmin {
 		return add_query_arg( array( 'page' => AdminDefinition::PROVIDERS_SLUG ), admin_url( 'admin.php' ) );
 	}
 
-	/** Enforce the existing admin capability on render and action callbacks. */
+	/**
+	 * Enforce the existing admin capability on render and action callbacks.
+	 *
+	 * @return void
+	 * @throws RuntimeException When WordPress authorization is unavailable in a test context.
+	 */
 	private static function guard_capability(): void {
 		if ( ! function_exists( 'current_user_can' ) || ! current_user_can( AdminDefinition::CAPABILITY ) ) {
 			if ( function_exists( 'wp_die' ) ) {
@@ -294,7 +323,12 @@ final class ProviderManagerAdmin {
 		}
 	}
 
-	/** Render a text+visual semantic status cue. */
+	/**
+	 * Render a text+visual semantic status cue.
+	 *
+	 * @param string $status Provider readiness status.
+	 * @return void
+	 */
 	private static function status_badge( string $status ): void {
 		$class = strtolower( str_replace( '_', '-', $status ) );
 		$label = match ( $status ) {
