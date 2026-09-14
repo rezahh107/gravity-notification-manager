@@ -8,8 +8,6 @@ $baseDir = dirname($vendorDir);
 return array(
     'PhpParser\\' => array($vendorDir . '/nikic/php-parser/lib/PhpParser'),
     'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' => array($vendorDir . '/dealerdirect/phpcodesniffer-composer-installer/src'),
-    'GravityNotify\\Tests\\' => array($baseDir . '/tests'),
-    'GravityNotify\\' => array($baseDir . '/src'),
     'GFSMS\\Tests\\' => array($baseDir . '/tests'),
     'GFSMS\\Services\\' => array($baseDir . '/includes/Services'),
     'GFSMS\\Queue\\' => array($baseDir . '/includes/Integration'),

@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'gravityflow-sms-ippanel/gravityflow-sms-ippanel',
-        'pretty_version' => 'dev-main',
-        'version' => 'dev-main',
-        'reference' => '49b84a205c96097acdea176de8798d0ead58b749',
+        'pretty_version' => '1.0.0',
+        'version' => '1.0.0.0',
+        'reference' => null,
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -29,9 +29,9 @@
             'dev_requirement' => true,
         ),
         'gravityflow-sms-ippanel/gravityflow-sms-ippanel' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
-            'reference' => '49b84a205c96097acdea176de8798d0ead58b749',
+            'pretty_version' => '1.0.0',
+            'version' => '1.0.0.0',
+            'reference' => null,
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

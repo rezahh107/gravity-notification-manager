@@ -98,8 +98,9 @@ final class OperationalLogInstaller {
 
 		dbDelta( $sql );
 
+		$like_table = $wpdb->esc_like( $table );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema verification after dbDelta.
-		$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like_table ) );
 		if ( $table !== $found ) {
 			return false;
 		}
