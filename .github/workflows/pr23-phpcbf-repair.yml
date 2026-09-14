@@ -1,0 +1,47 @@
+name: PR23 PHPCBF Repair
+
+on:
+  push:
+    branches:
+      - feat/operational-observability
+    paths:
+      - '.github/workflows/pr23-phpcbf-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feat/operational-observability
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - name: Install locked dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Apply repository coding-standard autofixes
+        run: php vendor/bin/phpcbf --standard=phpcs.xml src tests || test $? -eq 1
+
+      - name: Remove temporary workflow and commit autofixes
+        shell: bash
+        run: |
+          git rm .github/workflows/pr23-phpcbf-repair.yml
+          git add src tests
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --cached --quiet; then
+            exit 1
+          fi
+          git commit -m 'style: apply repository coding-standard fixes'
+          git push origin HEAD:feat/operational-observability
