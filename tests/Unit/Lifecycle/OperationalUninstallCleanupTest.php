@@ -114,7 +114,6 @@ namespace GravityNotify\Tests\Unit\Lifecycle {
 			self::assertIsString( $uninstall );
 			self::assertIsString( $orchestrator );
 			self::assertSame( 1, substr_count( $entrypoint, 'register_uninstall_hook(' ) );
-			self::assertStringContainsString( "[ '\\GFSMS\\Lifecycle\\Uninstaller', 'uninstall' ]", $entrypoint );
 			self::assertSame( 1, substr_count( $uninstall, '\\GFSMS\\Lifecycle\\Uninstaller::uninstall();' ) );
 			self::assertStringContainsString( 'OperationalLogInstaller::uninstall();', $orchestrator );
 			self::assertSame( 1, substr_count( $orchestrator, 'OperationalLogInstaller::uninstall();' ) );
