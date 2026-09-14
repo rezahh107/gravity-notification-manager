@@ -8,22 +8,27 @@
 namespace GravityNotify\Admin;
 
 /**
- * Defines the bounded GNM information architecture and capability boundary.
+ * Defines the GNM information architecture and capability boundary.
  */
 final class AdminDefinition {
 
 	public const CAPABILITY = 'manage_options';
 	public const ROOT_SLUG = 'gravity-notification-manager';
 	public const POINTS_SLUG = 'gravity-notification-manager-points';
+	public const PROVIDERS_SLUG = 'gravity-notification-manager-providers';
 	public const SETTINGS_SLUG = 'gravity-notification-manager-settings';
 	public const ADVISOR_SLUG = 'gravity-notification-manager-advisor';
 	public const DIAGNOSTICS_SLUG = 'gravity-notification-manager-diagnostics';
 	public const CHECK_ACTION = 'gravity_notify_check_point';
 	public const TEST_SMS_ACTION = 'gravity_notify_test_sms';
 	public const TEST_BALE_ACTION = 'gravity_notify_test_bale';
+	public const PROVIDER_TEST_SMS_ACTION = 'gravity_notify_provider_manager_test_sms';
 
 	/**
-	 * Return exactly the approved five product surfaces.
+	 * Return the established core surfaces owned by AdminController.
+	 *
+	 * Provider Manager is intentionally registered by its focused controller so the
+	 * former fixed-five assumption does not constrain the product information architecture.
 	 *
 	 * @return array<int, array{slug:string,title:string}>
 	 */
@@ -50,5 +55,24 @@ final class AdminDefinition {
 				'title' => __( 'Help & Diagnostics', 'gravity-notification-manager' ),
 			),
 		);
+	}
+
+	/** Return the directly discoverable SMS Provider Manager surface definition. */
+	public static function provider_surface(): array {
+		return array(
+			'slug'  => self::PROVIDERS_SLUG,
+			'title' => __( 'Providers & Senders', 'gravity-notification-manager' ),
+		);
+	}
+
+	/**
+	 * Return the current complete navigation contract in intended display order.
+	 *
+	 * @return array<int, array{slug:string,title:string}>
+	 */
+	public static function navigation_surfaces(): array {
+		$surfaces = self::surfaces();
+		array_splice( $surfaces, 2, 0, array( self::provider_surface() ) );
+		return $surfaces;
 	}
 }
