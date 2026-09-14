@@ -10,11 +10,12 @@ namespace GravityNotify\Tests\Unit\Admin;
 use GravityNotify\Admin\ProviderTestService;
 use GravityNotify\Delivery\AttemptStatus;
 use GravityNotify\Delivery\Http\HttpResponse;
+use GravityNotify\Provider\SmsProviderManager;
 use GravityNotify\Tests\Support\WordPress\FakeHttpTransport;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Proves explicit tests use production provider contracts without delivery-state side effects.
+ * Proves explicit tests use production provider composition without delivery-state side effects.
  */
 final class ProviderTestServiceTest extends TestCase {
 
@@ -30,6 +31,19 @@ final class ProviderTestServiceTest extends TestCase {
 		self::assertSame( 'provider_not_configured', $sms->diagnostic() );
 		self::assertSame( AttemptStatus::FAILED, $bale->status() );
 		self::assertSame( 'provider_not_configured', $bale->diagnostic() );
+		self::assertSame( array(), $http->requests() );
+	}
+
+	/** Disabled IPPanel test fails locally and never invokes the transport. */
+	public function test_disabled_ippanel_sends_nothing(): void {
+		$settings = $this->settings();
+		$settings[ SmsProviderManager::CONFIG_KEY ][ SmsProviderManager::IPPANEL ]['enabled'] = false;
+		$http    = new FakeHttpTransport( array() );
+		$service = new ProviderTestService( $settings, $http );
+		$result  = $service->test_sms( '+989121234567', 'GNM test' );
+
+		self::assertSame( AttemptStatus::FAILED, $result->status() );
+		self::assertSame( 'provider_not_configured', $result->diagnostic() );
 		self::assertSame( array(), $http->requests() );
 	}
 
@@ -71,6 +85,7 @@ final class ProviderTestServiceTest extends TestCase {
 		$payload = json_decode( (string) $request['args']['body'], true );
 		self::assertIsArray( $payload );
 		self::assertSame( 'webservice', $payload['sending_type'] );
+		self::assertSame( '+989000000000', $payload['from_number'] );
 		self::assertSame( array( '+989121234567' ), $payload['params']['recipients'] );
 	}
 
@@ -132,16 +147,17 @@ final class ProviderTestServiceTest extends TestCase {
 		self::assertStringNotContainsString( 'GFAPI', $source );
 	}
 
-	/**
-	 * Return configured test settings.
-	 *
-	 * @return array<string, string>
-	 */
+	/** @return array<string, mixed> */
 	private function settings(): array {
 		return array(
-			'ippanel_api_key' => 'test-api-key',
-			'sms_from_number' => '+989000000000',
-			'bale_bot_token'  => 'test-bale-token',
+			SmsProviderManager::CONFIG_KEY => array(
+				SmsProviderManager::IPPANEL => array(
+					'enabled' => true,
+					'api_key' => 'test-api-key',
+					'sender'  => '+989000000000',
+				),
+			),
+			'bale_bot_token' => 'test-bale-token',
 		);
 	}
 }
