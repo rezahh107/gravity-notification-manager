@@ -18,10 +18,33 @@ use JsonException;
 final class IPPanelProvider implements SmsProviderInterface {
 
 	private const ENDPOINT = 'https://edge.ippanel.com/v1/api/send';
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private string $api_key;
+	/**
+	 * Stored value.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private string $endpoint;
 
+	/**
+	 * Construct the object.
+	 *
+	 * @param string                 $api_key Value.
+	 * @param HttpTransportInterface $http Value.
+	 * @param string|null            $test_endpoint Value.
+	 * @throws \InvalidArgumentException When supplied data is invalid.
+	 */
 	public function __construct( string $api_key, HttpTransportInterface $http, ?string $test_endpoint = null ) {
 		$this->api_key  = $api_key;
 		$this->http     = $http;
@@ -32,11 +55,20 @@ final class IPPanelProvider implements SmsProviderInterface {
 		}
 	}
 
+	/**
+	 * Identifier.
+	 *
+	 * @return string Return value.
+	 */
 	public function identifier(): string {
 		return 'ippanel';
 	}
 
-	/** @return array<int, string> */
+		/**
+		 * Capabilities.
+		 *
+		 * @return array Return value.
+		 */
 	public function capabilities(): array {
 		return array(
 			SmsCapability::PLAIN,
@@ -46,6 +78,12 @@ final class IPPanelProvider implements SmsProviderInterface {
 		);
 	}
 
+	/**
+	 * Send.
+	 *
+	 * @param SmsRequest $request Value.
+	 * @return AttemptResult Return value.
+	 */
 	public function send( SmsRequest $request ): AttemptResult {
 		if ( ! in_array( $request->capability(), $this->capabilities(), true ) ) {
 			return $this->result( AttemptStatus::SKIPPED, $request, array(), 'unsupported_capability' );
@@ -78,6 +116,12 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return $this->classify_response( $request, $response );
 	}
 
+	/**
+	 * Has valid e164 addresses.
+	 *
+	 * @param SmsRequest $request Value.
+	 * @return bool Return value.
+	 */
 	private function has_valid_e164_addresses( SmsRequest $request ): bool {
 		if ( ! $this->is_e164( $request->from() ) ) {
 			return false;
@@ -90,11 +134,22 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return true;
 	}
 
+	/**
+	 * Is e164.
+	 *
+	 * @param string $value Value.
+	 * @return bool Return value.
+	 */
 	private function is_e164( string $value ): bool {
 		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value );
 	}
 
-	/** @return array<string, mixed>|null */
+		/**
+		 * Build payload.
+		 *
+		 * @param SmsRequest $request Value.
+		 * @return array|null Return value.
+		 */
 	private function build_payload( SmsRequest $request ): ?array {
 		if ( SmsCapability::PLAIN === $request->capability() || SmsCapability::MULTI_RECIPIENT_PLAIN === $request->capability() ) {
 			return array(
@@ -116,6 +171,13 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return null;
 	}
 
+	/**
+	 * Classify response.
+	 *
+	 * @param SmsRequest   $request Value.
+	 * @param HttpResponse $response Value.
+	 * @return AttemptResult Return value.
+	 */
 	private function classify_response( SmsRequest $request, HttpResponse $response ): AttemptResult {
 		if ( $response->is_transport_error() ) {
 			return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'transport_error' );
@@ -144,7 +206,12 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'acceptance_unestablished', $status );
 	}
 
-	/** @param array<string, mixed> $decoded @return array<int, string> */
+		/**
+		 * Documented references.
+		 *
+		 * @param array $decoded Value.
+		 * @return array Return value.
+		 */
 	private function documented_references( array $decoded ): array {
 		$data = $decoded['data'] ?? null;
 		if ( ! is_array( $data ) || ! isset( $data['message_outbox_ids'] ) || ! is_array( $data['message_outbox_ids'] ) ) {
@@ -159,7 +226,16 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return $references;
 	}
 
-	/** @param array<int, string> $references */
+		/**
+		 * Result.
+		 *
+		 * @param string     $status Value.
+		 * @param SmsRequest $request Value.
+		 * @param array      $references Value.
+		 * @param string     $diagnostic Value.
+		 * @param int|null   $http_status Value.
+		 * @return AttemptResult Return value.
+		 */
 	private function result( string $status, SmsRequest $request, array $references, string $diagnostic, ?int $http_status = null ): AttemptResult {
 		return new AttemptResult(
 			$status,

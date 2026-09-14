@@ -16,14 +16,37 @@ use JsonException;
 /** Synchronous Bale sendMessage client using the injected HTTP seam. */
 final class BaleClient implements BaleChannelInterface {
 
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private string $token;
+	/**
+	 * Stored value.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
+	/**
+	 * Construct the object.
+	 *
+	 * @param string                 $token Value.
+	 * @param HttpTransportInterface $http Value.
+	 * @throws \InvalidArgumentException When supplied data is invalid.
+	 */
 	public function __construct( string $token, HttpTransportInterface $http ) {
 		$this->token = $token;
 		$this->http  = $http;
 	}
 
+	/**
+	 * Send.
+	 *
+	 * @param BaleRequest $request Value.
+	 * @return AttemptResult Return value.
+	 */
 	public function send( BaleRequest $request ): AttemptResult {
 		try {
 			$body = json_encode(
@@ -49,6 +72,12 @@ final class BaleClient implements BaleChannelInterface {
 		return $this->classify_response( $response );
 	}
 
+	/**
+	 * Classify response.
+	 *
+	 * @param HttpResponse $response Value.
+	 * @return AttemptResult Return value.
+	 */
 	private function classify_response( HttpResponse $response ): AttemptResult {
 		if ( $response->is_transport_error() ) {
 			return $this->result( AttemptStatus::AMBIGUOUS, array(), 'transport_error' );
@@ -76,7 +105,15 @@ final class BaleClient implements BaleChannelInterface {
 		return $this->result( AttemptStatus::AMBIGUOUS, array(), 'acceptance_unestablished', $status );
 	}
 
-	/** @param array<int, string> $references */
+		/**
+		 * Result.
+		 *
+		 * @param string   $status Value.
+		 * @param array    $references Value.
+		 * @param string   $diagnostic Value.
+		 * @param int|null $http_status Value.
+		 * @return AttemptResult Return value.
+		 */
 	private function result( string $status, array $references, string $diagnostic, ?int $http_status = null ): AttemptResult {
 		return new AttemptResult(
 			$status,

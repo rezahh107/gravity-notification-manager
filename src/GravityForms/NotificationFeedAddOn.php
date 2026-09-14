@@ -17,17 +17,66 @@ use GravityNotify\Observability\OperationalContext;
  */
 final class NotificationFeedAddOn extends \GFFeedAddOn {
 
-	/** @var self|null */
-	private static $_instance                             = null;
-	protected $_version                                   = '0.1.0';
-	protected $_slug                                      = 'gravity-notification-manager';
-	protected $_title                                     = '';
-	protected $_short_title                               = '';
-	protected $_async_feed_processing                     = false;
-	private ?NotificationFeedProcessor $processor         = null;
+		/**
+		 * Stored value.
+		 *
+		 * @var self|null
+		 */
+	private static $_instance = null;
+	/**
+	 * Stored value.
+	 *
+	 * @var mixed
+	 */
+	protected $_version = '0.1.0';
+	/**
+	 * Stored value.
+	 *
+	 * @var mixed
+	 */
+	protected $_slug = 'gravity-notification-manager';
+	/**
+	 * Stored value.
+	 *
+	 * @var mixed
+	 */
+	protected $_title = '';
+	/**
+	 * Stored value.
+	 *
+	 * @var mixed
+	 */
+	protected $_short_title = '';
+	/**
+	 * Stored value.
+	 *
+	 * @var mixed
+	 */
+	protected $_async_feed_processing = false;
+	/**
+	 * Stored value.
+	 *
+	 * @var NotificationFeedProcessor|null
+	 */
+	private ?NotificationFeedProcessor $processor = null;
+	/**
+	 * Stored value.
+	 *
+	 * @var DeliveryStateManager|null
+	 */
 	private ?DeliveryStateManager $delivery_state_manager = null;
+	/**
+	 * Stored value.
+	 *
+	 * @var NotificationExecutionResult|null
+	 */
 	private ?NotificationExecutionResult $last_execution_result = null;
 
+	/**
+	 * Get instance.
+	 *
+	 * @return self Return value.
+	 */
 	public static function get_instance(): self {
 		if ( null === self::$_instance ) {
 			self::$_instance = new self();
@@ -36,6 +85,9 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		return self::$_instance;
 	}
 
+	/**
+	 * Init.
+	 */
 	public function init() {
 		$this->_title       = __( 'Gravity Notification Manager', 'gravity-notification-manager' );
 		$this->_short_title = __( 'Gravity Notification Manager', 'gravity-notification-manager' );
@@ -43,19 +95,36 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		ManualRetryHandler::boot( $this );
 	}
 
+	/**
+	 * Configure processor.
+	 *
+	 * @param NotificationFeedProcessor|null $processor Value.
+	 */
 	public function configure_processor( ?NotificationFeedProcessor $processor ): void {
 		$this->processor = $processor;
 	}
 
+	/**
+	 * Configure delivery state manager.
+	 *
+	 * @param DeliveryStateManager|null $manager Value.
+	 */
 	public function configure_delivery_state_manager( ?DeliveryStateManager $manager ): void {
 		$this->delivery_state_manager = $manager;
 	}
 
+	/**
+	 * Last execution result.
+	 *
+	 * @return NotificationExecutionResult|null Return value.
+	 */
 	public function last_execution_result(): ?NotificationExecutionResult {
 		return $this->last_execution_result;
 	}
 
-	/** @return array<int, array<string, mixed>> */
+		/**
+		 * Feed settings fields.
+		 */
 	public function feed_settings_fields() {
 		return array(
 			array(
@@ -125,11 +194,26 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		);
 	}
 
+	/**
+	 * Process feed.
+	 *
+	 * @param mixed $feed Value.
+	 * @param mixed $entry Value.
+	 * @param mixed $form Value.
+	 */
 	public function process_feed( $feed, $entry, $form ) {
 		$result = $this->execute_feed( is_array( $feed ) ? $feed : array(), is_array( $entry ) ? $entry : array(), is_array( $form ) ? $form : array(), false );
 		return $result->delivery_succeeded();
 	}
 
+	/**
+	 * Retry feed.
+	 *
+	 * @param array $feed Value.
+	 * @param array $entry Value.
+	 * @param array $form Value.
+	 * @return NotificationExecutionResult|null Return value.
+	 */
 	public function retry_feed( array $feed, array $entry, array $form ): ?NotificationExecutionResult {
 		$manager  = $this->delivery_state_manager();
 		$entry_id = $this->positive_identifier( $entry['id'] ?? null );
@@ -144,6 +228,15 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		return $this->has_state_persistence_failure( $result ) ? null : $result;
 	}
 
+	/**
+	 * Execute feed.
+	 *
+	 * @param array $feed Value.
+	 * @param array $entry Value.
+	 * @param array $form Value.
+	 * @param bool  $manual_retry Value.
+	 * @return NotificationExecutionResult Return value.
+	 */
 	private function execute_feed( array $feed, array $entry, array $form, bool $manual_retry ): NotificationExecutionResult {
 		$meta       = isset( $feed['meta'] ) && is_array( $feed['meta'] ) ? $feed['meta'] : array();
 		$rule       = FeedRuleSchema::normalize( $meta );
@@ -205,6 +298,11 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		return $result;
 	}
 
+	/**
+	 * Delivery state manager.
+	 *
+	 * @return DeliveryStateManager|null Return value.
+	 */
 	private function delivery_state_manager(): ?DeliveryStateManager {
 		if ( null === $this->delivery_state_manager && function_exists( 'gform_get_meta' ) && function_exists( 'gform_update_meta' ) ) {
 			$this->delivery_state_manager = new DeliveryStateManager( new EntryMetaDeliveryStore() );
@@ -212,6 +310,12 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		return $this->delivery_state_manager;
 	}
 
+	/**
+	 * Has state persistence failure.
+	 *
+	 * @param NotificationExecutionResult $result Value.
+	 * @return bool Return value.
+	 */
 	private function has_state_persistence_failure( NotificationExecutionResult $result ): bool {
 		foreach ( $result->skips() as $skip ) {
 			if ( 'delivery_state' === ( $skip['subject'] ?? null ) && 'persistence_failed' === ( $skip['reason'] ?? null ) ) {
@@ -221,6 +325,12 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		return false;
 	}
 
+	/**
+	 * With state persistence failure.
+	 *
+	 * @param NotificationExecutionResult $result Value.
+	 * @return NotificationExecutionResult Return value.
+	 */
 	private function with_state_persistence_failure( NotificationExecutionResult $result ): NotificationExecutionResult {
 		$skips   = $result->skips();
 		$skips[] = array(
@@ -230,6 +340,12 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		return new NotificationExecutionResult( $result->attempts(), $skips, $result->delivery_succeeded() );
 	}
 
+	/**
+	 * Positive identifier.
+	 *
+	 * @param mixed $value Value.
+	 * @return int|null Return value.
+	 */
 	private function positive_identifier( $value ): ?int {
 		if ( is_int( $value ) ) {
 			return $value > 0 ? $value : null;
@@ -241,7 +357,11 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		return $identifier > 0 ? $identifier : null;
 	}
 
-	/** @return array<int, array<string, string>> */
+		/**
+		 * Recipient source choices.
+		 *
+		 * @return array Return value.
+		 */
 	private function recipient_source_choices(): array {
 		return array(
 			array(

@@ -13,13 +13,15 @@ class ComposerStaticInitf0928ad33539f8c0364eca40b5f872dd
     );
 
     public static $prefixLengthsPsr4 = array (
-        'P' => 
+        'P' =>
         array (
             'PhpParser\\' => 10,
             'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' => 57,
         ),
-        'G' => 
+        'G' =>
         array (
+            'GravityNotify\\Tests\\' => 20,
+            'GravityNotify\\' => 14,
             'GFSMS\\Tests\\' => 12,
             'GFSMS\\Services\\' => 15,
             'GFSMS\\Queue\\' => 12,
@@ -31,7 +33,7 @@ class ComposerStaticInitf0928ad33539f8c0364eca40b5f872dd
             'GFSMS\\Admin\\' => 12,
             'GFSMS\\' => 6,
         ),
-        'D' => 
+        'D' =>
         array (
             'Doctrine\\Instantiator\\' => 22,
             'DeepCopy\\' => 9,
@@ -39,59 +41,67 @@ class ComposerStaticInitf0928ad33539f8c0364eca40b5f872dd
     );
 
     public static $prefixDirsPsr4 = array (
-        'PhpParser\\' => 
+        'PhpParser\\' =>
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
         ),
-        'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' => 
+        'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' =>
         array (
             0 => __DIR__ . '/..' . '/dealerdirect/phpcodesniffer-composer-installer/src',
         ),
-        'GFSMS\\Tests\\' => 
+        'GravityNotify\\Tests\\' =>
         array (
             0 => __DIR__ . '/../..' . '/tests',
         ),
-        'GFSMS\\Services\\' => 
+        'GravityNotify\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/src',
+        ),
+        'GFSMS\\Tests\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/tests',
+        ),
+        'GFSMS\\Services\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes/Services',
         ),
-        'GFSMS\\Queue\\' => 
+        'GFSMS\\Queue\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes/Integration',
         ),
-        'GFSMS\\Logging\\' => 
+        'GFSMS\\Logging\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes/Logging',
         ),
-        'GFSMS\\Lifecycle\\' => 
+        'GFSMS\\Lifecycle\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes/Lifecycle',
         ),
-        'GFSMS\\Integration\\' => 
+        'GFSMS\\Integration\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes/Integration',
         ),
-        'GFSMS\\Infrastructure\\' => 
+        'GFSMS\\Infrastructure\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes/Infrastructure',
         ),
-        'GFSMS\\Domain\\' => 
+        'GFSMS\\Domain\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes/Domain',
         ),
-        'GFSMS\\Admin\\' => 
+        'GFSMS\\Admin\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes/Admin',
         ),
-        'GFSMS\\' => 
+        'GFSMS\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes',
         ),
-        'Doctrine\\Instantiator\\' => 
+        'Doctrine\\Instantiator\\' =>
         array (
             0 => __DIR__ . '/..' . '/doctrine/instantiator/src/Doctrine/Instantiator',
         ),
-        'DeepCopy\\' => 
+        'DeepCopy\\' =>
         array (
             0 => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy',
         ),
@@ -130,40 +140,155 @@ class ComposerStaticInitf0928ad33539f8c0364eca40b5f872dd
         'Doctrine\\Instantiator\\Exception\\UnexpectedValueException' => __DIR__ . '/..' . '/doctrine/instantiator/src/Doctrine/Instantiator/Exception/UnexpectedValueException.php',
         'Doctrine\\Instantiator\\Instantiator' => __DIR__ . '/..' . '/doctrine/instantiator/src/Doctrine/Instantiator/Instantiator.php',
         'Doctrine\\Instantiator\\InstantiatorInterface' => __DIR__ . '/..' . '/doctrine/instantiator/src/Doctrine/Instantiator/InstantiatorInterface.php',
-        'GFSMS\\Admin\\DoctorPage' => __DIR__ . '/../..' . '/includes/Admin/DoctorPage.php',
-        'GFSMS\\Admin\\Logs_Table' => __DIR__ . '/../..' . '/includes/Admin/Logs_Table.php',
-        'GFSMS\\Admin\\Settings_Fields' => __DIR__ . '/../..' . '/includes/Admin/Settings_Fields.php',
-        'GFSMS\\Admin\\Settings_Page' => __DIR__ . '/../..' . '/includes/Admin/Settings_Page.php',
         'GFSMS\\Admin\\Settings_Schema' => __DIR__ . '/../..' . '/includes/Admin/Settings_Schema.php',
         'GFSMS\\Autoloader' => __DIR__ . '/../..' . '/includes/Autoloader.php',
-        'GFSMS\\Domain\\EventSnapshot' => __DIR__ . '/../..' . '/includes/Domain/EventSnapshot.php',
-        'GFSMS\\Domain\\EventState' => __DIR__ . '/../..' . '/includes/Domain/EventState.php',
-        'GFSMS\\Domain\\EventType' => __DIR__ . '/../..' . '/includes/Domain/EventType.php',
-        'GFSMS\\Domain\\Settings' => __DIR__ . '/../..' . '/includes/Domain/Settings.php',
-        'GFSMS\\Infrastructure\\ProviderFactory' => __DIR__ . '/../..' . '/includes/Infrastructure/ProviderFactory.php',
-        'GFSMS\\Integration\\Dispatcher' => __DIR__ . '/../..' . '/includes/Integration/Dispatcher.php',
-        'GFSMS\\Integration\\GravityForms_Handler' => __DIR__ . '/../..' . '/includes/Integration/GravityForms_Handler.php',
-        'GFSMS\\Integration\\HTTP_Client_Interface' => __DIR__ . '/../..' . '/includes/Integration/HTTP_Client_Interface.php',
-        'GFSMS\\Integration\\IPPanel_Provider' => __DIR__ . '/../..' . '/includes/Integration/IPPanel_Provider.php',
-        'GFSMS\\Integration\\Ippanel_Connection_Test' => __DIR__ . '/../..' . '/includes/Integration/Ippanel_Connection_Test.php',
-        'GFSMS\\Integration\\Listener' => __DIR__ . '/../..' . '/includes/Integration/Listener.php',
-        'GFSMS\\Integration\\ProviderErrorStatus' => __DIR__ . '/../..' . '/includes/Integration/ProviderErrorStatus.php',
-        'GFSMS\\Integration\\SMS_Provider_Interface' => __DIR__ . '/../..' . '/includes/Integration/SMS_Provider_Interface.php',
-        'GFSMS\\Integration\\Secondary_Provider' => __DIR__ . '/../..' . '/includes/Integration/Secondary_Provider.php',
-        'GFSMS\\Integration\\Sms_Sender' => __DIR__ . '/../..' . '/includes/Integration/Sms_Sender.php',
-        'GFSMS\\Integration\\Webhook_Alert' => __DIR__ . '/../..' . '/includes/Integration/Webhook_Alert.php',
-        'GFSMS\\Integration\\Wp_HTTP_Client' => __DIR__ . '/../..' . '/includes/Integration/Wp_HTTP_Client.php',
         'GFSMS\\Lifecycle\\Activator' => __DIR__ . '/../..' . '/includes/Lifecycle/Activator.php',
         'GFSMS\\Lifecycle\\Deactivator' => __DIR__ . '/../..' . '/includes/Lifecycle/Deactivator.php',
         'GFSMS\\Lifecycle\\Uninstaller' => __DIR__ . '/../..' . '/includes/Lifecycle/Uninstaller.php',
         'GFSMS\\Logging\\Logger' => __DIR__ . '/../..' . '/includes/Logging/Logger.php',
-        'GFSMS\\Plugin' => __DIR__ . '/../..' . '/includes/Plugin.php',
-        'GFSMS\\Queue\\Event_Queue' => __DIR__ . '/../..' . '/includes/Integration/Event_Queue.php',
-        'GFSMS\\Services\\LockManager' => __DIR__ . '/../..' . '/includes/Services/LockManager.php',
-        'GFSMS\\Services\\MessageBuilder' => __DIR__ . '/../..' . '/includes/Services/MessageBuilder.php',
-        'GFSMS\\Services\\PatternVariableBuilder' => __DIR__ . '/../..' . '/includes/Services/PatternVariableBuilder.php',
-        'GFSMS\\Services\\PhoneNumberNormalizer' => __DIR__ . '/../..' . '/includes/Services/PhoneNumberNormalizer.php',
-        'GFSMS\\Services\\RecipientResolver' => __DIR__ . '/../..' . '/includes/Services/RecipientResolver.php',
+        'GravityNotify\\Admin\\AdminController' => __DIR__ . '/../..' . '/src/Admin/AdminController.php',
+        'GravityNotify\\Admin\\AdminDefinition' => __DIR__ . '/../..' . '/src/Admin/AdminDefinition.php',
+        'GravityNotify\\Admin\\AdvisorModel' => __DIR__ . '/../..' . '/src/Admin/AdvisorModel.php',
+        'GravityNotify\\Admin\\ConfigurationSourceInterface' => __DIR__ . '/../..' . '/src/Admin/ConfigurationSourceInterface.php',
+        'GravityNotify\\Admin\\Environment' => __DIR__ . '/../..' . '/src/Admin/Environment.php',
+        'GravityNotify\\Admin\\GravityFlowNavigation' => __DIR__ . '/../..' . '/src/Admin/GravityFlowNavigation.php',
+        'GravityNotify\\Admin\\OperationalLogAdmin' => __DIR__ . '/../..' . '/src/Admin/OperationalLogAdmin.php',
+        'GravityNotify\\Admin\\OverviewSummary' => __DIR__ . '/../..' . '/src/Admin/OverviewSummary.php',
+        'GravityNotify\\Admin\\PointInspector' => __DIR__ . '/../..' . '/src/Admin/PointInspector.php',
+        'GravityNotify\\Admin\\PointStatus' => __DIR__ . '/../..' . '/src/Admin/PointStatus.php',
+        'GravityNotify\\Admin\\PointVerificationService' => __DIR__ . '/../..' . '/src/Admin/PointVerificationService.php',
+        'GravityNotify\\Admin\\ProviderManagerAdmin' => __DIR__ . '/../..' . '/src/Admin/ProviderManagerAdmin.php',
+        'GravityNotify\\Admin\\ProviderTestService' => __DIR__ . '/../..' . '/src/Admin/ProviderTestService.php',
+        'GravityNotify\\Admin\\Settings' => __DIR__ . '/../..' . '/src/Admin/Settings.php',
+        'GravityNotify\\Admin\\WordPressConfigurationSource' => __DIR__ . '/../..' . '/src/Admin/WordPressConfigurationSource.php',
+        'GravityNotify\\DeliveryState\\DeliveryStateManager' => __DIR__ . '/../..' . '/src/DeliveryState/DeliveryStateManager.php',
+        'GravityNotify\\DeliveryState\\DeliveryStateReadResult' => __DIR__ . '/../..' . '/src/DeliveryState/DeliveryStateReadResult.php',
+        'GravityNotify\\DeliveryState\\DeliveryStateStoreInterface' => __DIR__ . '/../..' . '/src/DeliveryState/DeliveryStateStoreInterface.php',
+        'GravityNotify\\DeliveryState\\EntryMetaDeliveryStore' => __DIR__ . '/../..' . '/src/DeliveryState/EntryMetaDeliveryStore.php',
+        'GravityNotify\\Delivery\\AttemptResult' => __DIR__ . '/../..' . '/src/Delivery/AttemptResult.php',
+        'GravityNotify\\Delivery\\AttemptStatus' => __DIR__ . '/../..' . '/src/Delivery/AttemptStatus.php',
+        'GravityNotify\\Delivery\\Bale\\BaleChannelInterface' => __DIR__ . '/../..' . '/src/Delivery/Bale/BaleChannelInterface.php',
+        'GravityNotify\\Delivery\\Bale\\BaleClient' => __DIR__ . '/../..' . '/src/Delivery/Bale/BaleClient.php',
+        'GravityNotify\\Delivery\\Bale\\BaleRequest' => __DIR__ . '/../..' . '/src/Delivery/Bale/BaleRequest.php',
+        'GravityNotify\\Delivery\\Http\\HttpResponse' => __DIR__ . '/../..' . '/src/Delivery/Http/HttpResponse.php',
+        'GravityNotify\\Delivery\\Http\\HttpTransportInterface' => __DIR__ . '/../..' . '/src/Delivery/Http/HttpTransportInterface.php',
+        'GravityNotify\\Delivery\\Http\\WordPressHttpTransport' => __DIR__ . '/../..' . '/src/Delivery/Http/WordPressHttpTransport.php',
+        'GravityNotify\\Delivery\\Sms\\IPPanelProvider' => __DIR__ . '/../..' . '/src/Delivery/Sms/IPPanelProvider.php',
+        'GravityNotify\\Delivery\\Sms\\SmsCapability' => __DIR__ . '/../..' . '/src/Delivery/Sms/SmsCapability.php',
+        'GravityNotify\\Delivery\\Sms\\SmsProviderInterface' => __DIR__ . '/../..' . '/src/Delivery/Sms/SmsProviderInterface.php',
+        'GravityNotify\\Delivery\\Sms\\SmsProviderRegistry' => __DIR__ . '/../..' . '/src/Delivery/Sms/SmsProviderRegistry.php',
+        'GravityNotify\\Delivery\\Sms\\SmsRequest' => __DIR__ . '/../..' . '/src/Delivery/Sms/SmsRequest.php',
+        'GravityNotify\\Delivery\\SynchronousDispatcher' => __DIR__ . '/../..' . '/src/Delivery/SynchronousDispatcher.php',
+        'GravityNotify\\GravityFlow\\FeedStepRegistration' => __DIR__ . '/../..' . '/src/GravityFlow/FeedStepRegistration.php',
+        'GravityNotify\\GravityFlow\\NotificationFeedStep' => __DIR__ . '/../..' . '/src/GravityFlow/NotificationFeedStep.php',
+        'GravityNotify\\GravityForms\\FeedRuleSchema' => __DIR__ . '/../..' . '/src/GravityForms/FeedRuleSchema.php',
+        'GravityNotify\\GravityForms\\ManualRetryHandler' => __DIR__ . '/../..' . '/src/GravityForms/ManualRetryHandler.php',
+        'GravityNotify\\GravityForms\\ManualRetryRuntimeInterface' => __DIR__ . '/../..' . '/src/GravityForms/ManualRetryRuntimeInterface.php',
+        'GravityNotify\\GravityForms\\NotificationExecutionResult' => __DIR__ . '/../..' . '/src/GravityForms/NotificationExecutionResult.php',
+        'GravityNotify\\GravityForms\\NotificationFeedAddOn' => __DIR__ . '/../..' . '/src/GravityForms/NotificationFeedAddOn.php',
+        'GravityNotify\\GravityForms\\NotificationFeedProcessor' => __DIR__ . '/../..' . '/src/GravityForms/NotificationFeedProcessor.php',
+        'GravityNotify\\GravityForms\\WordPressManualRetryRuntime' => __DIR__ . '/../..' . '/src/GravityForms/WordPressManualRetryRuntime.php',
+        'GravityNotify\\Migration\\CutoverRegistry' => __DIR__ . '/../..' . '/src/Migration/CutoverRegistry.php',
+        'GravityNotify\\Migration\\CutoverSequence' => __DIR__ . '/../..' . '/src/Migration/CutoverSequence.php',
+        'GravityNotify\\Migration\\CutoverService' => __DIR__ . '/../..' . '/src/Migration/CutoverService.php',
+        'GravityNotify\\Migration\\FlowStepVerifier' => __DIR__ . '/../..' . '/src/Migration/FlowStepVerifier.php',
+        'GravityNotify\\Migration\\LegacyRuleMapper' => __DIR__ . '/../..' . '/src/Migration/LegacyRuleMapper.php',
+        'GravityNotify\\Migration\\LegacyRuntimeGuard' => __DIR__ . '/../..' . '/src/Migration/LegacyRuntimeGuard.php',
+        'GravityNotify\\Migration\\MigrationAdminController' => __DIR__ . '/../..' . '/src/Migration/MigrationAdminController.php',
+        'GravityNotify\\Migration\\MigrationInventory' => __DIR__ . '/../..' . '/src/Migration/MigrationInventory.php',
+        'GravityNotify\\Migration\\MigrationService' => __DIR__ . '/../..' . '/src/Migration/MigrationService.php',
+        'GravityNotify\\Migration\\ProductionRuntime' => __DIR__ . '/../..' . '/src/Migration/ProductionRuntime.php',
+        'GravityNotify\\Observability\\LlmDebugReport' => __DIR__ . '/../..' . '/src/Observability/LlmDebugReport.php',
+        'GravityNotify\\Observability\\OperationalContext' => __DIR__ . '/../..' . '/src/Observability/OperationalContext.php',
+        'GravityNotify\\Observability\\OperationalEvent' => __DIR__ . '/../..' . '/src/Observability/OperationalEvent.php',
+        'GravityNotify\\Observability\\OperationalEventStoreInterface' => __DIR__ . '/../..' . '/src/Observability/OperationalEventStoreInterface.php',
+        'GravityNotify\\Observability\\OperationalLogInstaller' => __DIR__ . '/../..' . '/src/Observability/OperationalLogInstaller.php',
+        'GravityNotify\\Observability\\OperationalLogger' => __DIR__ . '/../..' . '/src/Observability/OperationalLogger.php',
+        'GravityNotify\\Observability\\WordPressOperationalEventStore' => __DIR__ . '/../..' . '/src/Observability/WordPressOperationalEventStore.php',
+        'GravityNotify\\Presentation\\DeliveryStatePresentationReader' => __DIR__ . '/../..' . '/src/Presentation/DeliveryStatePresentationReader.php',
+        'GravityNotify\\Presentation\\OperationalPresentation' => __DIR__ . '/../..' . '/src/Presentation/OperationalPresentation.php',
+        'GravityNotify\\Provider\\SmsProviderManager' => __DIR__ . '/../..' . '/src/Provider/SmsProviderManager.php',
+        'GravityNotify\\Recipient\\EntryFieldReader' => __DIR__ . '/../..' . '/src/Recipient/EntryFieldReader.php',
+        'GravityNotify\\Recipient\\FlowAssigneeReader' => __DIR__ . '/../..' . '/src/Recipient/FlowAssigneeReader.php',
+        'GravityNotify\\Recipient\\Native\\GravityFlowAssigneeReader' => __DIR__ . '/../..' . '/src/Recipient/Native/GravityFlowAssigneeReader.php',
+        'GravityNotify\\Recipient\\Native\\GravityFormsEntryFieldReader' => __DIR__ . '/../..' . '/src/Recipient/Native/GravityFormsEntryFieldReader.php',
+        'GravityNotify\\Recipient\\Native\\WordPressUserDirectory' => __DIR__ . '/../..' . '/src/Recipient/Native/WordPressUserDirectory.php',
+        'GravityNotify\\Recipient\\RecipientResolver' => __DIR__ . '/../..' . '/src/Recipient/RecipientResolver.php',
+        'GravityNotify\\Recipient\\ResolutionResult' => __DIR__ . '/../..' . '/src/Recipient/ResolutionResult.php',
+        'GravityNotify\\Recipient\\UserDirectory' => __DIR__ . '/../..' . '/src/Recipient/UserDirectory.php',
+        'GravityNotify\\Support\\NoSendGuard' => __DIR__ . '/../..' . '/src/Support/NoSendGuard.php',
+        'GravityNotify\\Tests\\Integration\\LiveRuntime\\LiveIPPanelFlowStepValidationTest' => __DIR__ . '/../..' . '/tests/Integration/LiveRuntime/LiveIPPanelFlowStepValidationTest.php',
+        'GravityNotify\\Tests\\Integration\\LiveRuntime\\SafeIPPanelDiagnostics' => __DIR__ . '/../..' . '/tests/Integration/LiveRuntime/SafeIPPanelDiagnostics.php',
+        'GravityNotify\\Tests\\Integration\\RealRuntime\\I18nRealRuntimeTest' => __DIR__ . '/../..' . '/tests/Integration/RealRuntime/I18nRealRuntimeTest.php',
+        'GravityNotify\\Tests\\Integration\\RealRuntime\\IPPanelContractRealRuntimeTest' => __DIR__ . '/../..' . '/tests/Integration/RealRuntime/IPPanelContractRealRuntimeTest.php',
+        'GravityNotify\\Tests\\Integration\\RealRuntime\\OperationalPresentationKsesRealRuntimeTest' => __DIR__ . '/../..' . '/tests/Integration/RealRuntime/OperationalPresentationKsesRealRuntimeTest.php',
+        'GravityNotify\\Tests\\Integration\\RealRuntime\\RealRuntimeTest' => __DIR__ . '/../..' . '/tests/Integration/RealRuntime/RealRuntimeTest.php',
+        'GravityNotify\\Tests\\Integration\\RealRuntime\\WU08MigrationRealRuntimeTest' => __DIR__ . '/../..' . '/tests/Integration/RealRuntime/WU08MigrationRealRuntimeTest.php',
+        'GravityNotify\\Tests\\Integration\\RealRuntime\\WU09LegacyRuntimeRetirementRealRuntimeTest' => __DIR__ . '/../..' . '/tests/Integration/RealRuntime/WU09LegacyRuntimeRetirementRealRuntimeTest.php',
+        'GravityNotify\\Tests\\Integration\\RealRuntime\\WU10CompatibilityRealRuntimeTest' => __DIR__ . '/../..' . '/tests/Integration/RealRuntime/WU10CompatibilityRealRuntimeTest.php',
+        'GravityNotify\\Tests\\Support\\Admin\\MutableAdminSource' => __DIR__ . '/../..' . '/tests/Support/Admin/MutableAdminSource.php',
+        'GravityNotify\\Tests\\Support\\DeliveryState\\InMemoryDeliveryStateStore' => __DIR__ . '/../..' . '/tests/Support/DeliveryState/InMemoryDeliveryStateStore.php',
+        'GravityNotify\\Tests\\Support\\Delivery\\FakeBaleChannel' => __DIR__ . '/../..' . '/tests/Support/Delivery/FakeBaleChannel.php',
+        'GravityNotify\\Tests\\Support\\Delivery\\FakeSmsProvider' => __DIR__ . '/../..' . '/tests/Support/Delivery/FakeSmsProvider.php',
+        'GravityNotify\\Tests\\Support\\GravityFlow\\GravityFlowStepFeedAddOnStub' => __DIR__ . '/../..' . '/tests/Support/GravityFlow/GravityFlowStepFeedAddOnStub.php',
+        'GravityNotify\\Tests\\Support\\GravityFlow\\GravityFlowStepsStub' => __DIR__ . '/../..' . '/tests/Support/GravityFlow/GravityFlowStepsStub.php',
+        'GravityNotify\\Tests\\Support\\GravityForms\\FakeManualRetryRuntime' => __DIR__ . '/../..' . '/tests/Support/GravityForms/FakeManualRetryRuntime.php',
+        'GravityNotify\\Tests\\Support\\GravityForms\\GFFeedAddOnStub' => __DIR__ . '/../..' . '/tests/Support/GravityForms/GFFeedAddOnStub.php',
+        'GravityNotify\\Tests\\Support\\Lifecycle\\OperationalUninstallWpdb' => __DIR__ . '/../..' . '/tests/Support/Lifecycle/OperationalUninstallWpdb.php',
+        'GravityNotify\\Tests\\Support\\NoSendTransport' => __DIR__ . '/../..' . '/tests/Support/NoSendTransport.php',
+        'GravityNotify\\Tests\\Support\\Observability\\InMemoryOperationalEventStore' => __DIR__ . '/../..' . '/tests/Support/Observability/InMemoryOperationalEventStore.php',
+        'GravityNotify\\Tests\\Support\\Recipient\\FakeEntryFieldReader' => __DIR__ . '/../..' . '/tests/Support/Recipient/FakeEntryFieldReader.php',
+        'GravityNotify\\Tests\\Support\\Recipient\\FakeFlowAssigneeReader' => __DIR__ . '/../..' . '/tests/Support/Recipient/FakeFlowAssigneeReader.php',
+        'GravityNotify\\Tests\\Support\\Recipient\\FakeUserDirectory' => __DIR__ . '/../..' . '/tests/Support/Recipient/FakeUserDirectory.php',
+        'GravityNotify\\Tests\\Support\\Recipient\\GravityFlowAssigneeIdentityStub' => __DIR__ . '/../..' . '/tests/Support/Recipient/GravityFlowAssigneeIdentityStub.php',
+        'GravityNotify\\Tests\\Support\\Recipient\\GravityFlowAssigneeStepStub' => __DIR__ . '/../..' . '/tests/Support/Recipient/GravityFlowAssigneeStepStub.php',
+        'GravityNotify\\Tests\\Support\\Recipient\\GravityFlowExactStepApiStub' => __DIR__ . '/../..' . '/tests/Support/Recipient/GravityFlowExactStepApiStub.php',
+        'GravityNotify\\Tests\\Support\\WordPress\\FakeHttpTransport' => __DIR__ . '/../..' . '/tests/Support/WordPress/FakeHttpTransport.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\AdminContractTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/AdminContractTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\AdvisorAdminContractTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/AdvisorAdminContractTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\AdvisorModelTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/AdvisorModelTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\OperationalLogAdminContractTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/OperationalLogAdminContractTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\OverviewAndNavigationTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/OverviewAndNavigationTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\PointInspectorTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/PointInspectorTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\PointVerificationServiceTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/PointVerificationServiceTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\ProviderManagerAdminTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/ProviderManagerAdminTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\ProviderTestAdminContractTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/ProviderTestAdminContractTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\ProviderTestObservabilityTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/ProviderTestObservabilityTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\ProviderTestServiceTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/ProviderTestServiceTest.php',
+        'GravityNotify\\Tests\\Unit\\Admin\\SettingsTest' => __DIR__ . '/../..' . '/tests/Unit/Admin/SettingsTest.php',
+        'GravityNotify\\Tests\\Unit\\DeliveryState\\DeliveryStateHistoryValidationTest' => __DIR__ . '/../..' . '/tests/Unit/DeliveryState/DeliveryStateHistoryValidationTest.php',
+        'GravityNotify\\Tests\\Unit\\DeliveryState\\DeliveryStateManagerTest' => __DIR__ . '/../..' . '/tests/Unit/DeliveryState/DeliveryStateManagerTest.php',
+        'GravityNotify\\Tests\\Unit\\DeliveryState\\DeliveryStatePrivacyTest' => __DIR__ . '/../..' . '/tests/Unit/DeliveryState/DeliveryStatePrivacyTest.php',
+        'GravityNotify\\Tests\\Unit\\Delivery\\BaleRequestUtf8LengthTest' => __DIR__ . '/../..' . '/tests/Unit/Delivery/BaleRequestUtf8LengthTest.php',
+        'GravityNotify\\Tests\\Unit\\Delivery\\IPPanelAddressValidationTest' => __DIR__ . '/../..' . '/tests/Unit/Delivery/IPPanelAddressValidationTest.php',
+        'GravityNotify\\Tests\\Unit\\Delivery\\TransportSubsystemTest' => __DIR__ . '/../..' . '/tests/Unit/Delivery/TransportSubsystemTest.php',
+        'GravityNotify\\Tests\\Unit\\GravityFlow\\ExplicitFlowAssigneeFeedStepTest' => __DIR__ . '/../..' . '/tests/Unit/GravityFlow/ExplicitFlowAssigneeFeedStepTest.php',
+        'GravityNotify\\Tests\\Unit\\GravityFlow\\NotificationFeedStepTest' => __DIR__ . '/../..' . '/tests/Unit/GravityFlow/NotificationFeedStepTest.php',
+        'GravityNotify\\Tests\\Unit\\GravityForms\\ManualRetryHandlerTest' => __DIR__ . '/../..' . '/tests/Unit/GravityForms/ManualRetryHandlerTest.php',
+        'GravityNotify\\Tests\\Unit\\GravityForms\\ManualRetryMissingNonceTest' => __DIR__ . '/../..' . '/tests/Unit/GravityForms/ManualRetryMissingNonceTest.php',
+        'GravityNotify\\Tests\\Unit\\GravityForms\\NotificationDeliveryStateTest' => __DIR__ . '/../..' . '/tests/Unit/GravityForms/NotificationDeliveryStateTest.php',
+        'GravityNotify\\Tests\\Unit\\GravityForms\\NotificationFeedAddOnTest' => __DIR__ . '/../..' . '/tests/Unit/GravityForms/NotificationFeedAddOnTest.php',
+        'GravityNotify\\Tests\\Unit\\GravityForms\\NotificationFeedProcessorTest' => __DIR__ . '/../..' . '/tests/Unit/GravityForms/NotificationFeedProcessorTest.php',
+        'GravityNotify\\Tests\\Unit\\GravityForms\\OperationalFeedObservabilityTest' => __DIR__ . '/../..' . '/tests/Unit/GravityForms/OperationalFeedObservabilityTest.php',
+        'GravityNotify\\Tests\\Unit\\I18n\\LocalizationContractTest' => __DIR__ . '/../..' . '/tests/Unit/I18n/LocalizationContractTest.php',
+        'GravityNotify\\Tests\\Unit\\Lifecycle\\OperationalUninstallCleanupTest' => __DIR__ . '/../..' . '/tests/Unit/Lifecycle/OperationalUninstallCleanupTest.php',
+        'GravityNotify\\Tests\\Unit\\Migration\\CutoverSequenceTest' => __DIR__ . '/../..' . '/tests/Unit/Migration/CutoverSequenceTest.php',
+        'GravityNotify\\Tests\\Unit\\Migration\\LegacyRuleMapperTest' => __DIR__ . '/../..' . '/tests/Unit/Migration/LegacyRuleMapperTest.php',
+        'GravityNotify\\Tests\\Unit\\Migration\\LegacyRuntimeRetirementTest' => __DIR__ . '/../..' . '/tests/Unit/Migration/LegacyRuntimeRetirementTest.php',
+        'GravityNotify\\Tests\\Unit\\Migration\\MigrationInventoryTest' => __DIR__ . '/../..' . '/tests/Unit/Migration/MigrationInventoryTest.php',
+        'GravityNotify\\Tests\\Unit\\NoSendGuardTest' => __DIR__ . '/../..' . '/tests/Unit/NoSendGuardTest.php',
+        'GravityNotify\\Tests\\Unit\\Observability\\LlmDebugReportTest' => __DIR__ . '/../..' . '/tests/Unit/Observability/LlmDebugReportTest.php',
+        'GravityNotify\\Tests\\Unit\\Observability\\OperationalLogLocalizationTest' => __DIR__ . '/../..' . '/tests/Unit/Observability/OperationalLogLocalizationTest.php',
+        'GravityNotify\\Tests\\Unit\\Observability\\OperationalLoggerTest' => __DIR__ . '/../..' . '/tests/Unit/Observability/OperationalLoggerTest.php',
+        'GravityNotify\\Tests\\Unit\\Observability\\WordPressOperationalEventStoreTest' => __DIR__ . '/../..' . '/tests/Unit/Observability/WordPressOperationalEventStoreTest.php',
+        'GravityNotify\\Tests\\Unit\\Presentation\\DeliveryStatePresentationReaderTest' => __DIR__ . '/../..' . '/tests/Unit/Presentation/DeliveryStatePresentationReaderTest.php',
+        'GravityNotify\\Tests\\Unit\\Presentation\\OperationalPresentationKsesTest' => __DIR__ . '/../..' . '/tests/Unit/Presentation/OperationalPresentationKsesTest.php',
+        'GravityNotify\\Tests\\Unit\\Presentation\\OperationalPresentationTest' => __DIR__ . '/../..' . '/tests/Unit/Presentation/OperationalPresentationTest.php',
+        'GravityNotify\\Tests\\Unit\\Provider\\SmsProviderManagerTest' => __DIR__ . '/../..' . '/tests/Unit/Provider/SmsProviderManagerTest.php',
+        'GravityNotify\\Tests\\Unit\\Recipient\\ExplicitFlowAssigneeRecipientTest' => __DIR__ . '/../..' . '/tests/Unit/Recipient/ExplicitFlowAssigneeRecipientTest.php',
+        'GravityNotify\\Tests\\Unit\\Recipient\\GravityFlowAssigneeReaderTest' => __DIR__ . '/../..' . '/tests/Unit/Recipient/GravityFlowAssigneeReaderTest.php',
+        'GravityNotify\\Tests\\Unit\\Recipient\\RecipientResolverTest' => __DIR__ . '/../..' . '/tests/Unit/Recipient/RecipientResolverTest.php',
+        'GravityNotify\\Tests\\Unit\\Recipient\\WordPressUserDirectoryTest' => __DIR__ . '/../..' . '/tests/Unit/Recipient/WordPressUserDirectoryTest.php',
         'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin' => __DIR__ . '/..' . '/dealerdirect/phpcodesniffer-composer-installer/src/Plugin.php',
         'PHPCSUtils\\AbstractSniffs\\AbstractArrayDeclarationSniff' => __DIR__ . '/..' . '/phpcsstandards/phpcsutils/PHPCSUtils/AbstractSniffs/AbstractArrayDeclarationSniff.php',
         'PHPCSUtils\\BackCompat\\BCFile' => __DIR__ . '/..' . '/phpcsstandards/phpcsutils/PHPCSUtils/BackCompat/BCFile.php',

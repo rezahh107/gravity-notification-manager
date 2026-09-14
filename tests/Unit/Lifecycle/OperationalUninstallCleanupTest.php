@@ -17,7 +17,11 @@ use PHPUnit\Framework\TestCase;
  */
 final class OperationalUninstallCleanupTest extends TestCase {
 
-	/** wpdb-compatible uninstall test double. */
+		/**
+		 * Stored value.
+		 *
+		 * @var OperationalUninstallWpdb
+		 */
 	private OperationalUninstallWpdb $db;
 
 	/** Load the global WordPress option deletion stub before exercising uninstall code. */

@@ -9,10 +9,14 @@ namespace GravityNotify\Tests\Unit\Observability;
 
 use PHPUnit\Framework\TestCase;
 
+/** OperationalLogLocalizationTest implementation. */
 final class OperationalLogLocalizationTest extends TestCase {
 
 	private const DOMAIN = 'gravity-notification-manager';
 
+	/**
+	 * Test operational log strings are in persian po and mo.
+	 */
 	public function test_operational_log_strings_are_in_persian_po_and_mo(): void {
 		$root   = dirname( __DIR__, 3 );
 		$po     = $this->parse_po( $root . '/languages/' . self::DOMAIN . '-fa_IR.po' );
@@ -33,6 +37,9 @@ final class OperationalLogLocalizationTest extends TestCase {
 		}
 	}
 
+	/**
+	 * Test operational log css preserves ltr technical islands in rtl.
+	 */
 	public function test_operational_log_css_preserves_ltr_technical_islands_in_rtl(): void {
 		$css = file_get_contents( dirname( __DIR__, 3 ) . '/assets/admin/gnm-operational-log.css' );
 		self::assertIsString( $css );
@@ -41,7 +48,12 @@ final class OperationalLogLocalizationTest extends TestCase {
 		self::assertStringContainsString( 'unicode-bidi: isolate', $css );
 	}
 
-	/** @return array<int, string> */
+		/**
+		 * Gettext msgids.
+		 *
+		 * @param string $file Value.
+		 * @return array Return value.
+		 */
 	private function gettext_msgids( string $file ): array {
 		$source  = file_get_contents( $file );
 		$pattern = '/\\b(?:__|_e|esc_html__|esc_html_e|esc_attr__|esc_attr_e)\\(\\s*([\'\"])((?:\\\\.|(?!\\1).)*)\\1\\s*,\\s*([\'\"])' . self::DOMAIN . '\\3/s';
@@ -50,7 +62,12 @@ final class OperationalLogLocalizationTest extends TestCase {
 		return array_map( 'stripcslashes', $matches[2] );
 	}
 
-	/** @return array<string, string> */
+		/**
+		 * Parse po.
+		 *
+		 * @param string $file Value.
+		 * @return array Return value.
+		 */
 	private function parse_po( string $file ): array {
 		$source = file_get_contents( $file );
 		self::assertIsString( $source, $file );
@@ -62,7 +79,12 @@ final class OperationalLogLocalizationTest extends TestCase {
 		return $catalog;
 	}
 
-	/** @return array<string, string> */
+		/**
+		 * Parse mo.
+		 *
+		 * @param string $file Value.
+		 * @return array Return value.
+		 */
 	private function parse_mo( string $file ): array {
 		$data = file_get_contents( $file );
 		self::assertIsString( $data, $file );

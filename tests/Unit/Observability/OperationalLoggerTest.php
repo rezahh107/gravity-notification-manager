@@ -14,8 +14,12 @@ use GravityNotify\Observability\OperationalLogger;
 use GravityNotify\Tests\Support\Observability\InMemoryOperationalEventStore;
 use PHPUnit\Framework\TestCase;
 
+/** OperationalLoggerTest implementation. */
 final class OperationalLoggerTest extends TestCase {
 
+	/**
+	 * Test fallback attempts share one trace and preserve truthful statuses.
+	 */
 	public function test_fallback_attempts_share_one_trace_and_preserve_truthful_statuses(): void {
 		$store   = new InMemoryOperationalEventStore();
 		$logger  = new OperationalLogger( $store );
@@ -51,6 +55,9 @@ final class OperationalLoggerTest extends TestCase {
 		self::assertStringContainsString( '*', (string) $first['destination'] );
 	}
 
+	/**
+	 * Test bale event remains bale and has no sms sender.
+	 */
 	public function test_bale_event_remains_bale_and_has_no_sms_sender(): void {
 		$store  = new InMemoryOperationalEventStore();
 		$logger = new OperationalLogger( $store );
@@ -66,6 +73,9 @@ final class OperationalLoggerTest extends TestCase {
 		self::assertSame( AttemptStatus::FAILED, $data['status'] );
 	}
 
+	/**
+	 * Test logging failure never throws or changes attempt truth.
+	 */
 	public function test_logging_failure_never_throws_or_changes_attempt_truth(): void {
 		$store              = new InMemoryOperationalEventStore();
 		$store->fail_writes = true;
@@ -83,6 +93,9 @@ final class OperationalLoggerTest extends TestCase {
 		self::assertSame( 'accepted', $result->diagnostic() );
 	}
 
+	/**
+	 * Test representative secret like diagnostics and references are not persisted.
+	 */
 	public function test_representative_secret_like_diagnostics_and_references_are_not_persisted(): void {
 		$store  = new InMemoryOperationalEventStore();
 		$logger = new OperationalLogger( $store );
@@ -96,9 +109,13 @@ final class OperationalLoggerTest extends TestCase {
 		$data = $store->events[0]->to_array();
 		self::assertSame( array( 'safe-ref-2' ), $data['provider_references'] );
 		self::assertSame( 'unknown', $data['diagnostic'] );
-		self::assertStringNotContainsString( 'BearerSecret', json_encode( $data ) ?: '' );
+		$encoded = json_encode( $data );
+		self::assertStringNotContainsString( 'BearerSecret', false === $encoded ? '' : $encoded );
 	}
 
+	/**
+	 * Test masking never persists full personal destination.
+	 */
 	public function test_masking_never_persists_full_personal_destination(): void {
 		$masked = OperationalLogger::masked_destinations( array( '+989121234567', '@private_channel' ) );
 		self::assertIsString( $masked );

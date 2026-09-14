@@ -29,8 +29,12 @@ use GravityNotify\Tests\Support\Recipient\FakeFlowAssigneeReader;
 use GravityNotify\Tests\Support\Recipient\FakeUserDirectory;
 use PHPUnit\Framework\TestCase;
 
+/** OperationalFeedObservabilityTest implementation. */
 final class OperationalFeedObservabilityTest extends TestCase {
 
+	/**
+	 * SetUpBeforeClass.
+	 */
 	public static function setUpBeforeClass(): void {
 		parent::setUpBeforeClass();
 		if ( ! class_exists( 'GFFeedAddOn', false ) ) {
@@ -38,6 +42,9 @@ final class OperationalFeedObservabilityTest extends TestCase {
 		}
 	}
 
+	/**
+	 * TearDown.
+	 */
 	protected function tearDown(): void {
 		$add_on = NotificationFeedAddOn::get_instance();
 		$add_on->configure_processor( null );
@@ -45,6 +52,9 @@ final class OperationalFeedObservabilityTest extends TestCase {
 		parent::tearDown();
 	}
 
+	/**
+	 * Test normal sms fallback has one trace without changing entry meta truth.
+	 */
 	public function test_normal_sms_fallback_has_one_trace_without_changing_entry_meta_truth(): void {
 		$delivery_store = new InMemoryDeliveryStateStore();
 		$event_store    = new InMemoryOperationalEventStore();
@@ -68,6 +78,9 @@ final class OperationalFeedObservabilityTest extends TestCase {
 		self::assertNotSame( '+989121234567', $first_event['destination'] );
 	}
 
+	/**
+	 * Test manual retry is distinct in log and preserves retry state authority.
+	 */
 	public function test_manual_retry_is_distinct_in_log_and_preserves_retry_state_authority(): void {
 		$delivery_store = new InMemoryDeliveryStateStore();
 		$event_store    = new InMemoryOperationalEventStore();
@@ -91,6 +104,9 @@ final class OperationalFeedObservabilityTest extends TestCase {
 		self::assertFalse( $target['attention_required'] );
 	}
 
+	/**
+	 * Test bale feed is observed as bale not sms.
+	 */
 	public function test_bale_feed_is_observed_as_bale_not_sms(): void {
 		$delivery_store = new InMemoryDeliveryStateStore();
 		$event_store    = new InMemoryOperationalEventStore();
@@ -104,7 +120,15 @@ final class OperationalFeedObservabilityTest extends TestCase {
 		self::assertNull( $event_store->events[0]->get( 'sender' ) );
 	}
 
-	/** @param array<int, SmsProviderInterface> $providers */
+		/**
+		 * Configured add on.
+		 *
+		 * @param InMemoryDeliveryStateStore    $delivery_store Value.
+		 * @param array                         $providers Value.
+		 * @param BaleChannelInterface|null     $bale Value.
+		 * @param InMemoryOperationalEventStore $event_store Value.
+		 * @return NotificationFeedAddOn Return value.
+		 */
 	private function configured_add_on(
 		InMemoryDeliveryStateStore $delivery_store,
 		array $providers,
@@ -117,7 +141,14 @@ final class OperationalFeedObservabilityTest extends TestCase {
 		return $add_on;
 	}
 
-	/** @param array<int, SmsProviderInterface> $providers */
+		/**
+		 * Processor.
+		 *
+		 * @param array                         $providers Value.
+		 * @param BaleChannelInterface|null     $bale Value.
+		 * @param InMemoryOperationalEventStore $events Value.
+		 * @return NotificationFeedProcessor Return value.
+		 */
 	private function processor( array $providers, ?BaleChannelInterface $bale, InMemoryOperationalEventStore $events ): NotificationFeedProcessor {
 		$resolver = new RecipientResolver(
 			new FakeEntryFieldReader( array() ),
@@ -138,17 +169,33 @@ final class OperationalFeedObservabilityTest extends TestCase {
 		);
 	}
 
-	/** @return array<string, mixed> */
+		/**
+		 * Sms feed.
+		 *
+		 * @param string $fallback Value.
+		 * @return array Return value.
+		 */
 	private function sms_feed( string $fallback = FeedRuleSchema::FALLBACK_NONE ): array {
 		return $this->feed( FeedRuleSchema::CHANNEL_SMS, '+989121234567', $fallback );
 	}
 
-	/** @return array<string, mixed> */
+		/**
+		 * Bale feed.
+		 *
+		 * @return array Return value.
+		 */
 	private function bale_feed(): array {
 		return $this->feed( FeedRuleSchema::CHANNEL_BALE, '123456789', FeedRuleSchema::FALLBACK_NONE );
 	}
 
-	/** @return array<string, mixed> */
+		/**
+		 * Feed.
+		 *
+		 * @param string $channel Value.
+		 * @param string $recipient Value.
+		 * @param string $fallback Value.
+		 * @return array Return value.
+		 */
 	private function feed( string $channel, string $recipient, string $fallback ): array {
 		return array(
 			'id'         => 7,
@@ -166,7 +213,11 @@ final class OperationalFeedObservabilityTest extends TestCase {
 		);
 	}
 
-	/** @return array<string, int> */
+		/**
+		 * Entry.
+		 *
+		 * @return array Return value.
+		 */
 	private function entry(): array {
 		return array(
 			'id'      => 10,
@@ -174,11 +225,21 @@ final class OperationalFeedObservabilityTest extends TestCase {
 		);
 	}
 
-	/** @return array<string, int> */
+		/**
+		 * Form.
+		 *
+		 * @return array Return value.
+		 */
 	private function form(): array {
 		return array( 'id' => 5 );
 	}
 
+	/**
+	 * Manager.
+	 *
+	 * @param InMemoryDeliveryStateStore $store Value.
+	 * @return DeliveryStateManager Return value.
+	 */
 	private function manager( InMemoryDeliveryStateStore $store ): DeliveryStateManager {
 		return new DeliveryStateManager( $store, static fn(): string => '2026-09-14T00:00:00+00:00' );
 	}

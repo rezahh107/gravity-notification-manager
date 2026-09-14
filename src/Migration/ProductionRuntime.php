@@ -25,21 +25,37 @@ use GravityNotify\Support\NoSendGuard;
 /** Enables the greenfield runtime only when every active GNM Feed is cutover-authorized. */
 final class ProductionRuntime {
 
+	/**
+	 * Boot.
+	 */
 	public static function boot(): void {
 		if ( function_exists( 'add_action' ) ) {
 			add_action( 'gform_loaded', array( self::class, 'register' ), 5 );
 		}
 	}
 
+	/**
+	 * Register.
+	 */
 	public static function register(): void {
 		self::register_with_endpoint( null );
 	}
 
+	/**
+	 * Register with test ippanel endpoint.
+	 *
+	 * @param string $endpoint Value.
+	 */
 	public static function register_with_test_ippanel_endpoint( string $endpoint ): void {
 		NoSendGuard::assert_test_loopback_http_url( $endpoint );
 		self::register_with_endpoint( $endpoint );
 	}
 
+	/**
+	 * Register with endpoint.
+	 *
+	 * @param string|null $test_endpoint Value.
+	 */
 	private static function register_with_endpoint( ?string $test_endpoint ): void {
 		if ( ! class_exists( '\\GFForms' ) || ! method_exists( '\\GFForms', 'include_addon_framework' ) ) {
 			return;
@@ -57,6 +73,12 @@ final class ProductionRuntime {
 		$add_on->configure_processor( self::processor( $test_endpoint ) );
 	}
 
+	/**
+	 * Processor.
+	 *
+	 * @param string|null $test_endpoint Value.
+	 * @return NotificationFeedProcessor Return value.
+	 */
 	private static function processor( ?string $test_endpoint = null ): NotificationFeedProcessor {
 		$settings         = Settings::read();
 		$http             = new WordPressHttpTransport();
@@ -76,6 +98,12 @@ final class ProductionRuntime {
 		);
 	}
 
+	/**
+	 * All active feeds authorized.
+	 *
+	 * @param NotificationFeedAddOn $add_on Value.
+	 * @return bool Return value.
+	 */
 	private static function all_active_feeds_authorized( NotificationFeedAddOn $add_on ): bool {
 		if ( ! class_exists( '\\GFAPI' ) ) {
 			return false;

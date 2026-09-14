@@ -15,12 +15,19 @@ use InvalidArgumentException;
  */
 final class OperationalEvent {
 
-	/** @var array<string, mixed> */
+		/**
+		 * Stored value.
+		 *
+		 * @var array<string,
+		 */
 	private array $data;
 
-	/**
-	 * @param array<string, mixed> $data Safe normalized event facts.
-	 */
+		/**
+		 * Construct the object.
+		 *
+		 * @param array $data Value.
+		 * @throws \InvalidArgumentException When supplied data is invalid.
+		 */
 	public function __construct( array $data ) {
 		$status = (string) ( $data['status'] ?? '' );
 		if ( ! AttemptStatus::is_valid( $status ) ) {
@@ -61,17 +68,30 @@ final class OperationalEvent {
 		);
 	}
 
-	/** @return array<string, mixed> */
+		/**
+		 * To array.
+		 *
+		 * @return array Return value.
+		 */
 	public function to_array(): array {
 		return $this->data;
 	}
 
-	/** @param string $key Field name. */
+		/**
+		 * Get.
+		 *
+		 * @param string $key Value.
+		 */
 	public function get( string $key ) {
 		return $this->data[ $key ] ?? null;
 	}
 
-	/** @param array<string, mixed> $row Database row. */
+		/**
+		 * From storage row.
+		 *
+		 * @param array $row Value.
+		 * @return self Return value.
+		 */
 	public static function from_storage_row( array $row ): self {
 		$references = array();
 		if ( isset( $row['provider_references'] ) && is_string( $row['provider_references'] ) && '' !== $row['provider_references'] ) {
@@ -82,6 +102,12 @@ final class OperationalEvent {
 		return new self( $row );
 	}
 
+	/**
+	 * Positive or null.
+	 *
+	 * @param mixed $value Value.
+	 * @return int|null Return value.
+	 */
 	private static function positive_or_null( $value ): ?int {
 		if ( is_int( $value ) ) {
 			return 0 < $value ? $value : null;
@@ -93,6 +119,13 @@ final class OperationalEvent {
 		return null;
 	}
 
+	/**
+	 * Timestamp.
+	 *
+	 * @param string $value Value.
+	 * @return string Return value.
+	 * @throws \InvalidArgumentException When the timestamp format is invalid.
+	 */
 	private static function timestamp( string $value ): string {
 		if ( 1 !== preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $value ) ) {
 			throw new InvalidArgumentException( 'Operational event timestamp is invalid.' );
@@ -100,6 +133,13 @@ final class OperationalEvent {
 		return $value;
 	}
 
+	/**
+	 * Trace id.
+	 *
+	 * @param string $value Value.
+	 * @return string Return value.
+	 * @throws \InvalidArgumentException When the trace identifier is not UUIDv4.
+	 */
 	private static function trace_id( string $value ): string {
 		$value = strtolower( trim( $value ) );
 		if ( 1 !== preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D', $value ) ) {
@@ -108,6 +148,13 @@ final class OperationalEvent {
 		return $value;
 	}
 
+	/**
+	 * Identifier or null.
+	 *
+	 * @param mixed $value Value.
+	 * @param int   $limit Value.
+	 * @return string|null Return value.
+	 */
 	private static function identifier_or_null( $value, int $limit ): ?string {
 		if ( ! is_string( $value ) || '' === trim( $value ) ) {
 			return null;
@@ -119,6 +166,14 @@ final class OperationalEvent {
 		return 1 === preg_match( '/^[A-Za-z0-9._:-]{1,' . $limit . '}$/D', $value ) ? $value : null;
 	}
 
+	/**
+	 * Identifier.
+	 *
+	 * @param string $value Value.
+	 * @param int    $limit Value.
+	 * @param string $fallback Value.
+	 * @return string Return value.
+	 */
 	private static function identifier( string $value, int $limit, string $fallback ): string {
 		$value = trim( $value );
 		if ( self::looks_sensitive( $value ) ) {
@@ -127,6 +182,13 @@ final class OperationalEvent {
 		return 1 === preg_match( '/^[A-Za-z0-9._:-]{1,' . $limit . '}$/D', $value ) ? $value : $fallback;
 	}
 
+	/**
+	 * Text or null.
+	 *
+	 * @param mixed $value Value.
+	 * @param int   $limit Value.
+	 * @return string|null Return value.
+	 */
 	private static function text_or_null( $value, int $limit ): ?string {
 		if ( ! is_string( $value ) || '' === trim( $value ) ) {
 			return null;
@@ -136,6 +198,12 @@ final class OperationalEvent {
 		return '' === $value ? null : $value;
 	}
 
+	/**
+	 * Sender or null.
+	 *
+	 * @param mixed $value Value.
+	 * @return string|null Return value.
+	 */
 	private static function sender_or_null( $value ): ?string {
 		if ( ! is_string( $value ) ) {
 			return null;
@@ -144,7 +212,12 @@ final class OperationalEvent {
 		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value ) ? $value : null;
 	}
 
-	/** @return array<int, string> */
+		/**
+		 * References.
+		 *
+		 * @param mixed $values Value.
+		 * @return array Return value.
+		 */
 	private static function references( $values ): array {
 		if ( ! is_array( $values ) ) {
 			return array();
@@ -164,15 +237,33 @@ final class OperationalEvent {
 		return array_values( array_unique( $safe ) );
 	}
 
+	/**
+	 * Looks sensitive.
+	 *
+	 * @param string $value Value.
+	 * @return bool Return value.
+	 */
 	private static function looks_sensitive( string $value ): bool {
 		return 1 === preg_match( '/(?:api[_-]?key|authorization|bearer|secret|token)/i', $value );
 	}
 
+	/**
+	 * Http status or null.
+	 *
+	 * @param mixed $value Value.
+	 * @return int|null Return value.
+	 */
 	private static function http_status_or_null( $value ): ?int {
 		$status = is_int( $value ) ? $value : ( is_string( $value ) && ctype_digit( $value ) ? (int) $value : 0 );
 		return 100 <= $status && 599 >= $status ? $status : null;
 	}
 
+	/**
+	 * Version or null.
+	 *
+	 * @param mixed $value Value.
+	 * @return string|null Return value.
+	 */
 	private static function version_or_null( $value ): ?string {
 		if ( ! is_string( $value ) ) {
 			return null;

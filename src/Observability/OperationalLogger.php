@@ -15,29 +15,42 @@ use Throwable;
  */
 final class OperationalLogger {
 
+	/**
+	 * Stored value.
+	 *
+	 * @var OperationalEventStoreInterface
+	 */
 	private OperationalEventStoreInterface $store;
 
+	/**
+	 * Construct the object.
+	 *
+	 * @param OperationalEventStoreInterface $store Value.
+	 * @throws \InvalidArgumentException When supplied data is invalid.
+	 */
 	public function __construct( OperationalEventStoreInterface $store ) {
 		$this->store = $store;
 	}
 
-	/** Production writer using the WordPress-native bounded event table. */
+		/**
+		 * Production.
+		 *
+		 * @return self Return value.
+		 */
 	public static function production(): self {
 		return new self( WordPressOperationalEventStore::production() );
 	}
 
-	/**
-	 * Record a sequence of attempts sharing one trace.
-	 *
-	 * Logging is deliberately best-effort and never throws into delivery.
-	 *
-	 * @param OperationalContext        $context          Logical operation context.
-	 * @param array<int, AttemptResult> $attempts         Normalized attempts.
-	 * @param array<int, string>        $raw_destinations Raw resolved destinations; masked before persistence.
-	 * @param string|null               $sender           Validated SMS sender when applicable.
-	 * @param int                       $start_index      First attempt index within the trace.
-	 * @return int Next attempt index after the supplied attempts.
-	 */
+		/**
+		 * Record attempts.
+		 *
+		 * @param OperationalContext $context Value.
+		 * @param array              $attempts Value.
+		 * @param array              $raw_destinations Value.
+		 * @param string|null        $sender Value.
+		 * @param int                $start_index Value.
+		 * @return int Return value.
+		 */
 	public function record_attempts(
 		OperationalContext $context,
 		array $attempts,
@@ -55,11 +68,16 @@ final class OperationalLogger {
 		return $index;
 	}
 
-	/**
-	 * Record one normalized attempt without affecting caller truth on persistence failure.
-	 *
-	 * @param array<int, string> $raw_destinations Resolved destinations.
-	 */
+		/**
+		 * Record attempt.
+		 *
+		 * @param OperationalContext $context Value.
+		 * @param AttemptResult      $attempt Value.
+		 * @param array              $raw_destinations Value.
+		 * @param string|null        $sender Value.
+		 * @param int                $attempt_index Value.
+		 * @return bool Return value.
+		 */
 	public function record_attempt(
 		OperationalContext $context,
 		AttemptResult $attempt,
@@ -98,7 +116,11 @@ final class OperationalLogger {
 		}
 	}
 
-	/** @return array<string, string|null> */
+		/**
+		 * Runtime snapshot.
+		 *
+		 * @return array Return value.
+		 */
 	private function runtime_snapshot(): array {
 		$plugin = defined( 'GFSMS_PLUGIN_VERSION' ) ? (string) GFSMS_PLUGIN_VERSION : null;
 		$wp     = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'version' ) : null;
@@ -109,11 +131,12 @@ final class OperationalLogger {
 		);
 	}
 
-	/**
-	 * Mask personal destinations before they cross the persistence boundary.
-	 *
-	 * @param array<int, string> $destinations Raw resolved targets.
-	 */
+		/**
+		 * Masked destinations.
+		 *
+		 * @param array $destinations Value.
+		 * @return string|null Return value.
+		 */
 	public static function masked_destinations( array $destinations ): ?string {
 		$masks = array();
 		foreach ( $destinations as $destination ) {
@@ -131,6 +154,12 @@ final class OperationalLogger {
 		return implode( ', ', $masks ) . ( 0 < $remaining ? ' (+' . $remaining . ')' : '' );
 	}
 
+	/**
+	 * Mask destination.
+	 *
+	 * @param string $value Value.
+	 * @return string Return value.
+	 */
 	private static function mask_destination( string $value ): string {
 		$length = strlen( $value );
 		if ( 6 >= $length ) {

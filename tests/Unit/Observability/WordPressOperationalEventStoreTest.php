@@ -11,10 +11,15 @@ use GravityNotify\Delivery\AttemptStatus;
 use GravityNotify\Observability\OperationalContext;
 use GravityNotify\Observability\OperationalEvent;
 use GravityNotify\Observability\WordPressOperationalEventStore;
+use GravityNotify\Tests\Support\Observability\OperationalStoreWpdbFake;
 use PHPUnit\Framework\TestCase;
 
+/** WordPressOperationalEventStoreTest implementation. */
 final class WordPressOperationalEventStoreTest extends TestCase {
 
+	/**
+	 * Test retention keeps only newest configured number of rows.
+	 */
 	public function test_retention_keeps_only_newest_configured_number_of_rows(): void {
 		$db    = new OperationalStoreWpdbFake();
 		$store = new WordPressOperationalEventStore( $db, 3 );
@@ -26,6 +31,12 @@ final class WordPressOperationalEventStoreTest extends TestCase {
 		self::assertSame( array( 3, 4, 5 ), array_column( $db->rows, 'id' ) );
 	}
 
+	/**
+	 * Event.
+	 *
+	 * @param int $index Value.
+	 * @return OperationalEvent Return value.
+	 */
 	private function event( int $index ): OperationalEvent {
 		return new OperationalEvent(
 			array(
@@ -39,48 +50,5 @@ final class WordPressOperationalEventStoreTest extends TestCase {
 				'diagnostic'     => 'accepted',
 			)
 		);
-	}
-}
-
-final class OperationalStoreWpdbFake {
-	public string $prefix = 'wp_';
-	/** @var array<int, array<string, mixed>> */
-	public array $rows   = array();
-	private int $next_id = 1;
-
-	/** @param array<string, mixed> $data */
-	public function insert( string $table, array $data ) {
-		unset( $table );
-		$data['id']   = $this->next_id++;
-		$this->rows[] = $data;
-		return 1;
-	}
-
-	public function prepare( string $query, ...$args ): string {
-		return (string) json_encode(
-			array(
-				'query' => $query,
-				'args'  => $args,
-			)
-		);
-	}
-
-	public function get_var( string $prepared ) {
-		$data   = json_decode( $prepared, true );
-		$offset = (int) ( $data['args'][1] ?? 0 );
-		$ids    = array_reverse( array_column( $this->rows, 'id' ) );
-		return $ids[ $offset ] ?? null;
-	}
-
-	public function query( string $prepared ) {
-		$data       = json_decode( $prepared, true );
-		$cutoff     = (int) ( $data['args'][1] ?? 0 );
-		$this->rows = array_values(
-			array_filter(
-				$this->rows,
-				static fn( array $row ): bool => (int) $row['id'] >= $cutoff
-			)
-		);
-		return 1;
 	}
 }

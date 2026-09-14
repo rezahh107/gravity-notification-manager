@@ -10,12 +10,28 @@ namespace GravityNotify\Tests\Support\Observability;
 use GravityNotify\Observability\OperationalEvent;
 use GravityNotify\Observability\OperationalEventStoreInterface;
 
+/** InMemoryOperationalEventStore implementation. */
 final class InMemoryOperationalEventStore implements OperationalEventStoreInterface {
 
-	/** @var array<int, OperationalEvent> */
-	public array $events     = array();
+		/**
+		 * Stored value.
+		 *
+		 * @var array<int,
+		 */
+	public array $events = array();
+	/**
+	 * Stored value.
+	 *
+	 * @var bool
+	 */
 	public bool $fail_writes = false;
 
+	/**
+	 * Append.
+	 *
+	 * @param OperationalEvent $event Value.
+	 * @return bool Return value.
+	 */
 	public function append( OperationalEvent $event ): bool {
 		if ( $this->fail_writes ) {
 			return false;
@@ -24,6 +40,14 @@ final class InMemoryOperationalEventStore implements OperationalEventStoreInterf
 		return true;
 	}
 
+	/**
+	 * Latest.
+	 *
+	 * @param string $channel Value.
+	 * @param array  $filters Value.
+	 * @param int    $limit Value.
+	 * @return array Return value.
+	 */
 	public function latest( string $channel, array $filters = array(), int $limit = 100 ): array {
 		$events = array_values(
 			array_filter(

@@ -15,8 +15,16 @@ final class OperationalLogInstaller {
 	public const SCHEMA_VERSION = '1';
 	public const VERSION_OPTION = 'gravity_notify_operational_log_schema_version';
 
+	/**
+	 * Stored value.
+	 *
+	 * @var bool
+	 */
 	private static bool $booted = false;
 
+	/**
+	 * Boot.
+	 */
 	public static function boot(): void {
 		if ( self::$booted || ! function_exists( 'add_action' ) ) {
 			return;
@@ -120,7 +128,12 @@ final class OperationalLogInstaller {
 		);
 	}
 
-	/** @param object $db wpdb-compatible object. */
+		/**
+		 * Table name.
+		 *
+		 * @param object $db Value.
+		 * @return string Return value.
+		 */
 	public static function table_name( object $db ): string {
 		$prefix = isset( $db->prefix ) && is_string( $db->prefix ) ? $db->prefix : '';
 		return $prefix . 'gravity_notify_operational_events';

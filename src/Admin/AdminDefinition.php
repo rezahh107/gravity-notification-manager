@@ -22,7 +22,11 @@ final class AdminDefinition {
 	public const TEST_BALE_ACTION         = 'gravity_notify_test_bale';
 	public const PROVIDER_TEST_SMS_ACTION = 'gravity_notify_provider_manager_test_sms';
 
-	/** @return array<int, array{slug:string,title:string}> */
+		/**
+		 * Surfaces.
+		 *
+		 * @return array Return value.
+		 */
 	public static function surfaces(): array {
 		return array(
 			array(
@@ -48,7 +52,11 @@ final class AdminDefinition {
 		);
 	}
 
-	/** @return array{slug:string,title:string} */
+		/**
+		 * Provider surface.
+		 *
+		 * @return array Return value.
+		 */
 	public static function provider_surface(): array {
 		return array(
 			'slug'  => self::PROVIDERS_SLUG,
@@ -56,7 +64,11 @@ final class AdminDefinition {
 		);
 	}
 
-	/** @return array{slug:string,title:string} */
+		/**
+		 * Log surface.
+		 *
+		 * @return array Return value.
+		 */
 	public static function log_surface(): array {
 		return array(
 			'slug'  => self::LOGS_SLUG,
@@ -64,7 +76,11 @@ final class AdminDefinition {
 		);
 	}
 
-	/** @return array<int, array{slug:string,title:string}> */
+		/**
+		 * Navigation surfaces.
+		 *
+		 * @return array Return value.
+		 */
 	public static function navigation_surfaces(): array {
 		$surfaces = self::surfaces();
 		array_splice( $surfaces, 2, 0, array( self::provider_surface(), self::log_surface() ) );

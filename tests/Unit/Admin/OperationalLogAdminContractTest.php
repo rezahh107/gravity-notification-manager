@@ -9,8 +9,12 @@ namespace GravityNotify\Tests\Unit\Admin;
 
 use PHPUnit\Framework\TestCase;
 
+/** OperationalLogAdminContractTest implementation. */
 final class OperationalLogAdminContractTest extends TestCase {
 
+	/**
+	 * Test log surface has separate sms bale views and llm copy action.
+	 */
 	public function test_log_surface_has_separate_sms_bale_views_and_llm_copy_action(): void {
 		$root   = dirname( __DIR__, 3 );
 		$source = file_get_contents( $root . '/src/Admin/OperationalLogAdmin.php' );
@@ -22,6 +26,9 @@ final class OperationalLogAdminContractTest extends TestCase {
 		self::assertStringContainsString( 'WordPressOperationalEventStore::production()->latest(', $source );
 	}
 
+	/**
+	 * Test log render path contains no provider or network send.
+	 */
 	public function test_log_render_path_contains_no_provider_or_network_send(): void {
 		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/OperationalLogAdmin.php' );
 		self::assertIsString( $source );
@@ -31,6 +38,9 @@ final class OperationalLogAdminContractTest extends TestCase {
 		self::assertStringNotContainsString( '->send(', $source );
 	}
 
+	/**
+	 * Test greenfield schema is separate versioned and upgrade checked.
+	 */
 	public function test_greenfield_schema_is_separate_versioned_and_upgrade_checked(): void {
 		$root      = dirname( __DIR__, 3 );
 		$installer = file_get_contents( $root . '/src/Observability/OperationalLogInstaller.php' );
@@ -45,6 +55,9 @@ final class OperationalLogAdminContractTest extends TestCase {
 		self::assertStringNotContainsString( 'gfsms_logs', $installer );
 	}
 
+	/**
+	 * Test legacy logger has no production runtime consumer.
+	 */
 	public function test_legacy_logger_has_no_production_runtime_consumer(): void {
 		$root       = dirname( __DIR__, 3 );
 		$entrypoint = file_get_contents( $root . '/gravityflow-sms-ippanel.php' );

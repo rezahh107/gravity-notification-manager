@@ -19,8 +19,16 @@ use RuntimeException;
  */
 final class OperationalLogAdmin {
 
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private static string $screen_hook = '';
 
+	/**
+	 * Boot.
+	 */
 	public static function boot(): void {
 		if ( ! function_exists( 'add_action' ) ) {
 			return;
@@ -29,6 +37,9 @@ final class OperationalLogAdmin {
 		add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue_assets' ) );
 	}
 
+	/**
+	 * Register menu.
+	 */
 	public static function register_menu(): void {
 		if ( ! function_exists( 'add_submenu_page' ) ) {
 			return;
@@ -50,6 +61,11 @@ final class OperationalLogAdmin {
 		}
 	}
 
+	/**
+	 * Enqueue assets.
+	 *
+	 * @param string $hook_suffix Value.
+	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
 		if ( '' === self::$screen_hook || self::$screen_hook !== $hook_suffix || ! defined( 'GRAVITY_NOTIFY_PLUGIN_URL' ) ) {
 			return;
@@ -63,6 +79,9 @@ final class OperationalLogAdmin {
 		}
 	}
 
+	/**
+	 * Render.
+	 */
 	public static function render(): void {
 		self::guard_capability();
 		$channel = self::requested_channel();
@@ -79,6 +98,11 @@ final class OperationalLogAdmin {
 		echo '</div>';
 	}
 
+	/**
+	 * Render tabs.
+	 *
+	 * @param string $channel Value.
+	 */
 	private static function render_tabs( string $channel ): void {
 		echo '<nav class="nav-tab-wrapper gnm-log-tabs" aria-label="' . esc_attr__( 'Operational log channel', 'gravity-notification-manager' ) . '">';
 		foreach ( array(
@@ -98,7 +122,12 @@ final class OperationalLogAdmin {
 		echo '</nav>';
 	}
 
-	/** @param array<string, string> $filters */
+		/**
+		 * Render filters.
+		 *
+		 * @param string $channel Value.
+		 * @param array  $filters Value.
+		 */
 	private static function render_filters( string $channel, array $filters ): void {
 		echo '<form method="get" class="gnm-panel gnm-log-filters">';
 		echo '<input type="hidden" name="page" value="' . esc_attr( AdminDefinition::LOGS_SLUG ) . '">';
@@ -121,7 +150,11 @@ final class OperationalLogAdmin {
 		echo '</form>';
 	}
 
-	/** @param array<int, OperationalEvent> $events */
+		/**
+		 * Render table.
+		 *
+		 * @param array $events Value.
+		 */
 	private static function render_table( array $events ): void {
 		if ( array() === $events ) {
 			echo '<div class="gnm-panel gnm-empty"><p>' . esc_html__( 'No matching operational records were found.', 'gravity-notification-manager' ) . '</p></div>';
@@ -147,14 +180,19 @@ final class OperationalLogAdmin {
 		echo '</tbody></table></div>';
 	}
 
+	/**
+	 * Render row.
+	 *
+	 * @param OperationalEvent $event Value.
+	 */
 	private static function render_row( OperationalEvent $event ): void {
 		$data = $event->to_array();
 		echo '<tr>';
 		echo '<td><bdi class="gnm-ltr" dir="ltr">' . esc_html( (string) $data['created_at_utc'] ) . ' UTC</bdi></td>';
-		echo '<td>' . self::status_badge( (string) $data['status'] ) . '</td>';
+		echo '<td>' . self::status_badge( (string) $data['status'] ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Helper returns escaped fixed markup.
 		echo '<td>' . esc_html( self::execution_label( (string) $data['execution_type'] ) ) . '<br><small>#' . esc_html( (string) $data['attempt_index'] ) . '</small></td>';
-		echo '<td>' . self::provider_and_source( $data ) . '</td>';
-		echo '<td>' . self::route( $data ) . '</td>';
+		echo '<td>' . self::provider_and_source( $data ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Helper returns escaped fixed markup.
+		echo '<td>' . self::route( $data ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Helper returns escaped fixed markup.
 		echo '<td><bdi class="gnm-ltr" dir="ltr">' . esc_html( (string) $data['diagnostic'] ) . '</bdi>';
 		if ( null !== $data['http_status'] ) {
 			echo '<br><small>HTTP <bdi class="gnm-ltr" dir="ltr">' . esc_html( (string) $data['http_status'] ) . '</bdi></small>';
@@ -175,7 +213,12 @@ final class OperationalLogAdmin {
 		echo '</td></tr>';
 	}
 
-	/** @param array<string, mixed> $data */
+		/**
+		 * Provider and source.
+		 *
+		 * @param array $data Value.
+		 * @return string Return value.
+		 */
 	private static function provider_and_source( array $data ): string {
 		$parts = array();
 		if ( null !== $data['provider'] ) {
@@ -193,7 +236,12 @@ final class OperationalLogAdmin {
 		return array() === $parts ? '<span aria-hidden="true">—</span>' : implode( '<br>', $parts );
 	}
 
-	/** @param array<string, mixed> $data */
+		/**
+		 * Route.
+		 *
+		 * @param array $data Value.
+		 * @return string Return value.
+		 */
 	private static function route( array $data ): string {
 		$parts = array();
 		if ( null !== $data['sender'] ) {
@@ -205,11 +253,23 @@ final class OperationalLogAdmin {
 		return array() === $parts ? '<span aria-hidden="true">—</span>' : implode( '<br>', $parts );
 	}
 
+	/**
+	 * Status badge.
+	 *
+	 * @param string $status Value.
+	 * @return string Return value.
+	 */
 	private static function status_badge( string $status ): string {
 		$class = 'gnm-log-status gnm-log-status--' . strtolower( $status );
 		return '<span class="' . esc_attr( $class ) . '">' . esc_html( self::status_label( $status ) ) . '</span>';
 	}
 
+	/**
+	 * Status label.
+	 *
+	 * @param string $status Value.
+	 * @return string Return value.
+	 */
 	private static function status_label( string $status ): string {
 		return match ( $status ) {
 			AttemptStatus::SUCCESS   => __( 'Success', 'gravity-notification-manager' ),
@@ -220,6 +280,12 @@ final class OperationalLogAdmin {
 		};
 	}
 
+	/**
+	 * Execution label.
+	 *
+	 * @param string $execution Value.
+	 * @return string Return value.
+	 */
 	private static function execution_label( string $execution ): string {
 		return match ( $execution ) {
 			OperationalContext::EXECUTION_TEST  => __( 'TEST', 'gravity-notification-manager' ),
@@ -228,16 +294,32 @@ final class OperationalLogAdmin {
 		};
 	}
 
+	/**
+	 * Option.
+	 *
+	 * @param string $value Value.
+	 * @param string $label Value.
+	 * @param string $selected Value.
+	 */
 	private static function option( string $value, string $label, string $selected ): void {
 		echo '<option value="' . esc_attr( $value ) . '"' . selected( $selected, $value, false ) . '>' . esc_html( $label ) . '</option>';
 	}
 
+	/**
+	 * Requested channel.
+	 *
+	 * @return string Return value.
+	 */
 	private static function requested_channel(): string {
 		$value = isset( $_GET['channel'] ) ? self::request_text( $_GET['channel'] ) : 'sms'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only log filter.
 		return 'bale' === $value ? 'bale' : 'sms';
 	}
 
-	/** @return array<string, string> */
+		/**
+		 * Requested filters.
+		 *
+		 * @return array Return value.
+		 */
 	private static function requested_filters(): array {
 		$status    = isset( $_GET['status'] ) ? self::request_text( $_GET['status'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter.
 		$execution = isset( $_GET['execution_type'] ) ? self::request_text( $_GET['execution_type'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter.
@@ -249,12 +331,22 @@ final class OperationalLogAdmin {
 		);
 	}
 
-	/** @param mixed $value */
+		/**
+		 * Request text.
+		 *
+		 * @param mixed $value Value.
+		 * @return string Return value.
+		 */
 	private static function request_text( $value ): string {
 		$value = is_string( $value ) ? wp_unslash( $value ) : '';
 		return function_exists( 'sanitize_text_field' ) ? sanitize_text_field( $value ) : trim( $value );
 	}
 
+	/**
+	 * Guard capability.
+	 *
+	 * @throws \RuntimeException When the capability check cannot fail through wp_die.
+	 */
 	private static function guard_capability(): void {
 		if ( ! function_exists( 'current_user_can' ) || ! current_user_can( AdminDefinition::CAPABILITY ) ) {
 			if ( function_exists( 'wp_die' ) ) {

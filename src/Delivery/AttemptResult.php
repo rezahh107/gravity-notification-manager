@@ -14,27 +14,61 @@ use InvalidArgumentException;
  */
 final class AttemptResult {
 
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private string $status;
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private string $channel;
+	/**
+	 * Stored value.
+	 *
+	 * @var string|null
+	 */
 	private ?string $provider_id;
+	/**
+	 * Stored value.
+	 *
+	 * @var string|null
+	 */
 	private ?string $capability;
-	/** @var array<int, string> */
+		/**
+		 * Stored value.
+		 *
+		 * @var array<int,
+		 */
 	private array $provider_references;
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private string $diagnostic;
+	/**
+	 * Stored value.
+	 *
+	 * @var int|null
+	 */
 	private ?int $http_status;
 
-	/**
-	 * Build one immutable-by-interface attempt value.
-	 *
-	 * @param string             $status              Attempt status.
-	 * @param string             $channel             Logical channel.
-	 * @param string|null        $provider_id         Provider identifier.
-	 * @param string|null        $capability          Requested capability.
-	 * @param array<int, string> $provider_references Safe provider references.
-	 * @param string             $diagnostic          Safe diagnostic classification.
-	 * @param int|null           $http_status         Observed HTTP response status, when established.
-	 * @throws InvalidArgumentException When the attempt status or HTTP status is unsupported.
-	 */
+		/**
+		 * Construct the object.
+		 *
+		 * @param string      $status Value.
+		 * @param string      $channel Value.
+		 * @param string|null $provider_id Value.
+		 * @param string|null $capability Value.
+		 * @param array       $provider_references Value.
+		 * @param string      $diagnostic Value.
+		 * @param int|null    $http_status Value.
+		 * @throws \InvalidArgumentException When supplied data is invalid.
+		 */
 	public function __construct(
 		string $status,
 		string $channel,
@@ -60,32 +94,65 @@ final class AttemptResult {
 		$this->http_status         = $http_status;
 	}
 
+	/**
+	 * Status.
+	 *
+	 * @return string Return value.
+	 */
 	public function status(): string {
 		return $this->status;
 	}
 
+	/**
+	 * Channel.
+	 *
+	 * @return string Return value.
+	 */
 	public function channel(): string {
 		return $this->channel;
 	}
 
+	/**
+	 * Provider id.
+	 *
+	 * @return string|null Return value.
+	 */
 	public function provider_id(): ?string {
 		return $this->provider_id;
 	}
 
+	/**
+	 * Capability.
+	 *
+	 * @return string|null Return value.
+	 */
 	public function capability(): ?string {
 		return $this->capability;
 	}
 
-	/** @return array<int, string> */
+		/**
+		 * Provider references.
+		 *
+		 * @return array Return value.
+		 */
 	public function provider_references(): array {
 		return $this->provider_references;
 	}
 
+	/**
+	 * Diagnostic.
+	 *
+	 * @return string Return value.
+	 */
 	public function diagnostic(): string {
 		return $this->diagnostic;
 	}
 
-	/** Observed HTTP status without inferring one for transport failures. */
+		/**
+		 * Http status.
+		 *
+		 * @return int|null Return value.
+		 */
 	public function http_status(): ?int {
 		return $this->http_status;
 	}

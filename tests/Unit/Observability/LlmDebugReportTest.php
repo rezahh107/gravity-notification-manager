@@ -13,8 +13,12 @@ use GravityNotify\Observability\OperationalContext;
 use GravityNotify\Observability\OperationalEvent;
 use PHPUnit\Framework\TestCase;
 
+/** LlmDebugReportTest implementation. */
 final class LlmDebugReportTest extends TestCase {
 
+	/**
+	 * Test report is deterministic whitelisted and redacted by model boundary.
+	 */
 	public function test_report_is_deterministic_whitelisted_and_redacted_by_model_boundary(): void {
 		$event = new OperationalEvent(
 			array(
@@ -56,6 +60,9 @@ final class LlmDebugReportTest extends TestCase {
 		self::assertStringNotContainsString( 'Bearer-secret-must-drop because spaces', $first );
 	}
 
+	/**
+	 * Test absent evidence is omitted instead of invented.
+	 */
 	public function test_absent_evidence_is_omitted_instead_of_invented(): void {
 		$event  = new OperationalEvent(
 			array(

@@ -28,26 +28,55 @@ use InvalidArgumentException;
  */
 final class ProviderTestService {
 
-	/** @var array<string, mixed> */
+		/**
+		 * Stored value.
+		 *
+		 * @var array<string,
+		 */
 	private array $settings;
+	/**
+	 * Stored value.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
+	/**
+	 * Stored value.
+	 *
+	 * @var OperationalLogger|null
+	 */
 	private ?OperationalLogger $operational_log;
 
-	/**
-	 * @param array<string, mixed>   $settings        Sanitized provider settings.
-	 * @param HttpTransportInterface $http            Existing transport seam.
-	 * @param OperationalLogger|null $operational_log Optional observational writer.
-	 */
+		/**
+		 * Construct the object.
+		 *
+		 * @param array                  $settings Value.
+		 * @param HttpTransportInterface $http Value.
+		 * @param OperationalLogger|null $operational_log Value.
+		 * @throws \InvalidArgumentException When supplied data is invalid.
+		 */
 	public function __construct( array $settings, HttpTransportInterface $http, ?OperationalLogger $operational_log = null ) {
 		$this->settings        = $settings;
 		$this->http            = $http;
 		$this->operational_log = $operational_log;
 	}
 
+	/**
+	 * Production.
+	 *
+	 * @return self Return value.
+	 */
 	public static function production(): self {
 		return new self( Settings::read(), new WordPressHttpTransport(), OperationalLogger::production() );
 	}
 
+	/**
+	 * Test sms.
+	 *
+	 * @param string $destination Value.
+	 * @param string $message Value.
+	 * @return AttemptResult Return value.
+	 */
 	public function test_sms( string $destination, string $message ): AttemptResult {
 		$context  = new OperationalContext( OperationalContext::EXECUTION_TEST );
 		$manager  = new SmsProviderManager( $this->settings );
@@ -88,6 +117,13 @@ final class ProviderTestService {
 		return $this->observed_test_result( $context, $provider->send( $request ), array( $destination ), $from );
 	}
 
+	/**
+	 * Test bale.
+	 *
+	 * @param string $destination Value.
+	 * @param string $message Value.
+	 * @return AttemptResult Return value.
+	 */
 	public function test_bale( string $destination, string $message ): AttemptResult {
 		$context = new OperationalContext( OperationalContext::EXECUTION_TEST );
 		$token   = $this->settings['bale_bot_token'] ?? '';
@@ -123,10 +159,22 @@ final class ProviderTestService {
 		return $this->observed_test_result( $context, $result, array( $destination ) );
 	}
 
+	/**
+	 * Is e164.
+	 *
+	 * @param string $value Value.
+	 * @return bool Return value.
+	 */
 	private static function is_e164( string $value ): bool {
 		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value );
 	}
 
+	/**
+	 * Bale destination.
+	 *
+	 * @param string $value Value.
+	 * @return string|null Return value.
+	 */
 	private static function bale_destination( string $value ): ?string {
 		$value = trim( $value );
 		if ( '' === $value || 128 < strlen( $value ) || 1 === preg_match( '/[\x00-\x20\x7F]/', $value ) ) {
@@ -138,11 +186,28 @@ final class ProviderTestService {
 		return 1 === preg_match( '/^@[A-Za-z0-9_]+$/D', $value ) ? $value : null;
 	}
 
+	/**
+	 * Failure.
+	 *
+	 * @param string      $channel Value.
+	 * @param string|null $provider_id Value.
+	 * @param string|null $capability Value.
+	 * @param string      $diagnostic Value.
+	 * @return AttemptResult Return value.
+	 */
 	private function failure( string $channel, ?string $provider_id, ?string $capability, string $diagnostic ): AttemptResult {
 		return new AttemptResult( AttemptStatus::FAILED, $channel, $provider_id, $capability, array(), $diagnostic );
 	}
 
-	/** @param array<int, string> $destinations */
+		/**
+		 * Observed test result.
+		 *
+		 * @param OperationalContext $context Value.
+		 * @param AttemptResult      $result Value.
+		 * @param array              $destinations Value.
+		 * @param string|null        $sender Value.
+		 * @return AttemptResult Return value.
+		 */
 	private function observed_test_result(
 		OperationalContext $context,
 		AttemptResult $result,

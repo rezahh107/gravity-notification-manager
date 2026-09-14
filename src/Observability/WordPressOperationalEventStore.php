@@ -17,20 +17,47 @@ final class WordPressOperationalEventStore implements OperationalEventStoreInter
 
 	public const DEFAULT_RETENTION_LIMIT = 1000;
 
-	/** @var object WordPress wpdb-compatible object. */
+		/**
+		 * Stored value.
+		 *
+		 * @var object
+		 */
 	private object $db;
+	/**
+	 * Stored value.
+	 *
+	 * @var int
+	 */
 	private int $retention_limit;
 
+	/**
+	 * Construct the object.
+	 *
+	 * @param object $db Value.
+	 * @param int    $retention_limit Value.
+	 * @throws \InvalidArgumentException When supplied data is invalid.
+	 */
 	public function __construct( object $db, int $retention_limit = self::DEFAULT_RETENTION_LIMIT ) {
 		$this->db              = $db;
 		$this->retention_limit = max( 1, $retention_limit );
 	}
 
+	/**
+	 * Production.
+	 *
+	 * @return self Return value.
+	 */
 	public static function production(): self {
 		global $wpdb;
 		return new self( $wpdb );
 	}
 
+	/**
+	 * Append.
+	 *
+	 * @param OperationalEvent $event Value.
+	 * @return bool Return value.
+	 */
 	public function append( OperationalEvent $event ): bool {
 		$data = $event->to_array();
 		unset( $data['id'] );
@@ -50,6 +77,14 @@ final class WordPressOperationalEventStore implements OperationalEventStoreInter
 		}
 	}
 
+	/**
+	 * Latest.
+	 *
+	 * @param string $channel Value.
+	 * @param array  $filters Value.
+	 * @param int    $limit Value.
+	 * @return array Return value.
+	 */
 	public function latest( string $channel, array $filters = array(), int $limit = 100 ): array {
 		if ( ! in_array( $channel, array( 'sms', 'bale' ), true ) ) {
 			return array();
@@ -133,7 +168,12 @@ final class WordPressOperationalEventStore implements OperationalEventStoreInter
 		}
 	}
 
-	/** @param mixed $references Safe provider references. */
+		/**
+		 * Encode references.
+		 *
+		 * @param mixed $references Value.
+		 * @return string Return value.
+		 */
 	private static function encode_references( $references ): string {
 		$references = is_array( $references ) ? array_values( $references ) : array();
 		$encoded    = function_exists( 'wp_json_encode' ) ? wp_json_encode( $references ) : json_encode( $references );

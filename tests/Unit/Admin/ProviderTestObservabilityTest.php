@@ -17,8 +17,12 @@ use GravityNotify\Tests\Support\Observability\InMemoryOperationalEventStore;
 use GravityNotify\Tests\Support\WordPress\FakeHttpTransport;
 use PHPUnit\Framework\TestCase;
 
+/** ProviderTestObservabilityTest implementation. */
 final class ProviderTestObservabilityTest extends TestCase {
 
+	/**
+	 * Test ippanel and bale tests are logged as test without delivery state dependencies.
+	 */
 	public function test_ippanel_and_bale_tests_are_logged_as_test_without_delivery_state_dependencies(): void {
 		$events  = new InMemoryOperationalEventStore();
 		$http    = new FakeHttpTransport(
@@ -44,6 +48,9 @@ final class ProviderTestObservabilityTest extends TestCase {
 		self::assertNotSame( '123456789', $events->events[1]->get( 'destination' ) );
 	}
 
+	/**
+	 * Test test logging failure does not change provider result.
+	 */
 	public function test_test_logging_failure_does_not_change_provider_result(): void {
 		$events              = new InMemoryOperationalEventStore();
 		$events->fail_writes = true;
@@ -58,7 +65,11 @@ final class ProviderTestObservabilityTest extends TestCase {
 		self::assertCount( 1, $http->requests() );
 	}
 
-	/** @return array<string, mixed> */
+		/**
+		 * Settings.
+		 *
+		 * @return array Return value.
+		 */
 	private function settings(): array {
 		return array(
 			SmsProviderManager::CONFIG_KEY => array(

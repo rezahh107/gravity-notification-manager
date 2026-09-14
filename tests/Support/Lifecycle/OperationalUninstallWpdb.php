@@ -1,6 +1,6 @@
 <?php
 /**
- * wpdb-compatible uninstall test double.
+ * Wpdb-compatible uninstall test double.
  *
  * @package GravityNotify
  */
@@ -12,13 +12,25 @@ namespace GravityNotify\Tests\Support\Lifecycle;
  */
 final class OperationalUninstallWpdb {
 
-	/** Database table prefix. */
+		/**
+		 * Stored value.
+		 *
+		 * @var string
+		 */
 	public string $prefix = 'wp_';
 
-	/** @var array<string, bool> Existing tables keyed by table name. */
+		/**
+		 * Stored value.
+		 *
+		 * @var array<string,
+		 */
 	public array $tables = array();
 
-	/** @var array<int, string> Executed SQL queries. */
+		/**
+		 * Stored value.
+		 *
+		 * @var array<int,
+		 */
 	private array $queries = array();
 
 	/**

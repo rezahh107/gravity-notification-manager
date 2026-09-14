@@ -18,21 +18,54 @@ final class OperationalContext {
 	public const EXECUTION_TEST   = 'test';
 	public const EXECUTION_RETRY  = 'retry';
 
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private string $trace_id;
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private string $execution_type;
+	/**
+	 * Stored value.
+	 *
+	 * @var int|null
+	 */
 	private ?int $form_id;
+	/**
+	 * Stored value.
+	 *
+	 * @var int|null
+	 */
 	private ?int $feed_id;
+	/**
+	 * Stored value.
+	 *
+	 * @var int|null
+	 */
 	private ?int $entry_id;
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private string $feed_name;
 
-	/**
-	 * @param string   $execution_type Execution type.
-	 * @param int|null $form_id        Gravity Forms form ID.
-	 * @param int|null $feed_id        GNM Feed ID.
-	 * @param int|null $entry_id       Gravity Forms entry ID.
-	 * @param string   $feed_name      Feed label.
-	 * @param string   $trace_id       Optional externally supplied UUID for tests.
-	 */
+		/**
+		 * Construct the object.
+		 *
+		 * @param string   $execution_type Value.
+		 * @param int|null $form_id Value.
+		 * @param int|null $feed_id Value.
+		 * @param int|null $entry_id Value.
+		 * @param string   $feed_name Value.
+		 * @param string   $trace_id Value.
+		 * @throws \InvalidArgumentException When supplied data is invalid.
+		 */
 	public function __construct(
 		string $execution_type,
 		?int $form_id = null,
@@ -53,44 +86,98 @@ final class OperationalContext {
 		$this->trace_id       = '' === $trace_id ? self::new_trace_id() : self::validated_trace_id( $trace_id );
 	}
 
-	/** @return array<int, string> */
+		/**
+		 * Execution types.
+		 *
+		 * @return array Return value.
+		 */
 	public static function execution_types(): array {
 		return array( self::EXECUTION_NORMAL, self::EXECUTION_TEST, self::EXECUTION_RETRY );
 	}
 
+	/**
+	 * Trace id.
+	 *
+	 * @return string Return value.
+	 */
 	public function trace_id(): string {
 		return $this->trace_id;
 	}
 
+	/**
+	 * Execution type.
+	 *
+	 * @return string Return value.
+	 */
 	public function execution_type(): string {
 		return $this->execution_type;
 	}
 
+	/**
+	 * Form id.
+	 *
+	 * @return int|null Return value.
+	 */
 	public function form_id(): ?int {
 		return $this->form_id;
 	}
 
+	/**
+	 * Feed id.
+	 *
+	 * @return int|null Return value.
+	 */
 	public function feed_id(): ?int {
 		return $this->feed_id;
 	}
 
+	/**
+	 * Entry id.
+	 *
+	 * @return int|null Return value.
+	 */
 	public function entry_id(): ?int {
 		return $this->entry_id;
 	}
 
+	/**
+	 * Feed name.
+	 *
+	 * @return string Return value.
+	 */
 	public function feed_name(): string {
 		return $this->feed_name;
 	}
 
+	/**
+	 * Positive or null.
+	 *
+	 * @param int|null $value Value.
+	 * @return int|null Return value.
+	 */
 	private static function positive_or_null( ?int $value ): ?int {
 		return null !== $value && 0 < $value ? $value : null;
 	}
 
+	/**
+	 * Bounded text.
+	 *
+	 * @param string $value Value.
+	 * @param int    $limit Value.
+	 * @return string Return value.
+	 */
 	private static function bounded_text( string $value, int $limit ): string {
 		$value = trim( preg_replace( '/[\x00-\x1F\x7F]/u', ' ', $value ) ?? '' );
 		return function_exists( 'mb_substr' ) ? mb_substr( $value, 0, $limit ) : substr( $value, 0, $limit );
 	}
 
+	/**
+	 * Validated trace id.
+	 *
+	 * @param string $trace_id Value.
+	 * @return string Return value.
+	 * @throws \InvalidArgumentException When the trace identifier is not UUIDv4.
+	 */
 	private static function validated_trace_id( string $trace_id ): string {
 		$trace_id = strtolower( trim( $trace_id ) );
 		if ( 1 !== preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D', $trace_id ) ) {
@@ -99,6 +186,12 @@ final class OperationalContext {
 		return $trace_id;
 	}
 
+	/**
+	 * New trace id.
+	 *
+	 * @return string Return value.
+	 * @throws \Exception When secure random bytes cannot be generated.
+	 */
 	private static function new_trace_id(): string {
 		if ( function_exists( 'wp_generate_uuid4' ) ) {
 			return self::validated_trace_id( (string) wp_generate_uuid4() );

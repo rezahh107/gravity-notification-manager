@@ -12,7 +12,12 @@ namespace GravityNotify\Observability;
  */
 interface OperationalEventStoreInterface {
 
-	/** Persist one event; false means observability failed without changing delivery truth. */
+		/**
+		 * Append.
+		 *
+		 * @param OperationalEvent $event Value.
+		 * @return bool Return value.
+		 */
 	public function append( OperationalEvent $event ): bool;
 
 	/**

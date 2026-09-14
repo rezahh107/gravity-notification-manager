@@ -23,11 +23,40 @@ use Throwable;
  */
 final class NotificationFeedProcessor {
 
+	/**
+	 * Stored value.
+	 *
+	 * @var RecipientResolver
+	 */
 	private RecipientResolver $resolver;
+	/**
+	 * Stored value.
+	 *
+	 * @var SynchronousDispatcher
+	 */
 	private SynchronousDispatcher $dispatcher;
+	/**
+	 * Stored value.
+	 *
+	 * @var string
+	 */
 	private string $sms_sender;
+	/**
+	 * Stored value.
+	 *
+	 * @var OperationalLogger|null
+	 */
 	private ?OperationalLogger $operational_log;
 
+	/**
+	 * Construct the object.
+	 *
+	 * @param RecipientResolver      $resolver Value.
+	 * @param SynchronousDispatcher  $dispatcher Value.
+	 * @param string                 $sms_sender Value.
+	 * @param OperationalLogger|null $operational_log Value.
+	 * @throws \InvalidArgumentException When supplied data is invalid.
+	 */
 	public function __construct(
 		RecipientResolver $resolver,
 		SynchronousDispatcher $dispatcher,
@@ -40,14 +69,15 @@ final class NotificationFeedProcessor {
 		$this->operational_log = $operational_log;
 	}
 
-	/**
-	 * Execute one normalized Feed rule synchronously.
-	 *
-	 * @param array<string, int|string> $rule    Normalized Feed rule.
-	 * @param array                     $entry   Current Gravity Forms Entry.
-	 * @param array                     $form    Current Gravity Forms Form.
-	 * @param OperationalContext|null   $context Optional operation context from Feed orchestration.
-	 */
+		/**
+		 * Execute.
+		 *
+		 * @param array                   $rule Value.
+		 * @param array                   $entry Value.
+		 * @param array                   $form Value.
+		 * @param OperationalContext|null $context Value.
+		 * @return NotificationExecutionResult Return value.
+		 */
 	public function execute( array $rule, array $entry, array $form, ?OperationalContext $context = null ): NotificationExecutionResult {
 		$context = $context ?? $this->fallback_context( $rule, $entry, $form );
 		try {
@@ -81,11 +111,16 @@ final class NotificationFeedProcessor {
 		return new NotificationExecutionResult( array(), $skips, false );
 	}
 
-	/**
-	 * @param array<string, int|string>                       $rule         Normalized Feed rule.
-	 * @param array<int, string>                              $destinations Resolved SMS targets.
-	 * @param array<int, array{subject:string,reason:string}> $skips        Existing safe skips.
-	 */
+		/**
+		 * Execute sms.
+		 *
+		 * @param array              $rule Value.
+		 * @param array              $destinations Value.
+		 * @param string             $message Value.
+		 * @param array              $skips Value.
+		 * @param OperationalContext $context Value.
+		 * @return NotificationExecutionResult Return value.
+		 */
 	private function execute_sms(
 		array $rule,
 		array $destinations,
@@ -117,10 +152,15 @@ final class NotificationFeedProcessor {
 		return new NotificationExecutionResult( $attempts, $skips, $this->has_success( $attempts ) );
 	}
 
-	/**
-	 * @param array<int, string>                              $destinations Resolved Bale targets.
-	 * @param array<int, array{subject:string,reason:string}> $skips        Existing safe skips.
-	 */
+		/**
+		 * Execute bale.
+		 *
+		 * @param array              $destinations Value.
+		 * @param string             $message Value.
+		 * @param array              $skips Value.
+		 * @param OperationalContext $context Value.
+		 * @return NotificationExecutionResult Return value.
+		 */
 	private function execute_bale(
 		array $destinations,
 		string $message,
@@ -154,6 +194,14 @@ final class NotificationFeedProcessor {
 		return new NotificationExecutionResult( $attempts, $skips, $all_success && array() !== $attempts );
 	}
 
+	/**
+	 * Render message.
+	 *
+	 * @param string $message Value.
+	 * @param array  $form Value.
+	 * @param array  $entry Value.
+	 * @return string Return value.
+	 */
 	private function render_message( string $message, array $form, array $entry ): string {
 		if ( class_exists( '\\GFCommon' ) && method_exists( '\\GFCommon', 'replace_variables' ) ) {
 			$rendered = \GFCommon::replace_variables( $message, $form, $entry, false, false, false, 'text' );
@@ -162,7 +210,12 @@ final class NotificationFeedProcessor {
 		return $message;
 	}
 
-	/** @param array<int, AttemptResult> $attempts */
+		/**
+		 * Has success.
+		 *
+		 * @param array $attempts Value.
+		 * @return bool Return value.
+		 */
 	private function has_success( array $attempts ): bool {
 		foreach ( $attempts as $attempt ) {
 			if ( AttemptStatus::SUCCESS === $attempt->status() ) {
@@ -172,11 +225,24 @@ final class NotificationFeedProcessor {
 		return false;
 	}
 
+	/**
+	 * Failed without attempt.
+	 *
+	 * @param string $subject Value.
+	 * @param string $reason Value.
+	 * @return NotificationExecutionResult Return value.
+	 */
 	private function failed_without_attempt( string $subject, string $reason ): NotificationExecutionResult {
 		return new NotificationExecutionResult( array(), array( $this->skip( $subject, $reason ) ), false );
 	}
 
-	/** @return array{subject:string,reason:string} */
+		/**
+		 * Skip.
+		 *
+		 * @param string $subject Value.
+		 * @param string $reason Value.
+		 * @return array Return value.
+		 */
 	private function skip( string $subject, string $reason ): array {
 		return array(
 			'subject' => $subject,
@@ -184,6 +250,14 @@ final class NotificationFeedProcessor {
 		);
 	}
 
+	/**
+	 * Fallback context.
+	 *
+	 * @param array $rule Value.
+	 * @param array $entry Value.
+	 * @param array $form Value.
+	 * @return OperationalContext Return value.
+	 */
 	private function fallback_context( array $rule, array $entry, array $form ): OperationalContext {
 		return new OperationalContext(
 			OperationalContext::EXECUTION_NORMAL,
@@ -194,7 +268,12 @@ final class NotificationFeedProcessor {
 		);
 	}
 
-	/** @param mixed $value */
+		/**
+		 * Positive identifier.
+		 *
+		 * @param mixed $value Value.
+		 * @return int|null Return value.
+		 */
 	private function positive_identifier( $value ): ?int {
 		if ( is_int( $value ) ) {
 			return 0 < $value ? $value : null;
@@ -206,10 +285,16 @@ final class NotificationFeedProcessor {
 		return null;
 	}
 
-	/**
-	 * @param array<int, AttemptResult> $attempts
-	 * @param array<int, string>        $destinations
-	 */
+		/**
+		 * Record attempts.
+		 *
+		 * @param OperationalContext $context Value.
+		 * @param array              $attempts Value.
+		 * @param array              $destinations Value.
+		 * @param string|null        $sender Value.
+		 * @param int                $start_index Value.
+		 * @return int Return value.
+		 */
 	private function record_attempts(
 		OperationalContext $context,
 		array $attempts,
@@ -223,7 +308,16 @@ final class NotificationFeedProcessor {
 		return $this->operational_log->record_attempts( $context, $attempts, $destinations, $sender, $start_index );
 	}
 
-	/** @param array<int, string> $destinations */
+		/**
+		 * Record exception attempt.
+		 *
+		 * @param OperationalContext $context Value.
+		 * @param string             $channel Value.
+		 * @param string|null        $capability Value.
+		 * @param array              $destinations Value.
+		 * @param string|null        $sender Value.
+		 * @param int                $attempt_index Value.
+		 */
 	private function record_exception_attempt(
 		OperationalContext $context,
 		string $channel,

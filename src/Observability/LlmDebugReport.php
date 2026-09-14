@@ -14,6 +14,12 @@ final class LlmDebugReport {
 
 	public const SCHEMA = 'gnm-llm-debug-v1';
 
+	/**
+	 * Build.
+	 *
+	 * @param OperationalEvent $event Value.
+	 * @return string Return value.
+	 */
 	public static function build( OperationalEvent $event ): string {
 		$data   = $event->to_array();
 		$report = array(
@@ -57,7 +63,13 @@ final class LlmDebugReport {
 		return is_string( $json ) ? $json : '{"schema":"' . self::SCHEMA . '"}';
 	}
 
-	/** @param array<string, mixed> $target */
+		/**
+		 * Optional.
+		 *
+		 * @param array  $target Value.
+		 * @param string $key Value.
+		 * @param mixed  $value Value.
+		 */
 	private static function optional( array &$target, string $key, $value ): void {
 		if ( null === $value || '' === $value ) {
 			return;
