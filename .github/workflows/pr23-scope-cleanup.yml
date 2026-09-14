@@ -1,4 +1,4 @@
-name: PR23 Residual Repair
+name: PR23 Residual Repair Validation
 
 on:
   push:
@@ -11,23 +11,23 @@ permissions:
   contents: write
 
 jobs:
-  repair:
+  validate-and-clean:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       REQUIRED_STARTING_HEAD: 2591590f27d59d93d771cc30737639dc30feacad
       BRANCH_NAME: feat/operational-observability
     steps:
-      - name: Checkout exact orchestration commit
+      - name: Checkout exact validation commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Verify locked starting scope
+      - name: Verify locked ancestry and fetch base
         run: |
           git merge-base --is-ancestor "$REQUIRED_STARTING_HEAD" HEAD
-          test "$(git diff --name-only "$REQUIRED_STARTING_HEAD"..HEAD | sort -u)" = ".github/workflows/pr23-scope-cleanup.yml"
+          git fetch origin main
 
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
@@ -36,280 +36,20 @@ jobs:
           coverage: none
           tools: composer:v2
 
-      - name: Restore generated Composer artifacts from base
-        run: |
-          git fetch origin main
-          git checkout origin/main -- \
-            vendor/autoload.php \
-            vendor/composer/InstalledVersions.php \
-            vendor/composer/autoload_classmap.php \
-            vendor/composer/autoload_psr4.php \
-            vendor/composer/autoload_static.php \
-            vendor/composer/installed.php \
-            vendor/composer/platform_check.php
+      - name: Install locked development dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Apply selected residual repairs
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 <<'PY'
-          from pathlib import Path
-
-          stubs = Path('phpstan-stubs.php')
-          text = stubs.read_text()
-          anchor = "function esc_html__( string $text, string $domain = 'default' ): string { return $text; }\n"
-          addition = anchor + "function esc_attr__( string $text, string $domain = 'default' ): string { return $text; }\nfunction selected( mixed $selected, mixed $current = true, bool $display = true ): string { return ''; }\n"
-          if "function esc_attr__(" in text or "function selected(" in text:
-              raise RuntimeError('PHPStan stub surface already changed unexpectedly')
-          if anchor not in text:
-              raise RuntimeError('PHPStan stub anchor changed unexpectedly')
-          stubs.write_text(text.replace(anchor, addition, 1))
-
-          installer = Path('src/Observability/OperationalLogInstaller.php')
-          text = installer.read_text()
-          old = "\t\t// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema verification after dbDelta.\n\t\t$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );"
-          new = "\t\t$like_table = $wpdb->esc_like( $table );\n\t\t// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema verification after dbDelta.\n\t\t$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like_table ) );"
-          if old not in text:
-              raise RuntimeError('OperationalLogInstaller verification boundary changed unexpectedly')
-          installer.write_text(text.replace(old, new, 1))
-          PY
-
-          cat > tests/Support/WordPress/DbDeltaStub.php <<'PHP'
-          <?php
-          /**
-           * WordPress dbDelta test stub for WordPress-free unit tests.
-           *
-           * @package GravityNotify
-           */
-
-          /**
-           * Model the WordPress schema helper without mutating the installer fake.
-           *
-           * @param string|array $queries Schema queries.
-           * @param bool         $execute Whether WordPress would execute the queries.
-           * @return array<int, string> Empty result for the isolated installer test.
-           */
-          function dbDelta( string|array $queries = '', bool $execute = true ): array { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Intentional WordPress core test stub.
-          	unset( $queries, $execute );
-          	return array();
-          }
-          PHP
-
-          cat > tests/Support/Observability/OperationalInstallerWpdbFake.php <<'PHP'
-          <?php
-          /**
-           * wpdb fake for literal SQL LIKE verification in the operational installer.
-           *
-           * @package GravityNotify
-           */
-
-          namespace GravityNotify\Tests\Support\Observability;
-
-          /** Models only the wpdb surface required by OperationalLogInstaller::install(). */
-          final class OperationalInstallerWpdbFake {
-          	/** Database table prefix. */
-          	public string $prefix = 'wp_';
-
-          	/**
-          	 * Ordered table names returned by SHOW TABLES LIKE.
-          	 *
-          	 * @var array<int, string>
-          	 */
-          	private array $tables;
-
-          	/**
-          	 * LIKE patterns passed through prepare().
-          	 *
-          	 * @var array<int, string>
-          	 */
-          	private array $prepared_like_patterns = array();
-
-          	/**
-          	 * Constructor.
-          	 *
-          	 * @param array<int, string> $tables Ordered table names.
-          	 */
-          	public function __construct( array $tables ) {
-          		$this->tables = array_values( $tables );
-          	}
-
-          	/** Return the charset/collation suffix used by dbDelta. */
-          	public function get_charset_collate(): string {
-          		return '';
-          	}
-
-          	/**
-          	 * Escape SQL LIKE metacharacters exactly as wpdb::esc_like().
-          	 *
-          	 * @param string $text Raw pattern text.
-          	 * @return string Escaped LIKE pattern.
-          	 */
-          	public function esc_like( string $text ): string {
-          		return addcslashes( $text, '_%\\' );
-          	}
-
-          	/**
-          	 * Preserve the prepared query and arguments for deterministic evaluation.
-          	 *
-          	 * @param string $query SQL template.
-          	 * @param mixed  ...$args Placeholder values.
-          	 * @return string Serialized prepared representation.
-          	 */
-          	public function prepare( string $query, ...$args ): string {
-          		if ( 'SHOW TABLES LIKE %s' === $query && isset( $args[0] ) && is_string( $args[0] ) ) {
-          			$this->prepared_like_patterns[] = $args[0];
-          		}
-
-          		return (string) json_encode(
-          			array(
-          				'query' => $query,
-          				'args'  => $args,
-          			)
-          		);
-          	}
-
-          	/**
-          	 * Return the first ordered table matching the prepared LIKE pattern.
-          	 *
-          	 * @param string $prepared Serialized prepared representation.
-          	 * @return string|null First matching table.
-          	 */
-          	public function get_var( string $prepared ): ?string {
-          		$data = json_decode( $prepared, true );
-          		if ( ! is_array( $data ) || ! isset( $data['args'][0] ) || ! is_string( $data['args'][0] ) ) {
-          			return null;
-          		}
-
-          		return $this->first_like_match( $data['args'][0] );
-          	}
-
-          	/**
-          	 * Return the first table matching a SQL LIKE pattern.
-          	 *
-          	 * @param string $pattern SQL LIKE pattern.
-          	 * @return string|null First matching table.
-          	 */
-          	public function first_like_match( string $pattern ): ?string {
-          		foreach ( $this->tables as $table ) {
-          			if ( $this->matches_like_pattern( $pattern, $table ) ) {
-          				return $table;
-          			}
-          		}
-
-          		return null;
-          	}
-
-          	/** Return the most recent LIKE pattern passed to prepare(). */
-          	public function last_prepared_like_pattern(): ?string {
-          		if ( array() === $this->prepared_like_patterns ) {
-          			return null;
-          		}
-
-          		return $this->prepared_like_patterns[ count( $this->prepared_like_patterns ) - 1 ];
-          	}
-
-          	/**
-          	 * Evaluate %, _ and backslash escaping with SQL LIKE semantics needed by this regression.
-          	 *
-          	 * @param string $pattern LIKE pattern.
-          	 * @param string $value Candidate table name.
-          	 * @return bool Whether the candidate matches.
-          	 */
-          	private function matches_like_pattern( string $pattern, string $value ): bool {
-          		$regex  = '';
-          		$length = strlen( $pattern );
-
-          		for ( $index = 0; $index < $length; ++$index ) {
-          			$character = $pattern[ $index ];
-          			if ( '\\' === $character && $index + 1 < $length ) {
-          				++$index;
-          				$regex .= preg_quote( $pattern[ $index ], '~' );
-          				continue;
-          			}
-          			if ( '%' === $character ) {
-          				$regex .= '.*';
-          				continue;
-          			}
-          			if ( '_' === $character ) {
-          				$regex .= '.';
-          				continue;
-          			}
-          			$regex .= preg_quote( $character, '~' );
-          		}
-
-          		return 1 === preg_match( '~\\A' . $regex . '\\z~D', $value );
-          	}
-          }
-          PHP
-
-          cat > tests/Unit/Observability/OperationalLogInstallerTest.php <<'PHP'
-          <?php
-          /**
-           * Regression coverage for operational schema installation verification.
-           *
-           * @package GravityNotify
-           */
-
-          namespace GravityNotify\Tests\Unit\Observability;
-
-          use GravityNotify\Observability\OperationalLogInstaller;
-          use GravityNotify\Tests\Support\Observability\OperationalInstallerWpdbFake;
-          use PHPUnit\Framework\TestCase;
-
-          /** Proves the installer treats its table name as a literal SQL LIKE pattern. */
-          final class OperationalLogInstallerTest extends TestCase {
-
-          	/** Load the WordPress schema helper stub before exercising installation. */
-          	public static function setUpBeforeClass(): void {
-          		require_once dirname( __DIR__, 2 ) . '/Support/WordPress/DbDeltaStub.php';
-          	}
-
-          	/** Prepare the minimal WordPress filesystem constant used by the installer. */
-          	protected function setUp(): void {
-          		if ( ! defined( 'ABSPATH' ) ) {
-          			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WordPress core test environment constant.
-          			define( 'ABSPATH', dirname( __DIR__, 3 ) . '/' );
-          		}
-          	}
-
-          	/** Clear the isolated wpdb test double. */
-          	protected function tearDown(): void {
-          		unset( $GLOBALS['wpdb'] );
-          	}
-
-          	/**
-          	 * Prove an earlier wildcard-collision cannot mask the real operational table.
-          	 */
-          	public function test_install_escapes_like_pattern_and_ignores_wildcard_collision(): void {
-          		$expected  = 'wp_gravity_notify_operational_events';
-          		$collision = 'wpxgravity_notify_operational_events';
-          		$db        = new OperationalInstallerWpdbFake( array( $collision, $expected ) );
-
-          		$GLOBALS['wpdb'] = $db; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Isolated wpdb test double.
-
-          		self::assertSame(
-          			$collision,
-          			$db->first_like_match( $expected ),
-          			'Raw underscores must demonstrate the wildcard collision this regression protects against.'
-          		);
-          		self::assertSame( $expected, $db->first_like_match( $db->esc_like( $expected ) ) );
-          		self::assertTrue( OperationalLogInstaller::install() );
-          		self::assertSame( $db->esc_like( $expected ), $db->last_prepared_like_pattern() );
-          	}
-          }
-          PHP
-
-      - name: Validate PHPStan repair
+      - name: Validate PHPStan root-cause repair
         run: composer stan
 
-      - name: Validate installer collision regression
+      - name: Validate SQL LIKE collision regression
         run: php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Observability/OperationalLogInstallerTest.php
 
       - name: Validate preserved localization and uninstall boundaries
         run: |
           php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Observability/OperationalLogLocalizationTest.php
           php vendor/bin/phpunit --configuration phpunit.xml.dist tests/Unit/Lifecycle/OperationalUninstallCleanupTest.php
-          git diff --exit-code "$REQUIRED_STARTING_HEAD" -- \
+          git diff --exit-code "$REQUIRED_STARTING_HEAD" HEAD -- \
             languages/gravity-notification-manager-fa_IR.po \
             languages/gravity-notification-manager-fa_IR.mo \
             includes/Lifecycle/Uninstaller.php \
@@ -336,11 +76,11 @@ jobs:
           composer phpcompat
           composer stan
 
-      - name: Enforce scope hygiene
+      - name: Enforce committed scope hygiene
         shell: bash
         run: |
           set -euo pipefail
-          git diff --exit-code origin/main -- \
+          git diff --exit-code origin/main HEAD -- \
             vendor/autoload.php \
             vendor/composer/InstalledVersions.php \
             vendor/composer/autoload_classmap.php \
@@ -348,55 +88,48 @@ jobs:
             vendor/composer/autoload_static.php \
             vendor/composer/installed.php \
             vendor/composer/platform_check.php
-          git diff --exit-code "$REQUIRED_STARTING_HEAD" -- composer.lock
+          git diff --exit-code "$REQUIRED_STARTING_HEAD" HEAD -- composer.lock
           python3 <<'PY'
           import subprocess
 
-          allowed = {
-              '.github/workflows/pr23-scope-cleanup.yml',
-              'phpstan-stubs.php',
-              'src/Observability/OperationalLogInstaller.php',
-              'tests/Support/Observability/OperationalInstallerWpdbFake.php',
-              'tests/Support/WordPress/DbDeltaStub.php',
-              'tests/Unit/Observability/OperationalLogInstallerTest.php',
-              'vendor/autoload.php',
-              'vendor/composer/InstalledVersions.php',
-              'vendor/composer/autoload_classmap.php',
-              'vendor/composer/autoload_psr4.php',
-              'vendor/composer/autoload_static.php',
-              'vendor/composer/installed.php',
-              'vendor/composer/platform_check.php',
-          }
-          tracked = subprocess.check_output(['git', 'diff', '--name-only']).decode().splitlines()
-          untracked = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard']).decode().splitlines()
-          actual = set(tracked + untracked)
-          unexpected = sorted(actual - allowed)
-          if unexpected:
-              raise SystemExit('Unexpected repair artifacts: ' + ', '.join(unexpected))
+          changed = subprocess.check_output(
+              ['git', 'diff', '--name-only', 'origin/main...HEAD'],
+              text=True,
+          ).splitlines()
+          polluted_vendor = [
+              path for path in changed
+              if path in {
+                  'vendor/autoload.php',
+                  'vendor/composer/InstalledVersions.php',
+                  'vendor/composer/autoload_classmap.php',
+                  'vendor/composer/autoload_psr4.php',
+                  'vendor/composer/autoload_static.php',
+                  'vendor/composer/installed.php',
+                  'vendor/composer/platform_check.php',
+              }
+          ]
+          temporary = [
+              path for path in changed
+              if path.startswith('.github/workflows/pr23-')
+              and path != '.github/workflows/pr23-scope-cleanup.yml'
+          ]
+          if polluted_vendor:
+              raise SystemExit('Vendor pollution remains: ' + ', '.join(polluted_vendor))
+          if temporary:
+              raise SystemExit('Unexpected PR23 repair workflows remain: ' + ', '.join(temporary))
           PY
 
-      - name: Remove repair workflow and commit clean repair
+      - name: Remove validator and push clean final tree
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/pr23-scope-cleanup.yml
+          git reset --hard HEAD
+          git clean -fd
           git fetch origin "$BRANCH_NAME"
           test "$(git rev-parse origin/$BRANCH_NAME)" = "${{ github.sha }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- \
-            .github/workflows/pr23-scope-cleanup.yml \
-            phpstan-stubs.php \
-            src/Observability/OperationalLogInstaller.php \
-            tests/Support/Observability/OperationalInstallerWpdbFake.php \
-            tests/Support/WordPress/DbDeltaStub.php \
-            tests/Unit/Observability/OperationalLogInstallerTest.php \
-            vendor/autoload.php \
-            vendor/composer/InstalledVersions.php \
-            vendor/composer/autoload_classmap.php \
-            vendor/composer/autoload_psr4.php \
-            vendor/composer/autoload_static.php \
-            vendor/composer/installed.php \
-            vendor/composer/platform_check.php
-          git commit -m "fix: close observability qualification gaps"
+          git rm .github/workflows/pr23-scope-cleanup.yml
+          test "$(git diff --cached --name-only)" = ".github/workflows/pr23-scope-cleanup.yml"
+          git commit -m "chore: remove PR23 repair workflow"
           git push origin HEAD:"$BRANCH_NAME"
