@@ -1,0 +1,1 @@
+Automated validation for this batch is exercised by the repository test/CI mechanisms. This note intentionally contains no runtime authority; see OPERATIONAL_OBSERVABILITY_CONTRACT.md for the implementation snapshot.
