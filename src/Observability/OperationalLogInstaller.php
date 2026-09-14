@@ -102,6 +102,24 @@ final class OperationalLogInstaller {
 		return true;
 	}
 
+	/** Remove the operational schema owned by this installer during canonical plugin uninstall. */
+	public static function uninstall(): void {
+		global $wpdb;
+
+		delete_option( self::VERSION_OPTION );
+
+		if ( ! is_object( $wpdb ) ) {
+			return;
+		}
+
+		$table = self::table_name( $wpdb );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery -- Canonical uninstall schema cleanup.
+		$wpdb->query(
+			$wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		);
+	}
+
 	/** @param object $db wpdb-compatible object. */
 	public static function table_name( object $db ): string {
 		$prefix = isset( $db->prefix ) && is_string( $db->prefix ) ? $db->prefix : '';
