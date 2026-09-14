@@ -394,7 +394,13 @@ final class AdminController {
 		echo '</div>';
 	}
 
-	/** Store only bounded status/reference facts for the post-redirect notice. */
+	/**
+	 * Store only bounded status/reference facts for the post-redirect notice.
+	 *
+	 * @param string        $channel Test channel.
+	 * @param AttemptResult $result  Provider attempt result.
+	 * @return void
+	 */
 	private static function store_provider_test_notice( string $channel, AttemptResult $result ): void {
 		if ( ! function_exists( 'get_current_user_id' ) || ! function_exists( 'set_transient' ) ) {
 			return;
@@ -454,7 +460,13 @@ final class AdminController {
 		);
 	}
 
-	/** Convert safe diagnostic classifications into localized operator guidance. */
+	/**
+	 * Convert safe diagnostic classifications into localized operator guidance.
+	 *
+	 * @param string $diagnostic Safe diagnostic identifier.
+	 * @param string $channel    Test channel.
+	 * @return string
+	 */
 	private static function provider_test_detail( string $diagnostic, string $channel ): string {
 		return match ( $diagnostic ) {
 			'provider_not_configured' => 'sms' === $channel
@@ -471,13 +483,23 @@ final class AdminController {
 		};
 	}
 
-	/** Build an action/surface-bound provider test nonce action. */
+	/**
+	 * Build an action/surface-bound provider test nonce action.
+	 *
+	 * @param string $channel Test channel.
+	 * @return string
+	 */
 	private static function provider_test_nonce_action( string $channel ): string {
 		$action = 'sms' === $channel ? AdminDefinition::TEST_SMS_ACTION : AdminDefinition::TEST_BALE_ACTION;
 		return $action . '_' . AdminDefinition::SETTINGS_SLUG;
 	}
 
-	/** Build the short-lived one-user result notice key. */
+	/**
+	 * Build the short-lived one-user result notice key.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return string
+	 */
 	private static function provider_test_notice_key( int $user_id ): string {
 		return 'gravity_notify_provider_test_notice_' . $user_id;
 	}
