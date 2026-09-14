@@ -74,8 +74,11 @@ GNM uses a compact operational information architecture:
 Overview
 Notification Points
 Settings
+Advisor
 Help & Diagnostics
 ```
+
+Advisor is a read-only, task-oriented guidance surface over existing Settings, Notification Point, and dependency/runtime truth. Rendering Advisor does not send provider requests, write settings or delivery state, or mutate Gravity Flow topology.
 
 The approved UX direction combines:
 

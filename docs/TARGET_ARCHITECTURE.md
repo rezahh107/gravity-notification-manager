@@ -181,6 +181,7 @@ GNM admin UI uses a small purpose-built information architecture:
 Overview
 Notification Points
 Settings
+Advisor
 Help & Diagnostics
 ```
 
@@ -241,7 +242,7 @@ GF Entry Detail        GravityView + Elementor
 Status + Retry         Attention Required view
 ```
 
-GNM admin Overview/Notification Points/Settings/Help & Diagnostics sit beside this runtime to configure, guide, verify and diagnose. They do not become alternate workflow or delivery-state authorities.
+GNM admin Overview/Notification Points/Settings/Advisor/Help & Diagnostics sit beside this runtime to configure, guide, verify and diagnose. They do not become alternate workflow or delivery-state authorities.
 
 ## 6. Gravity Forms Feed Contract
 
@@ -518,6 +519,10 @@ Form/workflow-oriented guidance and verification for logical notification Feeds/
 ### Settings
 
 Provider/channel/global options using WordPress-native controls/APIs where sufficient.
+
+### Advisor
+
+Read-only task-oriented guidance assembled from existing Settings, Notification Point, and dependency/runtime truth. Advisor does not send provider requests, write Settings or delivery state, or mutate Gravity Flow topology.
 
 ### Help & Diagnostics
 

@@ -196,6 +196,7 @@ Gravity Notification Manager
 ├─ Overview
 ├─ Notification Points
 ├─ Settings
+├─ Advisor
 └─ Help & Diagnostics
 ```
 
@@ -265,7 +266,19 @@ Do not build a custom settings framework merely for styling.
 
 Connection/test-send actions must be explicit user actions. Rendering the page must never send external messages.
 
-### 5.4 Help & Diagnostics
+### 5.4 Advisor
+
+Purpose: read-only task-oriented guidance from the current Settings, Notification Point, and dependency/runtime truth.
+
+Advisor must not:
+
+- send provider requests;
+- write Settings;
+- write delivery state;
+- mutate Gravity Flow topology;
+- invent provider, workflow, or presentation state that is not already known from the existing authoritative surfaces.
+
+### 5.5 Help & Diagnostics
 
 Purpose: explain current environment/configuration health and provide safe troubleshooting.
 

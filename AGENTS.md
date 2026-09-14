@@ -263,6 +263,7 @@ Gravity Notification Manager
 ├─ Overview
 ├─ Notification Points
 ├─ Settings
+├─ Advisor
 └─ Help & Diagnostics
 ```
 

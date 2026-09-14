@@ -285,8 +285,11 @@ The approved GNM admin information architecture is:
 Overview
 Notification Points
 Settings
+Advisor
 Help & Diagnostics
 ```
+
+Advisor is the approved fifth read-only operational guidance surface. The historical WU-06 scope below is preserved as originally planned rather than rewritten after completion.
 
 Direction:
 
@@ -620,7 +623,7 @@ Normal notification execution/retry must not invoke:
 
 ### Admin UI / UX
 
-- Overview/Notification Points/Settings/Help & Diagnostics routes render as intended;
+- Overview/Notification Points/Settings/Advisor/Help & Diagnostics routes render as intended;
 - important states remain understandable without color alone;
 - Point Manager `Check Again` verifies actual configuration;
 - diagnostics render without external send;
