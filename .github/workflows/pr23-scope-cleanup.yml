@@ -1,0 +1,73 @@
+name: PR23 Scope Cleanup
+
+on:
+  push:
+    branches:
+      - feat/operational-observability
+    paths:
+      - .github/workflows/pr23-scope-cleanup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/operational-observability
+          fetch-depth: 0
+      - name: Restore generated vendor files from base
+        run: |
+          git fetch origin main
+          git checkout origin/main -- \
+            vendor/autoload.php \
+            vendor/composer/InstalledVersions.php \
+            vendor/composer/autoload_classmap.php \
+            vendor/composer/autoload_psr4.php \
+            vendor/composer/autoload_static.php \
+            vendor/composer/installed.php \
+            vendor/composer/platform_check.php
+      - name: Harden exact table verification
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          installer = Path('src/Observability/OperationalLogInstaller.php')
+          text = installer.read_text()
+          old = "\t\t// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema verification after dbDelta.\n\t\t$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );"
+          new = "\t\t$like_table = $wpdb->esc_like( $table );\n\t\t// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema verification after dbDelta.\n\t\t$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like_table ) );"
+          if old not in text:
+              raise RuntimeError('OperationalLogInstaller table verification shape changed unexpectedly')
+          installer.write_text(text.replace(old, new, 1))
+
+          test = Path('tests/Unit/Admin/OperationalLogAdminContractTest.php')
+          text = test.read_text()
+          anchor = "\t\tself::assertStringContainsString( 'dbDelta( $sql )', $installer );\n"
+          addition = anchor + "\t\tself::assertStringContainsString( '$wpdb->esc_like( $table )', $installer );\n"
+          if anchor not in text:
+              raise RuntimeError('Operational log schema contract anchor changed unexpectedly')
+          test.write_text(text.replace(anchor, addition, 1))
+          PY
+      - name: Validate scope and behavior
+        run: |
+          composer test:wu00
+          composer lint:wu00
+          git diff --exit-code origin/main -- \
+            vendor/autoload.php \
+            vendor/composer/InstalledVersions.php \
+            vendor/composer/autoload_classmap.php \
+            vendor/composer/autoload_psr4.php \
+            vendor/composer/autoload_static.php \
+            vendor/composer/installed.php \
+            vendor/composer/platform_check.php
+      - name: Remove temporary workflow and commit
+        run: |
+          rm -f .github/workflows/pr23-scope-cleanup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: harden operational schema verification"
+          git push origin HEAD:feat/operational-observability
