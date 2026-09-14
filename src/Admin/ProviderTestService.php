@@ -41,8 +41,10 @@ final class ProviderTestService {
 	private HttpTransportInterface $http;
 
 	/**
-	 * @param array<string, string> $settings Sanitized provider settings.
-	 * @param HttpTransportInterface $http Existing transport seam.
+	 * Create the provider test service.
+	 *
+	 * @param array<string, string>  $settings Sanitized provider settings.
+	 * @param HttpTransportInterface $http     Existing transport seam.
 	 */
 	public function __construct( array $settings, HttpTransportInterface $http ) {
 		$this->settings = $settings;
@@ -58,7 +60,7 @@ final class ProviderTestService {
 	 * Send exactly one plain IPPanel SMS test.
 	 *
 	 * @param string $destination Explicit operator-entered E.164 destination.
-	 * @param string $message Bounded localized test message.
+	 * @param string $message     Bounded localized test message.
 	 */
 	public function test_sms( string $destination, string $message ): AttemptResult {
 		$api_key = $this->settings['ippanel_api_key'] ?? '';
@@ -92,7 +94,7 @@ final class ProviderTestService {
 	 * Send exactly one Bale test message.
 	 *
 	 * @param string $destination Explicit operator-entered chat ID/channel username.
-	 * @param string $message Bounded localized test message.
+	 * @param string $message     Bounded localized test message.
 	 */
 	public function test_bale( string $destination, string $message ): AttemptResult {
 		$token = $this->settings['bale_bot_token'] ?? '';
@@ -115,7 +117,12 @@ final class ProviderTestService {
 		return ( new BaleClient( $token, $this->http ) )->send( $request );
 	}
 
-	/** Check the existing IPPanel E.164 contract. */
+	/**
+	 * Check the existing IPPanel E.164 contract.
+	 *
+	 * @param string $value Candidate phone number.
+	 * @return bool
+	 */
 	private static function is_e164( string $value ): bool {
 		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value );
 	}
@@ -123,6 +130,7 @@ final class ProviderTestService {
 	/**
 	 * Validate the documented Bale chat identifier/username shapes conservatively.
 	 *
+	 * @param string $value Candidate Bale chat destination.
 	 * @return string|null
 	 */
 	private static function bale_destination( string $value ): ?string {
@@ -138,7 +146,15 @@ final class ProviderTestService {
 		return 1 === preg_match( '/^@[A-Za-z0-9_]+$/D', $value ) ? $value : null;
 	}
 
-	/** Build a bounded local failure without touching a provider. */
+	/**
+	 * Build a bounded local failure without touching a provider.
+	 *
+	 * @param string      $channel     Channel identifier.
+	 * @param string|null $provider_id Provider identifier when applicable.
+	 * @param string|null $capability  SMS capability when applicable.
+	 * @param string      $diagnostic  Safe diagnostic identifier.
+	 * @return AttemptResult
+	 */
 	private function failure( string $channel, ?string $provider_id, ?string $capability, string $diagnostic ): AttemptResult {
 		return new AttemptResult(
 			AttemptStatus::FAILED,
