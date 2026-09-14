@@ -66,7 +66,12 @@ final class SmsProviderManagerTest extends TestCase {
 		self::assertSame( array(), $http->requests() );
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Build one normalized provider settings fixture.
+	 *
+	 * @param bool $enabled Whether IPPanel is enabled.
+	 * @return array<string, mixed>
+	 */
 	private function settings( bool $enabled ): array {
 		return array(
 			SmsProviderManager::CONFIG_KEY => array(
