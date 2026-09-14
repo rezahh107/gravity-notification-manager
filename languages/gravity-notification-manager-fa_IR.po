@@ -567,21 +567,3 @@ msgstr "موارد مرکزی «نیازمند رسیدگی» همچنان در 
 
 msgid "GravityView is not currently detected. Advisor does not create a replacement case dashboard; use Gravity Forms Entry Detail as the independent status and Retry fallback until the site’s GravityView / Elementor Attention Required presentation is available."
 msgstr "GravityView در حال حاضر شناسایی نشده است. مشاور داشبورد جایگزین برای پرونده‌ها نمی‌سازد؛ تا زمانی که نمایش «نیازمند رسیدگی» سایت در GravityView / Elementor دردسترس شود، از جزئیات Entry در Gravity Forms به‌عنوان مسیر مستقل وضعیت و تلاش مجدد استفاده کنید."
-
-msgid "Providers & Senders"
-msgstr "ارائه‌دهندگان و خطوط فرستنده"
-
-msgid "Configure supported SMS providers and sender lines. Saving this page never contacts the provider or sends a message."
-msgstr "ارائه‌دهندگان پشتیبانی‌شده SMS و خطوط فرستنده را پیکربندی کنید. ذخیره این صفحه هرگز با ارائه‌دهنده تماس نمی‌گیرد و پیامی ارسال نمی‌کند."
-
-msgid "IPPanel is the supported SMS provider in this batch."
-msgstr "در این مرحله، IPPanel ارائه‌دهنده پشتیبانی‌شده SMS است."
-
-msgid "Enable IPPanel"
-msgstr "فعال‌کردن IPPanel"
-
-msgid "Enter a sender number assigned to this IPPanel account. Automatic sender-line discovery is not exposed because no current documented enumeration contract was established."
-msgstr "شماره فرستنده‌ای را وارد کنید که به این حساب IPPanel اختصاص داده شده است. بازیابی خودکار خطوط فرستنده ارائه نمی‌شود، زیرا قرارداد مستند و فعلی برای فهرست‌کردن آن‌ها اثبات نشده است."
-
-msgid "IPPanel test could not run because the provider is disabled or its API key/sender number is not configured."
-msgstr "آزمون IPPanel قابل اجرا نبود، زیرا ارائه‌دهنده غیرفعال است یا کلید API/شماره فرستنده آن پیکربندی نشده است."
