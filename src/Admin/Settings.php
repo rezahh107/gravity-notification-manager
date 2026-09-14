@@ -18,24 +18,20 @@ final class Settings {
 	public const GROUP  = 'gravity_notify_settings';
 
 	/**
-	 * Read current GNM settings through the deterministic provider-config upgrade path.
+	 * Read current GNM settings through the deterministic provider-config read path.
 	 *
-	 * Existing flat IPPanel values are persisted once into the nested provider shape.
-	 * Compatibility aliases are returned in-memory for the pre-existing Settings UI
-	 * during this focused Provider Manager batch; aliases are never stored.
+	 * Existing flat IPPanel values are normalized in-memory into the nested provider
+	 * shape so runtime delivery keeps working before any operator save. Reads remain
+	 * side-effect-free; nested storage is persisted only by an explicit Settings API
+	 * write. Compatibility aliases are returned in-memory for the pre-existing Settings
+	 * UI during this focused Provider Manager batch; aliases are never stored.
 	 *
 	 * @return array<string, mixed>
 	 */
 	public static function read(): array {
-		$value      = function_exists( 'get_option' ) ? get_option( self::OPTION, array() ) : array();
-		$raw        = is_array( $value ) ? $value : array();
-		$normalized = self::normalize_stored( $raw );
-
-		if ( $raw !== $normalized && function_exists( 'update_option' ) ) {
-			update_option( self::OPTION, $normalized, false );
-		}
-
-		return self::with_compatibility_aliases( $normalized );
+		$value = function_exists( 'get_option' ) ? get_option( self::OPTION, array() ) : array();
+		$raw   = is_array( $value ) ? $value : array();
+		return self::with_compatibility_aliases( self::normalize_stored( $raw ) );
 	}
 
 	/**
@@ -57,18 +53,18 @@ final class Settings {
 	 * @return array<string, mixed>
 	 */
 	public static function sanitize_input( array $input, array $existing = array() ): array {
-		$normalized = self::normalize_stored( $existing );
-		$providers  = SmsProviderManager::sanitize_submission( $input, $normalized );
-		$bale_token = self::secret( $normalized['bale_bot_token'] ?? '' );
+		$normalized  = self::normalize_stored( $existing );
+		$providers   = SmsProviderManager::sanitize_submission( $input, $normalized );
+		$bale_token  = self::secret( $normalized['bale_bot_token'] ?? '' );
 		$replacement = self::secret( $input['bale_bot_token'] ?? '' );
 		if ( '' !== $replacement ) {
 			$bale_token = $replacement;
 		}
 
 		return array(
-			'schema_version'                    => SmsProviderManager::SCHEMA_VERSION,
-			SmsProviderManager::CONFIG_KEY      => $providers,
-			'bale_bot_token'                     => $bale_token,
+			'schema_version'               => SmsProviderManager::SCHEMA_VERSION,
+			SmsProviderManager::CONFIG_KEY => $providers,
+			'bale_bot_token'                => $bale_token,
 		);
 	}
 
