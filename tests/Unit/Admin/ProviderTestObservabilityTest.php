@@ -20,8 +20,8 @@ use PHPUnit\Framework\TestCase;
 final class ProviderTestObservabilityTest extends TestCase {
 
 	public function test_ippanel_and_bale_tests_are_logged_as_test_without_delivery_state_dependencies(): void {
-		$events = new InMemoryOperationalEventStore();
-		$http   = new FakeHttpTransport(
+		$events  = new InMemoryOperationalEventStore();
+		$http    = new FakeHttpTransport(
 			array(
 				HttpResponse::from_http( 200, '{"meta":{"status":true},"data":{"message_outbox_ids":["sms-test-ref"]}}' ),
 				HttpResponse::from_http( 200, '{"ok":true,"result":{"message_id":"bale-test-ref"}}' ),
@@ -45,13 +45,13 @@ final class ProviderTestObservabilityTest extends TestCase {
 	}
 
 	public function test_test_logging_failure_does_not_change_provider_result(): void {
-		$events = new InMemoryOperationalEventStore();
+		$events              = new InMemoryOperationalEventStore();
 		$events->fail_writes = true;
-		$http = new FakeHttpTransport(
+		$http                = new FakeHttpTransport(
 			array( HttpResponse::from_http( 200, '{"meta":{"status":true},"data":{"message_outbox_ids":["safe-ref"]}}' ) )
 		);
-		$service = new ProviderTestService( $this->settings(), $http, new OperationalLogger( $events ) );
-		$result = $service->test_sms( '+989121234567', 'GNM test' );
+		$service             = new ProviderTestService( $this->settings(), $http, new OperationalLogger( $events ) );
+		$result              = $service->test_sms( '+989121234567', 'GNM test' );
 
 		self::assertSame( AttemptStatus::SUCCESS, $result->status() );
 		self::assertSame( array( 'safe-ref' ), $result->provider_references() );
@@ -65,10 +65,10 @@ final class ProviderTestObservabilityTest extends TestCase {
 				SmsProviderManager::IPPANEL => array(
 					'enabled' => true,
 					'api_key' => 'test-api-key',
-					'sender' => '+989000000000',
+					'sender'  => '+989000000000',
 				),
 			),
-			'bale_bot_token' => 'test-bale-token',
+			'bale_bot_token'               => 'test-bale-token',
 		);
 	}
 }

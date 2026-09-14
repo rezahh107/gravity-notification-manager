@@ -47,7 +47,7 @@ final class LlmDebugReport {
 
 		$runtime = array();
 		self::optional( $runtime, 'gnm', $data['plugin_version'] );
-		self::optional( $runtime, 'wordpress', $data['wp_version'] );
+		self::optional( $runtime, 'WordPress', $data['wp_version'] );
 		self::optional( $runtime, 'php', $data['php_version'] );
 		if ( array() !== $runtime ) {
 			$report['runtime'] = $runtime;

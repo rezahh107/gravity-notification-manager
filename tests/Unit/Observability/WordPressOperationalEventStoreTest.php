@@ -45,19 +45,24 @@ final class WordPressOperationalEventStoreTest extends TestCase {
 final class OperationalStoreWpdbFake {
 	public string $prefix = 'wp_';
 	/** @var array<int, array<string, mixed>> */
-	public array $rows = array();
+	public array $rows   = array();
 	private int $next_id = 1;
 
 	/** @param array<string, mixed> $data */
 	public function insert( string $table, array $data ) {
 		unset( $table );
-		$data['id'] = $this->next_id++;
+		$data['id']   = $this->next_id++;
 		$this->rows[] = $data;
 		return 1;
 	}
 
 	public function prepare( string $query, ...$args ): string {
-		return (string) json_encode( array( 'query' => $query, 'args' => $args ) );
+		return (string) json_encode(
+			array(
+				'query' => $query,
+				'args'  => $args,
+			)
+		);
 	}
 
 	public function get_var( string $prepared ) {
@@ -68,8 +73,8 @@ final class OperationalStoreWpdbFake {
 	}
 
 	public function query( string $prepared ) {
-		$data   = json_decode( $prepared, true );
-		$cutoff = (int) ( $data['args'][1] ?? 0 );
+		$data       = json_decode( $prepared, true );
+		$cutoff     = (int) ( $data['args'][1] ?? 0 );
 		$this->rows = array_values(
 			array_filter(
 				$this->rows,
