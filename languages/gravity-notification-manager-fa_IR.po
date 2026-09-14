@@ -471,3 +471,99 @@ msgstr "شما اجازه مدیریت Gravity Notification Manager را ندا�
 
 msgid "You are not allowed to retry this notification."
 msgstr "شما اجازه تلاش مجدد برای این اعلان را ندارید."
+
+msgid "Advisor"
+msgstr "مشاور"
+
+msgid "Task-oriented guidance from current GNM configuration. Advisor reads existing state only; it does not send, retry, save settings, or change Gravity Flow topology."
+msgstr "راهنمای وظیفه‌محور بر پایه پیکربندی فعلی GNM. مشاور فقط وضعیت موجود را می‌خواند؛ پیام ارسال نمی‌کند، تلاش مجدد انجام نمی‌دهد، تنظیمات را ذخیره نمی‌کند و ساختار Gravity Flow را تغییر نمی‌دهد."
+
+msgid "Current detail:"
+msgstr "جزئیات فعلی:"
+
+msgid "How do I configure a provider?"
+msgstr "چطور یک ارائه‌دهنده را پیکربندی کنم؟"
+
+msgid "Open Settings"
+msgstr "باز کردن تنظیمات"
+
+msgid "How do I test SMS or Bale?"
+msgstr "چطور SMS یا بله را آزمایش کنم؟"
+
+msgid "Open Settings and use the dedicated IPPanel / SMS or Bale test control. Saving normal settings never sends a message; each test control is a separate explicit action that performs one real external send."
+msgstr "تنظیمات را باز کنید و از کنترل اختصاصی آزمون IPPanel / SMS یا بله استفاده کنید. ذخیره معمولی تنظیمات هرگز پیامی ارسال نمی‌کند؛ هر کنترل آزمون یک اقدام صریح و جداگانه است که یک ارسال واقعی خارجی انجام می‌دهد."
+
+msgid "Open provider tests"
+msgstr "باز کردن آزمون‌های ارائه‌دهنده"
+
+msgid "How do I create a notification?"
+msgstr "چطور یک اعلان بسازم؟"
+
+msgid "Open Help & Diagnostics"
+msgstr "باز کردن راهنما و عیب‌یابی"
+
+msgid "Where do I place it in Gravity Flow?"
+msgstr "آن را کجای Gravity Flow قرار دهم؟"
+
+msgid "How do I verify Notification Points?"
+msgstr "چطور نقاط اعلان را بررسی کنم؟"
+
+msgid "Open Notification Points to inspect the current Feed and Gravity Flow placement truth. Use Check Again after changing a Feed or workflow Step; GNM only re-reads configuration and never repairs topology automatically."
+msgstr "نقاط اعلان را باز کنید تا وضعیت واقعی فعلی Feed و محل قرارگیری در Gravity Flow را بررسی کنید. پس از تغییر Feed یا مرحله گردش‌کار، «بررسی دوباره» را اجرا کنید؛ GNM فقط پیکربندی را دوباره می‌خواند و هرگز ساختار را خودکار تعمیر نمی‌کند."
+
+msgid "Open Notification Points"
+msgstr "باز کردن نقاط اعلان"
+
+msgid "Why does this point say NEEDS_SETUP?"
+msgstr "چرا این نقطه وضعیت NEEDS_SETUP دارد؟"
+
+msgid "No current Notification Point is marked NEEDS_SETUP. If that changes, Advisor will repeat the same detail and next action reported by Notification Points."
+msgstr "در حال حاضر هیچ نقطه اعلانی با وضعیت NEEDS_SETUP علامت‌گذاری نشده است. اگر این وضعیت تغییر کند، مشاور همان جزئیات و اقدام بعدی گزارش‌شده در نقاط اعلان را نمایش می‌دهد."
+
+msgid "These Notification Points currently need setup. The detail and next action below come directly from the existing Point Inspector truth."
+msgstr "این نقاط اعلان در حال حاضر نیازمند تنظیم هستند. جزئیات و اقدام بعدی زیر مستقیماً از وضعیت واقعی Point Inspector موجود می‌آیند."
+
+msgid "How do I Retry a failed notification?"
+msgstr "چطور یک اعلان ناموفق را دوباره تلاش کنم؟"
+
+msgid "Open the affected Gravity Forms Entry Detail and find the Notification Delivery box. Retry appears there only when the stored target is trusted, Attention Required is true, Retry is currently allowed, and your account has the required capability. Retry is an explicit synchronous action and may contact the configured external channel."
+msgstr "جزئیات Entry مربوطه را در Gravity Forms باز کنید و کادر «تحویل اعلان» را پیدا کنید. گزینه تلاش مجدد فقط زمانی نمایش داده می‌شود که مقصد ذخیره‌شده قابل‌اعتماد باشد، وضعیت «نیازمند رسیدگی» فعال باشد، تلاش مجدد در حال حاضر مجاز باشد و حساب شما دسترسی لازم را داشته باشد. تلاش مجدد یک اقدام صریح و همگام است و ممکن است با کانال خارجی پیکربندی‌شده ارتباط برقرار کند."
+
+msgid "Where do I see Attention Required?"
+msgstr "وضعیت «نیازمند رسیدگی» را کجا ببینم؟"
+
+msgid "IPPanel and Bale are currently configured according to Settings readiness. Use Settings to review the SMS sender or replace stored credentials."
+msgstr "بر اساس وضعیت آمادگی تنظیمات، IPPanel و بله هر دو اکنون پیکربندی شده‌اند. برای بررسی شماره فرستنده SMS یا جایگزینی اطلاعات محرمانه ذخیره‌شده، تنظیمات را باز کنید."
+
+msgid "IPPanel and Bale both need setup. Configure the IPPanel API key plus a valid E.164 sender number, and configure the Bale bot token in Settings."
+msgstr "IPPanel و بله هر دو نیازمند تنظیم هستند. در تنظیمات، کلید API آی‌پی‌پنل همراه با یک شماره فرستنده معتبر E.164 و همچنین توکن ربات بله را پیکربندی کنید."
+
+msgid "IPPanel needs setup: configure the API key and a valid E.164 sender number in Settings. Bale is currently configured."
+msgstr "IPPanel نیازمند تنظیم است: کلید API و یک شماره فرستنده معتبر E.164 را در تنظیمات وارد کنید. بله در حال حاضر پیکربندی شده است."
+
+msgid "Bale needs setup: configure the bot token in Settings. IPPanel is currently configured."
+msgstr "بله نیازمند تنظیم است: توکن ربات را در تنظیمات وارد کنید. IPPanel در حال حاضر پیکربندی شده است."
+
+msgid "Gravity Forms is not currently available, so a GNM Notification Feed cannot be configured yet. Resolve the dependency first in Help & Diagnostics."
+msgstr "Gravity Forms در حال حاضر دردسترس نیست، بنابراین هنوز نمی‌توان یک Feed اعلان GNM را پیکربندی کرد. ابتدا وابستگی را در بخش راهنما و عیب‌یابی برطرف کنید."
+
+msgid "No GNM Notification Feed is currently detected. In Gravity Forms, open the intended Form, open Settings → Gravity Notification Manager, create a Feed, complete its message, channel, recipient source and fallback settings, then enable and save it."
+msgstr "در حال حاضر هیچ Feed اعلان GNM شناسایی نشده است. در Gravity Forms فرم موردنظر را باز کنید، به Settings → Gravity Notification Manager بروید، یک Feed بسازید، پیام، کانال، منبع گیرنده و تنظیمات مسیر جایگزین آن را کامل کنید، سپس آن را فعال و ذخیره کنید."
+
+msgid "GNM already detects one or more Notification Feeds. Create or edit each logical notification in Gravity Forms under the Form’s Gravity Notification Manager Feed settings; Notification Points will verify the saved result."
+msgstr "GNM از قبل یک یا چند Feed اعلان را شناسایی کرده است. هر اعلان منطقی را در تنظیمات Feed مربوط به Gravity Notification Manager برای همان فرم در Gravity Forms بسازید یا ویرایش کنید؛ نقاط اعلان نتیجه ذخیره‌شده را بررسی می‌کند."
+
+msgid "Gravity Flow is not currently available, so Advisor will not invent a workflow link. Resolve the dependency in Help & Diagnostics, then verify placement from Notification Points."
+msgstr "Gravity Flow در حال حاضر دردسترس نیست، بنابراین مشاور لینک ساختگی برای گردش‌کار ایجاد نمی‌کند. وابستگی را در راهنما و عیب‌یابی برطرف کنید و سپس محل قرارگیری را از نقاط اعلان بررسی کنید."
+
+msgid "Create the GNM Notification Feed first. When the notification must run at a workflow position, open the Form’s Workflow settings, add the supported Gravity Notification Manager Feed Step at the intended position, select the Feed and save."
+msgstr "ابتدا Feed اعلان GNM را بسازید. اگر اعلان باید در موقعیت مشخصی از گردش‌کار اجرا شود، تنظیمات Workflow فرم را باز کنید، مرحله پشتیبانی‌شده Gravity Notification Manager Feed را در محل موردنظر اضافه کنید، Feed را انتخاب و ذخیره کنید."
+
+msgid "When a notification must run at a workflow position, use the Form’s Workflow settings and the supported Gravity Notification Manager Feed Step. The known Form links below reuse GNM’s existing Gravity Flow navigation helper."
+msgstr "اگر اعلان باید در موقعیت مشخصی از گردش‌کار اجرا شود، از تنظیمات Workflow فرم و مرحله پشتیبانی‌شده Gravity Notification Manager Feed استفاده کنید. لینک‌های شناخته‌شده فرم در ادامه از همان راهنمای ناوبری موجود Gravity Flow در GNM استفاده می‌کنند."
+
+msgid "Central Attention Required cases remain in the site-configured GravityView / Elementor presentation. Advisor does not know or invent a specific View URL. Gravity Forms Entry Detail remains the independent status and Retry fallback for an individual Entry."
+msgstr "موارد مرکزی «نیازمند رسیدگی» همچنان در نمایش GravityView / Elementor پیکربندی‌شده سایت قرار دارند. مشاور آدرس مشخص یک View را نمی‌داند و آن را اختراع نمی‌کند. جزئیات Entry در Gravity Forms همچنان مسیر مستقل مشاهده وضعیت و تلاش مجدد برای یک Entry است."
+
+msgid "GravityView is not currently detected. Advisor does not create a replacement case dashboard; use Gravity Forms Entry Detail as the independent status and Retry fallback until the site’s GravityView / Elementor Attention Required presentation is available."
+msgstr "GravityView در حال حاضر شناسایی نشده است. مشاور داشبورد جایگزین برای پرونده‌ها نمی‌سازد؛ تا زمانی که نمایش «نیازمند رسیدگی» سایت در GravityView / Elementor دردسترس شود، از جزئیات Entry در Gravity Forms به‌عنوان مسیر مستقل وضعیت و تلاش مجدد استفاده کنید."
