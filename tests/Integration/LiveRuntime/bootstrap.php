@@ -15,7 +15,7 @@ $gravity_notify_config_path = dirname( __DIR__, 3 ) . '/.wp-env.runtime/live-con
 if ( ! is_readable( $gravity_notify_config_path ) ) {
 	throw new RuntimeException( 'Live validation configuration is unavailable.' );
 }
-$gravity_notify_config_raw = file_get_contents( $gravity_notify_config_path );
+$gravity_notify_config_raw  = file_get_contents( $gravity_notify_config_path );
 $gravity_notify_live_config = is_string( $gravity_notify_config_raw ) ? json_decode( $gravity_notify_config_raw, true ) : null;
 if ( ! is_array( $gravity_notify_live_config ) ) {
 	throw new RuntimeException( 'Live validation configuration is malformed.' );

@@ -81,7 +81,7 @@ final class SmsProviderManagerTest extends TestCase {
 					'sender'  => '+989000000000',
 				),
 			),
-			'bale_bot_token' => '',
+			'bale_bot_token'               => '',
 		);
 	}
 }

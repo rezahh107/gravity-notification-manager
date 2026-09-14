@@ -75,7 +75,7 @@ final class OperationalEvent {
 	public static function from_storage_row( array $row ): self {
 		$references = array();
 		if ( isset( $row['provider_references'] ) && is_string( $row['provider_references'] ) && '' !== $row['provider_references'] ) {
-			$decoded = json_decode( $row['provider_references'], true );
+			$decoded    = json_decode( $row['provider_references'], true );
 			$references = is_array( $decoded ) ? $decoded : array();
 		}
 		$row['provider_references'] = $references;

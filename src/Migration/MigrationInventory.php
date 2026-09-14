@@ -12,12 +12,12 @@ namespace GravityNotify\Migration;
  */
 final class MigrationInventory {
 
-	public const MIGRATE_VALUE = 'MIGRATE_VALUE';
-	public const MAP_DETERMINISTIC = 'MAP_DETERMINISTIC';
-	public const MANUAL_REQUIRED_AMBIGUOUS = 'MANUAL_REQUIRED_AMBIGUOUS';
+	public const MIGRATE_VALUE                = 'MIGRATE_VALUE';
+	public const MAP_DETERMINISTIC            = 'MAP_DETERMINISTIC';
+	public const MANUAL_REQUIRED_AMBIGUOUS    = 'MANUAL_REQUIRED_AMBIGUOUS';
 	public const RETAIN_READ_ONLY_TEMPORARILY = 'RETAIN_READ_ONLY_TEMPORARILY';
-	public const DO_NOT_MIGRATE_RETIRE_LATER = 'DO_NOT_MIGRATE_RETIRE_LATER';
-	public const NOT_APPLICABLE = 'NOT_APPLICABLE';
+	public const DO_NOT_MIGRATE_RETIRE_LATER  = 'DO_NOT_MIGRATE_RETIRE_LATER';
+	public const NOT_APPLICABLE               = 'NOT_APPLICABLE';
 
 	/**
 	 * Inventory material legacy option keys.
@@ -50,14 +50,14 @@ final class MigrationInventory {
 			);
 		}
 
-		$result['gf_rules'] = array(
+		$result['gf_rules']          = array(
 			'classification' => self::MAP_DETERMINISTIC,
 		);
-		$result['recipient_rules'] = array(
+		$result['recipient_rules']   = array(
 			'classification' => self::MANUAL_REQUIRED_AMBIGUOUS,
 			'reason'         => 'workflow_recipient_semantics_require_native_flow_setup',
 		);
-		$result['legacy_logs'] = array(
+		$result['legacy_logs']       = array(
 			'classification' => self::RETAIN_READ_ONLY_TEMPORARILY,
 		);
 		$result['plato_user_mobile'] = array(

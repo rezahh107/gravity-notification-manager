@@ -216,10 +216,10 @@ final class NotificationDeliveryStateTest extends TestCase {
 	 * @return void
 	 */
 	public function test_ordinary_transport_success_remains_success_when_state_write_fails(): void {
-		$provider = new FakeSmsProvider( AttemptStatus::SUCCESS, 'primary' );
-		$store    = new InMemoryDeliveryStateStore();
+		$provider           = new FakeSmsProvider( AttemptStatus::SUCCESS, 'primary' );
+		$store              = new InMemoryDeliveryStateStore();
 		$store->fail_writes = true;
-		$add_on = $this->configured_add_on( $store, array( $provider ) );
+		$add_on             = $this->configured_add_on( $store, array( $provider ) );
 
 		self::assertTrue( $add_on->process_feed( $this->feed(), $this->entry(), $this->form() ) );
 		self::assertSame( 1, $provider->send_count );

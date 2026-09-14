@@ -35,7 +35,7 @@ final class ProviderTestAdminContractTest extends TestCase {
 			'public static function handle_test_bale',
 			'private static function render_bale_test_control'
 		);
-		$sms = $this->method_section(
+		$sms  = $this->method_section(
 			$this->provider_manager_source(),
 			'public static function handle_test_sms',
 			'private static function render_test_control'
@@ -67,7 +67,7 @@ final class ProviderTestAdminContractTest extends TestCase {
 			'private static function store_bale_test_notice',
 			'private static function bale_test_diagnostics'
 		);
-		$sms_store = $this->method_section(
+		$sms_store  = $this->method_section(
 			$this->provider_manager_source(),
 			'private static function store_test_notice',
 			'private static function safe_diagnostics'

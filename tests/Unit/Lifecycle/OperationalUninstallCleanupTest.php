@@ -56,11 +56,11 @@ namespace GravityNotify\Tests\Unit\Lifecycle {
 				define( 'GFSMS_DB_TABLE_SUFFIX', 'gfsms_logs' );
 			}
 
-			$this->db = new OperationalUninstallWpdb();
+			$this->db        = new OperationalUninstallWpdb();
 			$GLOBALS['wpdb'] = $this->db; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Isolated wpdb test double.
 			$GLOBALS['gravity_notify_uninstall_deleted_options'] = array();
-			$GLOBALS['gravity_notify_uninstall_options'] = array(
-				GFSMS_SETTINGS_OPTION                    => 'legacy-settings',
+			$GLOBALS['gravity_notify_uninstall_options']         = array(
+				GFSMS_SETTINGS_OPTION                   => 'legacy-settings',
 				'gfsms_cached_senders'                  => 'legacy-cache',
 				'gfsms_version'                         => '3.3.0',
 				OperationalLogInstaller::VERSION_OPTION => OperationalLogInstaller::SCHEMA_VERSION,
@@ -151,10 +151,12 @@ namespace GravityNotify\Tests\Unit\Lifecycle {
 		}
 
 		public function drop_count( string $table ): int {
-			return count( array_filter(
-				$this->queries,
-				static fn( string $query ): bool => 'DROP TABLE IF EXISTS ' . $table === $query
-			) );
+			return count(
+				array_filter(
+					$this->queries,
+					static fn( string $query ): bool => 'DROP TABLE IF EXISTS ' . $table === $query
+				)
+			);
 		}
 	}
 }

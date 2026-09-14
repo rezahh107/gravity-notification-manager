@@ -82,7 +82,7 @@ final class OperationalPresentationKsesRealRuntimeTest extends WP_UnitTestCase {
 				'role' => 'administrator',
 			)
 		);
-		$user = get_user_by( 'id', $this->operator_user_id );
+		$user                   = get_user_by( 'id', $this->operator_user_id );
 		self::assertNotFalse( $user );
 		$user->add_cap( WordPressManualRetryRuntime::CAPABILITY );
 		wp_set_current_user( $this->operator_user_id );
@@ -132,7 +132,7 @@ final class OperationalPresentationKsesRealRuntimeTest extends WP_UnitTestCase {
 			)
 		);
 
-		$before = gform_get_meta( $this->entry_id, EntryMetaDeliveryStore::META_KEY );
+		$before       = gform_get_meta( $this->entry_id, EntryMetaDeliveryStore::META_KEY );
 		$presentation = new OperationalPresentation(
 			$this->add_on,
 			new DeliveryStatePresentationReader( $store, $manager ),
@@ -146,7 +146,7 @@ final class OperationalPresentationKsesRealRuntimeTest extends WP_UnitTestCase {
 				'form'  => GFAPI::get_form( $this->form_id ),
 			)
 		);
-		$html = (string) ob_get_clean();
+		$html  = (string) ob_get_clean();
 		$after = gform_get_meta( $this->entry_id, EntryMetaDeliveryStore::META_KEY );
 
 		self::assertSame( 0, $provider->send_count );

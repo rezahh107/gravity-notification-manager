@@ -14,10 +14,10 @@ use GravityNotify\Admin\AdminDefinition;
  */
 final class MigrationAdminController {
 
-	public const PREVIEW_ACTION = 'gravity_notify_migration_preview';
-	public const EXECUTE_ACTION = 'gravity_notify_migration_execute';
-	public const CUTOVER_ACTION = 'gravity_notify_cutover_enable';
-	public const ROLLBACK_ACTION = 'gravity_notify_cutover_rollback';
+	public const PREVIEW_ACTION      = 'gravity_notify_migration_preview';
+	public const EXECUTE_ACTION      = 'gravity_notify_migration_execute';
+	public const CUTOVER_ACTION      = 'gravity_notify_cutover_enable';
+	public const ROLLBACK_ACTION     = 'gravity_notify_cutover_rollback';
 	public const FLOW_PREPARE_ACTION = 'gravity_notify_flow_cutover_prepare';
 
 	/**

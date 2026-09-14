@@ -18,13 +18,13 @@ use GravityNotify\Observability\OperationalContext;
 final class NotificationFeedAddOn extends \GFFeedAddOn {
 
 	/** @var self|null */
-	private static $_instance = null;
-	protected $_version = '0.1.0';
-	protected $_slug = 'gravity-notification-manager';
-	protected $_title = '';
-	protected $_short_title = '';
-	protected $_async_feed_processing = false;
-	private ?NotificationFeedProcessor $processor = null;
+	private static $_instance                             = null;
+	protected $_version                                   = '0.1.0';
+	protected $_slug                                      = 'gravity-notification-manager';
+	protected $_title                                     = '';
+	protected $_short_title                               = '';
+	protected $_async_feed_processing                     = false;
+	private ?NotificationFeedProcessor $processor         = null;
 	private ?DeliveryStateManager $delivery_state_manager = null;
 	private ?NotificationExecutionResult $last_execution_result = null;
 
@@ -90,8 +90,14 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 						'label'   => __( 'Channel', 'gravity-notification-manager' ),
 						'type'    => 'select',
 						'choices' => array(
-							array( 'label' => __( 'SMS', 'gravity-notification-manager' ), 'value' => FeedRuleSchema::CHANNEL_SMS ),
-							array( 'label' => __( 'Bale', 'gravity-notification-manager' ), 'value' => FeedRuleSchema::CHANNEL_BALE ),
+							array(
+								'label' => __( 'SMS', 'gravity-notification-manager' ),
+								'value' => FeedRuleSchema::CHANNEL_SMS,
+							),
+							array(
+								'label' => __( 'Bale', 'gravity-notification-manager' ),
+								'value' => FeedRuleSchema::CHANNEL_BALE,
+							),
 						),
 					),
 					array(
@@ -99,11 +105,21 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 						'label'   => __( 'Fallback Policy', 'gravity-notification-manager' ),
 						'type'    => 'select',
 						'choices' => array(
-							array( 'label' => __( 'No fallback', 'gravity-notification-manager' ), 'value' => FeedRuleSchema::FALLBACK_NONE ),
-							array( 'label' => __( 'Compatible SMS fallback', 'gravity-notification-manager' ), 'value' => FeedRuleSchema::FALLBACK_COMPATIBLE_SMS ),
+							array(
+								'label' => __( 'No fallback', 'gravity-notification-manager' ),
+								'value' => FeedRuleSchema::FALLBACK_NONE,
+							),
+							array(
+								'label' => __( 'Compatible SMS fallback', 'gravity-notification-manager' ),
+								'value' => FeedRuleSchema::FALLBACK_COMPATIBLE_SMS,
+							),
 						),
 					),
-					array( 'name' => 'feed_condition', 'label' => __( 'Condition', 'gravity-notification-manager' ), 'type' => 'feed_condition' ),
+					array(
+						'name'  => 'feed_condition',
+						'label' => __( 'Condition', 'gravity-notification-manager' ),
+						'type'  => 'feed_condition',
+					),
 				),
 			),
 		);
@@ -129,7 +145,7 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	}
 
 	private function execute_feed( array $feed, array $entry, array $form, bool $manual_retry ): NotificationExecutionResult {
-		$meta = isset( $feed['meta'] ) && is_array( $feed['meta'] ) ? $feed['meta'] : array();
+		$meta       = isset( $feed['meta'] ) && is_array( $feed['meta'] ) ? $feed['meta'] : array();
 		$rule       = FeedRuleSchema::normalize( $meta );
 		$manager    = $this->delivery_state_manager();
 		$entry_id   = $this->positive_identifier( $entry['id'] ?? null );
@@ -140,7 +156,16 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		$can_record = null !== $manager && null !== $entry_id && null !== $form_id && null !== $feed_id;
 
 		if ( ! $manual_retry && $can_record && $manager->is_confirmed_complete( $entry_id, $feed_id ) ) {
-			$result = new NotificationExecutionResult( array(), array( array( 'subject' => 'delivery_state', 'reason' => 'duplicate_suppressed' ) ), true );
+			$result = new NotificationExecutionResult(
+				array(),
+				array(
+					array(
+						'subject' => 'delivery_state',
+						'reason'  => 'duplicate_suppressed',
+					),
+				),
+				true
+			);
 			if ( ! $manager->record_execution( $entry_id, $form_id, $feed_id, $feed_name, $channel, $result, DeliveryStateManager::EXECUTION_DUPLICATE_SUPPRESSED ) ) {
 				$result = $this->with_state_persistence_failure( $result );
 			}
@@ -149,7 +174,16 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 		}
 
 		if ( null === $this->processor ) {
-			$result = new NotificationExecutionResult( array(), array( array( 'subject' => 'runtime', 'reason' => 'runtime_not_configured' ) ), false );
+			$result = new NotificationExecutionResult(
+				array(),
+				array(
+					array(
+						'subject' => 'runtime',
+						'reason'  => 'runtime_not_configured',
+					),
+				),
+				false
+			);
 		} else {
 			$context = new OperationalContext(
 				$manual_retry ? OperationalContext::EXECUTION_RETRY : OperationalContext::EXECUTION_NORMAL,
@@ -158,7 +192,7 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 				$entry_id,
 				$feed_name
 			);
-			$result = $this->processor->execute( $rule, $entry, $form, $context );
+			$result  = $this->processor->execute( $rule, $entry, $form, $context );
 		}
 
 		if ( $can_record ) {
@@ -189,7 +223,10 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 
 	private function with_state_persistence_failure( NotificationExecutionResult $result ): NotificationExecutionResult {
 		$skips   = $result->skips();
-		$skips[] = array( 'subject' => 'delivery_state', 'reason' => 'persistence_failed' );
+		$skips[] = array(
+			'subject' => 'delivery_state',
+			'reason'  => 'persistence_failed',
+		);
 		return new NotificationExecutionResult( $result->attempts(), $skips, $result->delivery_succeeded() );
 	}
 
@@ -207,11 +244,26 @@ final class NotificationFeedAddOn extends \GFFeedAddOn {
 	/** @return array<int, array<string, string>> */
 	private function recipient_source_choices(): array {
 		return array(
-			array( 'label' => __( 'Entry field', 'gravity-notification-manager' ), 'value' => FeedRuleSchema::RECIPIENT_ENTRY_FIELD ),
-			array( 'label' => __( 'Fixed target', 'gravity-notification-manager' ), 'value' => FeedRuleSchema::RECIPIENT_FIXED ),
-			array( 'label' => __( 'WordPress user', 'gravity-notification-manager' ), 'value' => FeedRuleSchema::RECIPIENT_USER ),
-			array( 'label' => __( 'WordPress role', 'gravity-notification-manager' ), 'value' => FeedRuleSchema::RECIPIENT_ROLE ),
-			array( 'label' => __( 'Gravity Flow assignee', 'gravity-notification-manager' ), 'value' => FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE ),
+			array(
+				'label' => __( 'Entry field', 'gravity-notification-manager' ),
+				'value' => FeedRuleSchema::RECIPIENT_ENTRY_FIELD,
+			),
+			array(
+				'label' => __( 'Fixed target', 'gravity-notification-manager' ),
+				'value' => FeedRuleSchema::RECIPIENT_FIXED,
+			),
+			array(
+				'label' => __( 'WordPress user', 'gravity-notification-manager' ),
+				'value' => FeedRuleSchema::RECIPIENT_USER,
+			),
+			array(
+				'label' => __( 'WordPress role', 'gravity-notification-manager' ),
+				'value' => FeedRuleSchema::RECIPIENT_ROLE,
+			),
+			array(
+				'label' => __( 'Gravity Flow assignee', 'gravity-notification-manager' ),
+				'value' => FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE,
+			),
 		);
 	}
 }

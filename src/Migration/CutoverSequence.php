@@ -12,8 +12,8 @@ namespace GravityNotify\Migration;
  */
 final class CutoverSequence {
 
-	public const PREPARED = 'PREPARED';
-	public const LEGACY_DISABLED = 'LEGACY_DISABLED';
+	public const PREPARED           = 'PREPARED';
+	public const LEGACY_DISABLED    = 'LEGACY_DISABLED';
 	public const GREENFIELD_ENABLED = 'GREENFIELD_ENABLED';
 
 	/**

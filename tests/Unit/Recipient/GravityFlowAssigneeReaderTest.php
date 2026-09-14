@@ -41,7 +41,7 @@ final class GravityFlowAssigneeReaderTest extends TestCase {
 				new GravityFlowAssigneeIdentityStub( 'user_id', '999' ),
 			)
 		);
-		$selected_business_step = new GravityFlowAssigneeStepStub(
+		$selected_business_step    = new GravityFlowAssigneeStepStub(
 			array(
 				new GravityFlowAssigneeIdentityStub( 'user_id', '44' ),
 			)
@@ -53,7 +53,7 @@ final class GravityFlowAssigneeReaderTest extends TestCase {
 			$current_notification_step
 		);
 
-		$entry = array(
+		$entry  = array(
 			'id'      => 501,
 			'form_id' => 9,
 		);
@@ -91,7 +91,7 @@ final class GravityFlowAssigneeReaderTest extends TestCase {
 			'id'      => 502,
 			'form_id' => 9,
 		);
-		$form = array(
+		$form   = array(
 			'id' => 9,
 		);
 

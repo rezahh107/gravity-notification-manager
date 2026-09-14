@@ -44,7 +44,7 @@ final class RecipientResolverTest extends TestCase {
 	 * @return void
 	 */
 	public function test_entry_field_resolution_and_invalid_values(): void {
-		$fields = new FakeEntryFieldReader(
+		$fields   = new FakeEntryFieldReader(
 			array(
 				'7'   => 'entry-target-alpha',
 				'8.2' => 'entry-target-beta',
@@ -67,14 +67,14 @@ final class RecipientResolverTest extends TestCase {
 	 * @return void
 	 */
 	public function test_user_channel_specific_contact_lookup(): void {
-		$users = new FakeUserDirectory(
+		$users    = new FakeUserDirectory(
 			array( 'operator' => 11 ),
 			array(),
 			array(
 				11 => array(
 					RecipientResolver::SMS_META_KEY  => 'sms-contact-user-11',
 					RecipientResolver::BALE_META_KEY => 'bale-contact-user-11',
-					'plato_user_mobile'               => 'forbidden-legacy-contact',
+					'plato_user_mobile'              => 'forbidden-legacy-contact',
 				),
 			)
 		);
@@ -91,7 +91,7 @@ final class RecipientResolverTest extends TestCase {
 	 * @return void
 	 */
 	public function test_missing_user_and_missing_contact_are_nonfatal_skips(): void {
-		$users = new FakeUserDirectory( array( 'known' => 12 ), array(), array( 12 => array() ) );
+		$users    = new FakeUserDirectory( array( 'known' => 12 ), array(), array( 12 => array() ) );
 		$resolver = $this->resolver( null, $users );
 
 		$this->assertSame( 'user_not_found', $resolver->resolve( $this->rule( FeedRuleSchema::RECIPIENT_USER, 'unknown' ) )->skips()[0]['reason'] );
@@ -104,7 +104,7 @@ final class RecipientResolverTest extends TestCase {
 	 * @return void
 	 */
 	public function test_role_multiplicity_and_partial_missing_contacts(): void {
-		$users = new FakeUserDirectory(
+		$users  = new FakeUserDirectory(
 			array(),
 			array( 'reviewer' => array( 33, 31, 32, 31 ) ),
 			array(
@@ -133,7 +133,7 @@ final class RecipientResolverTest extends TestCase {
 	 * @return void
 	 */
 	public function test_flow_assignee_multiplicity_and_supported_identity_forms(): void {
-		$users = new FakeUserDirectory(
+		$users  = new FakeUserDirectory(
 			array( 'flow-user@example.test' => 44 ),
 			array( 'approver' => array( 43, 42 ) ),
 			array(
@@ -143,7 +143,7 @@ final class RecipientResolverTest extends TestCase {
 				44 => array( RecipientResolver::BALE_META_KEY => 'bale-flow-44' ),
 			)
 		);
-		$flow = new FakeFlowAssigneeReader(
+		$flow   = new FakeFlowAssigneeReader(
 			array(
 				'available' => true,
 				'reason'    => '',
@@ -181,7 +181,7 @@ final class RecipientResolverTest extends TestCase {
 	 * @return void
 	 */
 	public function test_unavailable_flow_context_is_a_safe_skip(): void {
-		$flow = new FakeFlowAssigneeReader(
+		$flow   = new FakeFlowAssigneeReader(
 			array(
 				'available' => false,
 				'reason'    => 'flow_step_unavailable',

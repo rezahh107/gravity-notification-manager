@@ -36,7 +36,7 @@ final class OperationalLogAdmin {
 		$surface = AdminDefinition::log_surface();
 		/* translators: %s: localized admin surface title. */
 		$page_title = sprintf( __( '%s — Gravity Notification Manager', 'gravity-notification-manager' ), $surface['title'] );
-		$hook = add_submenu_page(
+		$hook       = add_submenu_page(
 			AdminDefinition::ROOT_SLUG,
 			$page_title,
 			$surface['title'],
@@ -81,8 +81,17 @@ final class OperationalLogAdmin {
 
 	private static function render_tabs( string $channel ): void {
 		echo '<nav class="nav-tab-wrapper gnm-log-tabs" aria-label="' . esc_attr__( 'Operational log channel', 'gravity-notification-manager' ) . '">';
-		foreach ( array( 'sms' => __( 'SMS log', 'gravity-notification-manager' ), 'bale' => __( 'Bale log', 'gravity-notification-manager' ) ) as $value => $label ) {
-			$url   = add_query_arg( array( 'page' => AdminDefinition::LOGS_SLUG, 'channel' => $value ), admin_url( 'admin.php' ) );
+		foreach ( array(
+			'sms'  => __( 'SMS log', 'gravity-notification-manager' ),
+			'bale' => __( 'Bale log', 'gravity-notification-manager' ),
+		) as $value => $label ) {
+			$url   = add_query_arg(
+				array(
+					'page'    => AdminDefinition::LOGS_SLUG,
+					'channel' => $value,
+				),
+				admin_url( 'admin.php' )
+			);
 			$class = 'nav-tab' . ( $channel === $value ? ' nav-tab-active' : '' );
 			echo '<a class="' . esc_attr( $class ) . '" href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
 		}
@@ -230,10 +239,14 @@ final class OperationalLogAdmin {
 
 	/** @return array<string, string> */
 	private static function requested_filters(): array {
-		$status = isset( $_GET['status'] ) ? self::request_text( $_GET['status'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter.
+		$status    = isset( $_GET['status'] ) ? self::request_text( $_GET['status'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter.
 		$execution = isset( $_GET['execution_type'] ) ? self::request_text( $_GET['execution_type'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter.
-		$trace = isset( $_GET['trace_id'] ) ? strtolower( self::request_text( $_GET['trace_id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter.
-		return array( 'status' => $status, 'execution_type' => $execution, 'trace_id' => $trace );
+		$trace     = isset( $_GET['trace_id'] ) ? strtolower( self::request_text( $_GET['trace_id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter.
+		return array(
+			'status'         => $status,
+			'execution_type' => $execution,
+			'trace_id'       => $trace,
+		);
 	}
 
 	/** @param mixed $value */

@@ -13,7 +13,7 @@ use GravityNotify\Observability\OperationalEventStoreInterface;
 final class InMemoryOperationalEventStore implements OperationalEventStoreInterface {
 
 	/** @var array<int, OperationalEvent> */
-	public array $events = array();
+	public array $events     = array();
 	public bool $fail_writes = false;
 
 	public function append( OperationalEvent $event ): bool {
