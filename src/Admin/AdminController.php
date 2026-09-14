@@ -45,13 +45,12 @@ final class AdminController {
 		add_action( 'admin_init', array( self::class, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue_assets' ) );
 		add_action( 'admin_post_' . AdminDefinition::CHECK_ACTION, array( self::class, 'handle_check_again' ) );
-		add_action( 'admin_post_' . AdminDefinition::TEST_SMS_ACTION, array( self::class, 'handle_test_sms' ) );
 		add_action( 'admin_post_' . AdminDefinition::TEST_BALE_ACTION, array( self::class, 'handle_test_bale' ) );
 		self::$booted = true;
 	}
 
 	/**
-	 * Register exactly Overview / Notification Points / Settings / Advisor / Help & Diagnostics.
+	 * Register the core surfaces owned by AdminController.
 	 *
 	 * @return void
 	 */
@@ -206,33 +205,29 @@ final class AdminController {
 	}
 
 	/**
-	 * Render native write-only-secret Settings plus explicit provider test controls.
+	 * Render Bale/non-SMS settings plus the explicit Bale test control.
 	 *
-	 * Rendering this page is side-effect-free; only the separate test POST actions send.
+	 * Rendering this page is side-effect-free; only the separate Bale test POST sends.
 	 *
 	 * @return void
 	 */
 	public static function render_settings(): void {
 		self::guard_capability();
 		$settings = Settings::read();
-		$ready    = Settings::readiness( $settings );
 
 		self::header(
 			__( 'Settings', 'gravity-notification-manager' ),
 			__( 'Saving settings does not send messages. Provider tests below send only when you explicitly submit a test action.', 'gravity-notification-manager' )
 		);
-		self::render_provider_test_notice();
+		self::render_bale_test_notice();
 		echo '<form method="post" action="' . esc_url( admin_url( 'options.php' ) ) . '" class="gnm-panel gnm-settings">';
 		settings_fields( Settings::GROUP );
-		echo '<h2>' . esc_html__( 'SMS Providers / IPPanel', 'gravity-notification-manager' ) . '</h2>';
-		self::secret_field( 'ippanel_api_key', __( 'IPPanel API key', 'gravity-notification-manager' ), $ready['ippanel'] || '' !== ( $settings['ippanel_api_key'] ?? '' ) );
-		echo '<label class="gnm-field"><span>' . esc_html__( 'SMS sender number (E.164)', 'gravity-notification-manager' ) . '</span><input type="text" class="regular-text gnm-ltr" dir="ltr" name="' . esc_attr( Settings::OPTION ) . '[sms_from_number]" value="' . esc_attr( $settings['sms_from_number'] ?? '' ) . '" placeholder="+982100000000" autocomplete="off"></label>';
 		echo '<h2>' . esc_html__( 'Bale', 'gravity-notification-manager' ) . '</h2>';
 		self::secret_field( 'bale_bot_token', __( 'Bale bot token', 'gravity-notification-manager' ), '' !== ( $settings['bale_bot_token'] ?? '' ) );
 		echo '<p class="description">' . esc_html__( 'Stored credentials are never echoed back into this page or diagnostics.', 'gravity-notification-manager' ) . '</p>';
 		submit_button( __( 'Save Settings', 'gravity-notification-manager' ) );
 		echo '</form>';
-		self::render_provider_test_controls();
+		self::render_bale_test_control();
 		self::footer();
 	}
 
@@ -326,62 +321,37 @@ final class AdminController {
 		exit;
 	}
 
-	/** Handle the explicit IPPanel/SMS test POST. */
-	public static function handle_test_sms(): void {
-		self::handle_provider_test( 'sms' );
-	}
-
 	/** Handle the explicit Bale test POST. */
 	public static function handle_test_bale(): void {
-		self::handle_provider_test( 'bale' );
-	}
-
-	/**
-	 * Execute one explicit provider test after capability and action-specific nonce checks.
-	 *
-	 * @param string $channel Supported test channel.
-	 * @return void
-	 */
-	private static function handle_provider_test( string $channel ): void {
 		self::guard_capability();
-		check_admin_referer( self::provider_test_nonce_action( $channel ), 'gnm_provider_test_nonce' );
+		check_admin_referer( self::bale_test_nonce_action(), 'gnm_provider_test_nonce' );
 
-		$raw_destination = isset( $_POST['destination'] ) ? wp_unslash( $_POST['destination'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Target-specific nonce is verified immediately above.
+		$raw_destination = isset( $_POST['destination'] ) ? wp_unslash( $_POST['destination'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Action-bound nonce is verified immediately above.
 		$destination     = is_string( $raw_destination ) ? sanitize_text_field( $raw_destination ) : '';
-		$message         = __( 'Gravity Notification Manager provider test message.', 'gravity-notification-manager' );
-		$service         = ProviderTestService::production();
-		$result          = 'sms' === $channel
-			? $service->test_sms( $destination, $message )
-			: $service->test_bale( $destination, $message );
+		$result          = ProviderTestService::production()->test_bale(
+			$destination,
+			__( 'Gravity Notification Manager provider test message.', 'gravity-notification-manager' )
+		);
 
-		self::store_provider_test_notice( $channel, $result );
+		self::store_bale_test_notice( $result );
 		wp_safe_redirect( self::admin_page_url( AdminDefinition::SETTINGS_SLUG ) );
 		exit;
 	}
 
-	/** Render the two independent real-send controls on Settings. */
-	private static function render_provider_test_controls(): void {
-		echo '<section class="gnm-panel"><h2>' . esc_html__( 'IPPanel / SMS test', 'gravity-notification-manager' ) . '</h2>';
-		echo '<p><strong>' . esc_html__( 'Real external send:', 'gravity-notification-manager' ) . '</strong> ' . esc_html__( 'Submitting this action sends one real SMS through the configured IPPanel account.', 'gravity-notification-manager' ) . '</p>';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		echo '<input type="hidden" name="action" value="' . esc_attr( AdminDefinition::TEST_SMS_ACTION ) . '">';
-		wp_nonce_field( self::provider_test_nonce_action( 'sms' ), 'gnm_provider_test_nonce' );
-		echo '<label class="gnm-field"><span>' . esc_html__( 'Test SMS destination (E.164)', 'gravity-notification-manager' ) . '</span><input type="text" class="regular-text gnm-ltr" dir="ltr" name="destination" value="" placeholder="+989121234567" autocomplete="off" required></label>';
-		submit_button( __( 'Send Test SMS', 'gravity-notification-manager' ), 'secondary', 'submit', false );
-		echo '</form></section>';
-
+	/** Render the explicit Bale real-send control retained on Settings. */
+	private static function render_bale_test_control(): void {
 		echo '<section class="gnm-panel"><h2>' . esc_html__( 'Bale test', 'gravity-notification-manager' ) . '</h2>';
 		echo '<p><strong>' . esc_html__( 'Real external send:', 'gravity-notification-manager' ) . '</strong> ' . esc_html__( 'Submitting this action sends one real Bale message through the configured bot.', 'gravity-notification-manager' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( AdminDefinition::TEST_BALE_ACTION ) . '">';
-		wp_nonce_field( self::provider_test_nonce_action( 'bale' ), 'gnm_provider_test_nonce' );
+		wp_nonce_field( self::bale_test_nonce_action(), 'gnm_provider_test_nonce' );
 		echo '<label class="gnm-field"><span>' . esc_html__( 'Test Bale chat destination', 'gravity-notification-manager' ) . '</span><input type="text" class="regular-text gnm-ltr" dir="ltr" name="destination" value="" placeholder="123456789 or @channel" autocomplete="off" required></label>';
 		submit_button( __( 'Send Test Bale Message', 'gravity-notification-manager' ), 'secondary', 'submit', false );
 		echo '</form></section>';
 	}
 
-	/** Render one one-time privacy-safe test result, when present. */
-	private static function render_provider_test_notice(): void {
+	/** Render one one-time privacy-safe Bale test result, when present. */
+	private static function render_bale_test_notice(): void {
 		if ( ! function_exists( 'get_current_user_id' ) || ! function_exists( 'get_transient' ) || ! function_exists( 'delete_transient' ) ) {
 			return;
 		}
@@ -391,16 +361,15 @@ final class AdminController {
 			return;
 		}
 
-		$key    = self::provider_test_notice_key( $user_id );
+		$key    = self::bale_test_notice_key( $user_id );
 		$notice = get_transient( $key );
 		delete_transient( $key );
 		if ( ! is_array( $notice ) ) {
 			return;
 		}
 
-		$channel = (string) ( $notice['channel'] ?? '' );
-		$status  = (string) ( $notice['status'] ?? '' );
-		if ( ! in_array( $channel, array( 'sms', 'bale' ), true ) || ! in_array( $status, array( AttemptStatus::SUCCESS, AttemptStatus::FAILED, AttemptStatus::AMBIGUOUS ), true ) ) {
+		$status = (string) ( $notice['status'] ?? '' );
+		if ( ! in_array( $status, array( AttemptStatus::SUCCESS, AttemptStatus::FAILED, AttemptStatus::AMBIGUOUS ), true ) ) {
 			return;
 		}
 
@@ -409,14 +378,11 @@ final class AdminController {
 			AttemptStatus::AMBIGUOUS => 'notice-warning',
 			default                  => 'notice-error',
 		};
-		$title = 'sms' === $channel
-			? __( 'IPPanel / SMS test', 'gravity-notification-manager' )
-			: __( 'Bale test', 'gravity-notification-manager' );
 
-		echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible"><p><strong>' . esc_html( $title ) . '</strong> — ';
+		echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible"><p><strong>' . esc_html__( 'Bale test', 'gravity-notification-manager' ) . '</strong> — ';
 		/* translators: %s: stable provider test status token (SUCCESS, FAILED, or AMBIGUOUS). */
 		echo esc_html( sprintf( __( 'Result: %s', 'gravity-notification-manager' ), $status ) );
-		echo '</p><p>' . esc_html( self::provider_test_detail( (string) ( $notice['diagnostic'] ?? '' ), $channel ) ) . '</p>';
+		echo '</p><p>' . esc_html( self::bale_test_detail( (string) ( $notice['diagnostic'] ?? '' ) ) ) . '</p>';
 
 		$references = is_array( $notice['references'] ?? null ) ? $notice['references'] : array();
 		if ( array() !== $references ) {
@@ -427,13 +393,12 @@ final class AdminController {
 	}
 
 	/**
-	 * Store only bounded status/reference facts for the post-redirect notice.
+	 * Store only bounded Bale status/reference facts for the post-redirect notice.
 	 *
-	 * @param string        $channel Test channel.
-	 * @param AttemptResult $result  Provider attempt result.
+	 * @param AttemptResult $result Bale provider attempt result.
 	 * @return void
 	 */
-	private static function store_provider_test_notice( string $channel, AttemptResult $result ): void {
+	private static function store_bale_test_notice( AttemptResult $result ): void {
 		if ( ! function_exists( 'get_current_user_id' ) || ! function_exists( 'set_transient' ) ) {
 			return;
 		}
@@ -459,14 +424,13 @@ final class AdminController {
 		}
 
 		$diagnostic = $result->diagnostic();
-		if ( ! in_array( $diagnostic, self::provider_test_diagnostics(), true ) ) {
+		if ( ! in_array( $diagnostic, self::bale_test_diagnostics(), true ) ) {
 			$diagnostic = 'unknown_result';
 		}
 
 		set_transient(
-			self::provider_test_notice_key( $user_id ),
+			self::bale_test_notice_key( $user_id ),
 			array(
-				'channel'    => 'sms' === $channel ? 'sms' : 'bale',
 				'status'     => $status,
 				'references' => $references,
 				'diagnostic' => $diagnostic,
@@ -475,8 +439,8 @@ final class AdminController {
 		);
 	}
 
-	/** Return only diagnostics that are safe to persist/render as classifications. */
-	private static function provider_test_diagnostics(): array {
+	/** Return only Bale diagnostics that are safe to persist/render as classifications. */
+	private static function bale_test_diagnostics(): array {
 		return array(
 			'provider_not_configured',
 			'invalid_destination',
@@ -493,20 +457,15 @@ final class AdminController {
 	}
 
 	/**
-	 * Convert safe diagnostic classifications into localized operator guidance.
+	 * Convert safe Bale diagnostic classifications into localized operator guidance.
 	 *
 	 * @param string $diagnostic Safe diagnostic identifier.
-	 * @param string $channel    Test channel.
 	 * @return string
 	 */
-	private static function provider_test_detail( string $diagnostic, string $channel ): string {
+	private static function bale_test_detail( string $diagnostic ): string {
 		return match ( $diagnostic ) {
-			'provider_not_configured' => 'sms' === $channel
-				? __( 'IPPanel test could not run because the API key or sender number is not configured.', 'gravity-notification-manager' )
-				: __( 'Bale test could not run because the bot token is not configured.', 'gravity-notification-manager' ),
-			'invalid_destination' => 'sms' === $channel
-				? __( 'Enter a valid E.164 SMS destination.', 'gravity-notification-manager' )
-				: __( 'Enter a valid Bale numeric chat ID or @channel username.', 'gravity-notification-manager' ),
+			'provider_not_configured' => __( 'Bale test could not run because the bot token is not configured.', 'gravity-notification-manager' ),
+			'invalid_destination' => __( 'Enter a valid Bale numeric chat ID or @channel username.', 'gravity-notification-manager' ),
 			'invalid_test_request' => __( 'The test request could not be created safely.', 'gravity-notification-manager' ),
 			'accepted' => __( 'The provider accepted the test message.', 'gravity-notification-manager' ),
 			'http_rejection', 'provider_rejection', 'api_rejection' => __( 'The provider rejected the test request.', 'gravity-notification-manager' ),
@@ -515,24 +474,18 @@ final class AdminController {
 		};
 	}
 
-	/**
-	 * Build an action/surface-bound provider test nonce action.
-	 *
-	 * @param string $channel Test channel.
-	 * @return string
-	 */
-	private static function provider_test_nonce_action( string $channel ): string {
-		$action = 'sms' === $channel ? AdminDefinition::TEST_SMS_ACTION : AdminDefinition::TEST_BALE_ACTION;
-		return $action . '_' . AdminDefinition::SETTINGS_SLUG;
+	/** Build the Settings/Bale action-bound provider test nonce action. */
+	private static function bale_test_nonce_action(): string {
+		return AdminDefinition::TEST_BALE_ACTION . '_' . AdminDefinition::SETTINGS_SLUG;
 	}
 
 	/**
-	 * Build the short-lived one-user result notice key.
+	 * Build the short-lived one-user Bale test result notice key.
 	 *
 	 * @param int $user_id WordPress user ID.
 	 * @return string
 	 */
-	private static function provider_test_notice_key( int $user_id ): string {
+	private static function bale_test_notice_key( int $user_id ): string {
 		return 'gravity_notify_provider_test_notice_' . $user_id;
 	}
 
