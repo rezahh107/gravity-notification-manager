@@ -69,7 +69,7 @@ if ( file_exists( GFSMS_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 }
 
 // ---------------------------------------------------------------------------
-// Greenfield admin foundation and notification runtime.
+// Greenfield admin foundation, provider administration, and notification runtime.
 // WU-09 retired the legacy GFSMS sender/queue runtime. Migration state remains
 // readable for authorization/history, but no legacy runtime guard or migration
 // rollback controller is booted after retirement.
@@ -79,6 +79,9 @@ if ( ! defined( 'GRAVITY_NOTIFY_PLUGIN_URL' ) ) {
 }
 if ( class_exists( '\\GravityNotify\\Admin\\AdminController' ) ) {
 	\GravityNotify\Admin\AdminController::boot();
+}
+if ( class_exists( '\\GravityNotify\\Admin\\ProviderManagerAdmin' ) ) {
+	\GravityNotify\Admin\ProviderManagerAdmin::boot();
 }
 if ( class_exists( '\\GravityNotify\\Migration\\ProductionRuntime' ) ) {
 	\GravityNotify\Migration\ProductionRuntime::boot();

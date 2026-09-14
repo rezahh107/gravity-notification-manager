@@ -213,7 +213,7 @@ A new SMS provider is eligible only if it has:
 - no mandatory background worker for baseline delivery;
 - at least one useful declared capability such as `plain` or `pattern`.
 
-Provider-specific behavior stays behind the provider boundary.
+Provider-specific **delivery** behavior stays behind the provider boundary. Provider administration, credential storage, enablement/order, readiness, sender-line management/discovery, and construction belong to the separate Provider Manager/configuration-composition layer; do not expand `SmsProviderInterface` with those responsibilities.
 
 IPPanel is the initial primary provider. Implement against the new contract first, then perform the bounded legacy differential review defined in `SALVAGE_REFERENCE.md`.
 
@@ -256,16 +256,19 @@ Important states must not rely on color alone.
 
 Read `docs/UI_UX_REFERENCE.md` for any Work Unit touching admin presentation.
 
-Approved information architecture:
+Current approved information architecture is purpose-based and is **not permanently limited to a fixed count**. The directly supported surfaces are:
 
 ```text
 Gravity Notification Manager
 ├─ Overview
 ├─ Notification Points
+├─ SMS Providers / IPPanel   ← Provider Manager / Senders
 ├─ Settings
 ├─ Advisor
 └─ Help & Diagnostics
 ```
+
+Provider Manager owns supported SMS provider credentials, enablement/readiness, sender configuration, and explicit provider-management operations. `Settings` remains the home for Bale and other non-SMS-provider/global options until their own destination is explicitly changed. Future provider-management surfaces or provider types require an implemented, contract-gated capability; do not advertise speculative providers as working choices.
 
 The visual/interaction direction is:
 

@@ -10,11 +10,11 @@ namespace GravityNotify\Migration;
 use GravityNotify\Admin\Settings;
 use GravityNotify\Delivery\Bale\BaleClient;
 use GravityNotify\Delivery\Http\WordPressHttpTransport;
-use GravityNotify\Delivery\Sms\IPPanelProvider;
 use GravityNotify\Delivery\Sms\SmsProviderRegistry;
 use GravityNotify\Delivery\SynchronousDispatcher;
 use GravityNotify\GravityForms\NotificationFeedAddOn;
 use GravityNotify\GravityForms\NotificationFeedProcessor;
+use GravityNotify\Provider\SmsProviderManager;
 use GravityNotify\Recipient\Native\GravityFlowAssigneeReader;
 use GravityNotify\Recipient\Native\GravityFormsEntryFieldReader;
 use GravityNotify\Recipient\Native\WordPressUserDirectory;
@@ -79,14 +79,12 @@ final class ProductionRuntime {
 	 * @return NotificationFeedProcessor
 	 */
 	private static function processor( ?string $test_endpoint = null ): NotificationFeedProcessor {
-		$settings  = Settings::read();
-		$http      = new WordPressHttpTransport();
-		$providers = array();
-		if ( '' !== ( $settings['ippanel_api_key'] ?? '' ) ) {
-			$providers[] = new IPPanelProvider( $settings['ippanel_api_key'], $http, $test_endpoint );
-		}
-		$bale = '' !== ( $settings['bale_bot_token'] ?? '' ) ? new BaleClient( $settings['bale_bot_token'], $http ) : null;
-		$resolver = new RecipientResolver(
+		$settings         = Settings::read();
+		$http             = new WordPressHttpTransport();
+		$provider_manager = new SmsProviderManager( $settings );
+		$providers        = $provider_manager->enabled_providers( $http, $test_endpoint );
+		$bale             = '' !== ( $settings['bale_bot_token'] ?? '' ) ? new BaleClient( $settings['bale_bot_token'], $http ) : null;
+		$resolver         = new RecipientResolver(
 			new GravityFormsEntryFieldReader(),
 			new WordPressUserDirectory(),
 			new GravityFlowAssigneeReader()
@@ -94,7 +92,7 @@ final class ProductionRuntime {
 		return new NotificationFeedProcessor(
 			$resolver,
 			new SynchronousDispatcher( new SmsProviderRegistry( $providers ), $bale ),
-			$settings['sms_from_number'] ?? ''
+			$provider_manager->configured_sender( SmsProviderManager::IPPANEL )
 		);
 	}
 

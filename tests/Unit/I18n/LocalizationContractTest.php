@@ -30,6 +30,7 @@ final class LocalizationContractTest extends TestCase {
 			$root . '/src/Admin/AdvisorModel.php',
 			$root . '/src/Admin/Environment.php',
 			$root . '/src/Admin/PointInspector.php',
+			$root . '/src/Admin/ProviderManagerAdmin.php',
 			$root . '/src/Admin/Settings.php',
 			$root . '/src/Admin/WordPressConfigurationSource.php',
 			$root . '/src/GravityForms/NotificationFeedAddOn.php',

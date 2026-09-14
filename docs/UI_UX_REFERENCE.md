@@ -1,8 +1,8 @@
 # Gravity Notification Manager — UI/UX Reference
 
-> **Document ID:** `GNM-UI-UX-REFERENCE-1.0.0`  
+> **Document ID:** `GNM-UI-UX-REFERENCE-1.1.0`  
 > **Status:** `CLOSED / IMPLEMENTATION_REFERENCE`  
-> **Decision date:** `2026-09-03`  
+> **Decision date:** `2026-09-14`  
 > **Repository:** `rezahh107/gravity-notification-manager`  
 > **Visual/UX reference repository:** `rezahh107/EDIS-WordPress-Evidence-Exporter`  
 > **Inspected EDIS Head:** `0785e6113c1b5390071311947aa849a537f066b7`
@@ -189,18 +189,19 @@ Reference design language, not product topology.
 
 ## 5. GNM Information Architecture
 
-The approved GNM admin information architecture is intentionally small:
+The approved GNM admin information architecture is intentionally small and responsibility-based. It is **not permanently constrained to a fixed number of surfaces**:
 
 ```text
 Gravity Notification Manager
 ├─ Overview
 ├─ Notification Points
+├─ SMS Providers / IPPanel   ← Provider Manager / Senders
 ├─ Settings
 ├─ Advisor
 └─ Help & Diagnostics
 ```
 
-Do not add another top-level page unless it has a recurring operational purpose that cannot fit coherently in these surfaces.
+Add a surface only when it has a recurring operational purpose that cannot fit coherently elsewhere. Provider Manager qualifies because provider credentials, enablement/readiness, sender lines and explicit provider operations are a distinct recurring responsibility. Do not add placeholder surfaces for providers whose adapters are not implemented.
 
 ### 5.1 Overview
 
@@ -249,15 +250,32 @@ Gravity Flow Step is missing.
 
 Point Manager remains guidance/verification only; it does not mutate workflow topology.
 
-### 5.3 Settings
+### 5.3 SMS Providers / IPPanel — Provider Manager / Senders
+
+Purpose: configure and operate supported SMS providers without expanding the delivery-provider interface into an admin API.
+
+For each implemented provider, the surface may show:
+
+- enabled/disabled state;
+- readiness;
+- write-only credentials;
+- configured sender line;
+- explicit provider test actions;
+- explicit sender-line retrieval only when a current documented, account-authorized provider contract has been established.
+
+For the first Provider Manager batch, IPPanel is the only functional provider type. Do not show Melipayamak, SMS.ir, FarazSMS or other providers as working choices until their real adapters/contracts exist.
+
+Rendering the surface, typing credentials, or ordinary Settings API saving must never contact the provider. Real test sending and any future sender discovery are separate explicit operator actions with capability and nonce protection.
+
+If sender-line enumeration is not proven from the current official contract, manual sender entry is the truthful fallback; do not invent an endpoint from legacy code or memory.
+
+### 5.4 Settings
 
 Use WordPress-native controls and APIs where they satisfy the need.
 
-Group configuration by actual responsibility, for example:
+After Provider Manager separation, Settings owns Bale and remaining non-SMS-provider/global options, for example:
 
 ```text
-SMS Providers
-  └─ IPPanel
 Bale
 Defaults / operational options
 ```
@@ -266,19 +284,20 @@ Do not build a custom settings framework merely for styling.
 
 Connection/test-send actions must be explicit user actions. Rendering the page must never send external messages.
 
-### 5.4 Advisor
+### 5.5 Advisor
 
-Purpose: read-only task-oriented guidance from the current Settings, Notification Point, and dependency/runtime truth.
+Purpose: read-only task-oriented guidance from the current Settings, Notification Point, Provider Manager, and dependency/runtime truth.
 
 Advisor must not:
 
 - send provider requests;
 - write Settings;
+- write provider configuration;
 - write delivery state;
 - mutate Gravity Flow topology;
 - invent provider, workflow, or presentation state that is not already known from the existing authoritative surfaces.
 
-### 5.5 Help & Diagnostics
+### 5.6 Help & Diagnostics
 
 Purpose: explain current environment/configuration health and provide safe troubleshooting.
 
@@ -357,7 +376,7 @@ Approved direction:
 ```text
 Visual feel: modern WordPress admin / EDIS-like clarity
 Foundation: stable WordPress Design System
-Information architecture: GNM-specific and small
+Information architecture: GNM-specific, small and responsibility-based
 Primary style: panels + summary cards + semantic status + clear actions
 React: selective, justified only by interaction benefit
 Experimental Widget Dashboard: no production dependency

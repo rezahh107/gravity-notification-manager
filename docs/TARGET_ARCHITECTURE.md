@@ -1,8 +1,8 @@
 # Gravity Notification Manager — Target Architecture
 
-> **Document ID:** `GNM-TARGET-ARCHITECTURE-1.2.0`  
+> **Document ID:** `GNM-TARGET-ARCHITECTURE-1.3.0`  
 > **Status:** `CLOSED`  
-> **Decision date:** `2026-09-03`  
+> **Decision date:** `2026-09-14`  
 > **Repository:** `rezahh107/gravity-notification-manager`  
 > **Product identity:** `docs/PRODUCT_IDENTITY.md`  
 > **Owner preference overlay:** `docs/OWNER_PREFERENCE_PROFILE.md`  
@@ -175,15 +175,18 @@ Best-effort duplicate suppression is sufficient. Do not build heavy exactly-once
 
 ### 4.9 Admin UX direction
 
-GNM admin UI uses a small purpose-built information architecture:
+GNM admin UI uses a small purpose-built, responsibility-oriented information architecture. It is **not permanently limited to a fixed number of surfaces**:
 
 ```text
 Overview
 Notification Points
+SMS Providers / IPPanel   ← Provider Manager / Senders
 Settings
 Advisor
 Help & Diagnostics
 ```
+
+The Provider Manager owns supported SMS-provider credentials, enablement/order, readiness, sender configuration, and explicit provider-management operations. Settings remains responsible for Bale and other non-SMS-provider/global options until a later Owner-approved destination changes that ownership. Provider choices appear only when their actual adapters/contracts exist; speculative providers are not presented as working options.
 
 The approved direction is:
 
@@ -242,7 +245,7 @@ GF Entry Detail        GravityView + Elementor
 Status + Retry         Attention Required view
 ```
 
-GNM admin Overview/Notification Points/Settings/Advisor/Help & Diagnostics sit beside this runtime to configure, guide, verify and diagnose. They do not become alternate workflow or delivery-state authorities.
+GNM admin Overview/Notification Points/SMS Providers/Settings/Advisor/Help & Diagnostics sit beside this runtime to configure, guide, verify and diagnose. They do not become alternate workflow or delivery-state authorities.
 
 ## 6. Gravity Forms Feed Contract
 
@@ -389,6 +392,10 @@ pattern → plain
 
 or invent another semantic conversion merely to force fallback.
 
+`SmsProviderInterface` remains the normalized synchronous delivery boundary. Provider administration, credentials, enablement/order, readiness, sender-line management/discovery, and provider construction belong to a separate Provider Manager/configuration-composition layer. Do not add those responsibilities to the delivery interface merely to support administration.
+
+Production composition builds enabled providers from the Provider Manager in deterministic configured order and passes them to the existing `SmsProviderRegistry`; dispatcher fallback semantics remain unchanged.
+
 IPPanel is the initial primary provider. Implement it independently from the current official Edge contract, then perform the bounded post-implementation legacy differential review defined in `SALVAGE_REFERENCE.md`.
 
 ## 11. Bale Contract
@@ -506,7 +513,7 @@ Do not rebuild custom pagination/searchable case tables/page-design systems with
 
 ## 16. GNM Admin UI Contract
 
-The admin surfaces are:
+The current directly supported admin surfaces are responsibility-based; this list may grow when an Owner-approved product responsibility warrants a distinct surface and its implementation exists.
 
 ### Overview
 
@@ -516,9 +523,15 @@ Fast operational orientation: summary stats, environment/product availability, p
 
 Form/workflow-oriented guidance and verification for logical notification Feeds/Steps, including exact setup guidance and `Check Again`.
 
+### SMS Providers / IPPanel — Provider Manager / Senders
+
+Supported SMS-provider configuration and composition: credentials, enable/disable state, readiness, sender-line configuration, and explicit provider-management actions such as real test sends. Rendering and ordinary saving do not contact the provider. Sender discovery, when a provider exposes a current documented account-authorized enumeration contract, is a separate explicit operator action and never part of `SmsProviderInterface`.
+
+Only implemented provider types are presented as working choices. IPPanel is the functional provider type in the first Provider Manager batch.
+
 ### Settings
 
-Provider/channel/global options using WordPress-native controls/APIs where sufficient.
+Bale and remaining non-SMS-provider/global options using WordPress-native controls/APIs where sufficient. SMS-provider credentials/senders no longer define Settings as an IPPanel-only product surface.
 
 ### Advisor
 
@@ -616,6 +629,7 @@ Every Work Unit preserves:
 18. Exact-target qualification claims remain evidence-bound.
 19. GNM admin UI follows `UI_UX_REFERENCE.md` and avoids experimental Dashboard dependency.
 20. Additional complexity requires named material benefit/failure prevention.
+21. `SmsProviderInterface` remains delivery-focused; Provider Manager/configuration-composition owns provider administration and sender-management concerns.
 
 ## 21. Architecture Acceptance Boundary
 
@@ -693,6 +707,7 @@ Any reopen must name:
 | `D-25` | Admin UX = EDIS-inspired grammar + stable WordPress Design System + simplified GNM IA | `CLOSED` |
 | `D-26` | Experimental customizable WordPress Widget Dashboard is not a production dependency while its extension API is experimental | `CLOSED` |
 | `D-27` | Owner preference overlay is scoped implementation/validation guidance, not runtime dependency or architecture authority above this document | `CLOSED` |
+| `D-28` | Provider Manager/configuration-composition owns SMS provider administration; `SmsProviderInterface` remains delivery-only and admin IA is not fixed to five surfaces | `CLOSED` |
 
 ## 24. Legacy Boundary
 
@@ -748,7 +763,7 @@ Re-check current official contracts during implementation when behavior is decis
 - WordPress — Design System theming / 7.1 dev note: https://make.wordpress.org/core/2026/07/31/design-system-theming-in-wordpress-7-1/
 - WordPress — Dashboard experiment status: https://developer.wordpress.org/news/2026/06/whats-new-for-developers-june-2026/
 - GravityView — Elementor integration: https://www.gravitykit.com/docs/gravityview-pro/advanced-elementor-widget/
-- IPPanel Edge API: https://ippanelcom.github.io/Edge-Document/
+- IPPanel Edge API: https://apidoc.ippanel.com/
 - Bale Bot API: https://docs.bale.ai/
 
 ## 28. Final Architectural Statement
@@ -761,6 +776,7 @@ Native Gravity Forms Feed
 + Point guidance/verification
 + Recipient resolution
 + Synchronous multi-provider SMS
++ Provider Manager configuration/composition
 + Bale fallback
 + Entry Meta status
 + Manual Retry

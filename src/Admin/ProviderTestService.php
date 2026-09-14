@@ -13,9 +13,9 @@ use GravityNotify\Delivery\Bale\BaleClient;
 use GravityNotify\Delivery\Bale\BaleRequest;
 use GravityNotify\Delivery\Http\HttpTransportInterface;
 use GravityNotify\Delivery\Http\WordPressHttpTransport;
-use GravityNotify\Delivery\Sms\IPPanelProvider;
 use GravityNotify\Delivery\Sms\SmsCapability;
 use GravityNotify\Delivery\Sms\SmsRequest;
+use GravityNotify\Provider\SmsProviderManager;
 use InvalidArgumentException;
 
 /**
@@ -29,7 +29,7 @@ final class ProviderTestService {
 	/**
 	 * Sanitized provider settings snapshot.
 	 *
-	 * @var array<string, string>
+	 * @var array<string, mixed>
 	 */
 	private array $settings;
 
@@ -41,9 +41,9 @@ final class ProviderTestService {
 	private HttpTransportInterface $http;
 
 	/**
-	 * Create the provider test service.
+	 * Create a provider-test service around one settings snapshot and transport.
 	 *
-	 * @param array<string, string>  $settings Sanitized provider settings.
+	 * @param array<string, mixed>   $settings Sanitized provider settings.
 	 * @param HttpTransportInterface $http     Existing transport seam.
 	 */
 	public function __construct( array $settings, HttpTransportInterface $http ) {
@@ -63,16 +63,17 @@ final class ProviderTestService {
 	 * @param string $message     Bounded localized test message.
 	 */
 	public function test_sms( string $destination, string $message ): AttemptResult {
-		$api_key = $this->settings['ippanel_api_key'] ?? '';
-		$from    = $this->settings['sms_from_number'] ?? '';
+		$manager  = new SmsProviderManager( $this->settings );
+		$from     = $manager->configured_sender( SmsProviderManager::IPPANEL );
+		$provider = $manager->provider( SmsProviderManager::IPPANEL, $this->http );
 
-		if ( '' === $api_key || ! self::is_e164( $from ) ) {
-			return $this->failure( 'sms', 'ippanel', SmsCapability::PLAIN, 'provider_not_configured' );
+		if ( null === $provider || ! self::is_e164( $from ) ) {
+			return $this->failure( 'sms', SmsProviderManager::IPPANEL, SmsCapability::PLAIN, 'provider_not_configured' );
 		}
 
 		$destination = trim( $destination );
 		if ( ! self::is_e164( $destination ) ) {
-			return $this->failure( 'sms', 'ippanel', SmsCapability::PLAIN, 'invalid_destination' );
+			return $this->failure( 'sms', SmsProviderManager::IPPANEL, SmsCapability::PLAIN, 'invalid_destination' );
 		}
 
 		try {
@@ -84,10 +85,10 @@ final class ProviderTestService {
 			);
 		} catch ( InvalidArgumentException $exception ) {
 			unset( $exception );
-			return $this->failure( 'sms', 'ippanel', SmsCapability::PLAIN, 'invalid_test_request' );
+			return $this->failure( 'sms', SmsProviderManager::IPPANEL, SmsCapability::PLAIN, 'invalid_test_request' );
 		}
 
-		return ( new IPPanelProvider( $api_key, $this->http ) )->send( $request );
+		return $provider->send( $request );
 	}
 
 	/**
@@ -98,7 +99,7 @@ final class ProviderTestService {
 	 */
 	public function test_bale( string $destination, string $message ): AttemptResult {
 		$token = $this->settings['bale_bot_token'] ?? '';
-		if ( '' === $token ) {
+		if ( ! is_string( $token ) || '' === $token ) {
 			return $this->failure( 'bale', null, null, 'provider_not_configured' );
 		}
 
@@ -120,7 +121,7 @@ final class ProviderTestService {
 	/**
 	 * Check the existing IPPanel E.164 contract.
 	 *
-	 * @param string $value Candidate phone number.
+	 * @param string $value Candidate sender or destination.
 	 * @return bool
 	 */
 	private static function is_e164( string $value ): bool {
@@ -130,7 +131,7 @@ final class ProviderTestService {
 	/**
 	 * Validate the documented Bale chat identifier/username shapes conservatively.
 	 *
-	 * @param string $value Candidate Bale chat destination.
+	 * @param string $value Candidate Bale destination.
 	 * @return string|null
 	 */
 	private static function bale_destination( string $value ): ?string {
@@ -153,7 +154,6 @@ final class ProviderTestService {
 	 * @param string|null $provider_id Provider identifier when applicable.
 	 * @param string|null $capability  SMS capability when applicable.
 	 * @param string      $diagnostic  Safe diagnostic identifier.
-	 * @return AttemptResult
 	 */
 	private function failure( string $channel, ?string $provider_id, ?string $capability, string $diagnostic ): AttemptResult {
 		return new AttemptResult(
