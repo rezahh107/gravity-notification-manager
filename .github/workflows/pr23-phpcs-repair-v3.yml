@@ -75,7 +75,7 @@ jobs:
             tests/Unit/Observability/OperationalLoggerTest.php \
             tests/Unit/Observability/WordPressOperationalEventStoreTest.php \
             tests/Unit/Observability/LlmDebugReportTest.php || true
-      - name: Add the three remaining throw contracts
+      - name: Add final throw contracts
         run: |
           python3 <<'PY'
           from pathlib import Path
@@ -98,12 +98,13 @@ jobs:
                   text = text[:doc_start] + doc + text[doc_end + 2:]
                   path.write_text(text)
 
+          add_throw('src/Admin/OperationalLogAdmin.php', 'guard_capability', '\\RuntimeException', 'When the capability check cannot fail through wp_die')
           add_throw('src/Observability/OperationalContext.php', 'validated_trace_id', '\\InvalidArgumentException', 'When the trace identifier is not UUIDv4')
           add_throw('src/Observability/OperationalContext.php', 'new_trace_id', '\\Exception', 'When secure random bytes cannot be generated')
           add_throw('src/Observability/OperationalEvent.php', 'timestamp', '\\InvalidArgumentException', 'When the timestamp format is invalid')
           add_throw('src/Observability/OperationalEvent.php', 'trace_id', '\\InvalidArgumentException', 'When the trace identifier is not UUIDv4')
           PY
-          php vendor/bin/phpcbf -q --standard=phpcs.xml src/Observability/OperationalContext.php src/Observability/OperationalEvent.php || true
+          php vendor/bin/phpcbf -q --standard=phpcs.xml src/Admin/OperationalLogAdmin.php src/Observability/OperationalContext.php src/Observability/OperationalEvent.php || true
       - name: Validate final scoped repair
         run: |
           composer test:wu00
