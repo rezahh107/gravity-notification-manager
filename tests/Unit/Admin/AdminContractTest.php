@@ -10,6 +10,7 @@ namespace GravityNotify\Tests\Unit\Admin;
 use GravityNotify\Admin\AdminController;
 use GravityNotify\Admin\AdminDefinition;
 use GravityNotify\Admin\ConfigurationSourceInterface;
+use GravityNotify\Admin\OperationalLogAdmin;
 use GravityNotify\Admin\ProviderManagerAdmin;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -20,16 +21,17 @@ use RuntimeException;
  */
 final class AdminContractTest extends TestCase {
 
-	/** Provider Manager extends the established IA without changing the capability boundary. */
+	/** Provider Manager and Operational Log extend the established IA without changing capability. */
 	public function test_information_architecture_includes_provider_manager_with_native_capability(): void {
 		self::assertSame(
-			array( 'Overview', 'Notification Points', 'SMS Providers / IPPanel', 'Settings', 'Advisor', 'Help & Diagnostics' ),
+			array( 'Overview', 'Notification Points', 'SMS Providers / IPPanel', 'Operational Log', 'Settings', 'Advisor', 'Help & Diagnostics' ),
 			array_column( AdminDefinition::navigation_surfaces(), 'title' )
 		);
 		self::assertSame( 'manage_options', AdminDefinition::CAPABILITY );
 		self::assertTrue( is_callable( array( AdminController::class, 'render_overview' ) ) );
 		self::assertTrue( is_callable( array( AdminController::class, 'render_points' ) ) );
 		self::assertTrue( is_callable( array( ProviderManagerAdmin::class, 'render' ) ) );
+		self::assertTrue( is_callable( array( OperationalLogAdmin::class, 'render' ) ) );
 		self::assertTrue( is_callable( array( AdminController::class, 'render_settings' ) ) );
 		self::assertTrue( is_callable( array( AdminController::class, 'render_advisor' ) ) );
 		self::assertTrue( is_callable( array( AdminController::class, 'render_diagnostics' ) ) );
