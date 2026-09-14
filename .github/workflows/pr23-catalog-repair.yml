@@ -1,0 +1,162 @@
+name: PR23 Catalog Repair
+
+on:
+  push:
+    branches:
+      - feat/operational-observability
+    paths:
+      - '.github/workflows/pr23-catalog-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feat/operational-observability
+          fetch-depth: 0
+
+      - name: Synchronize Persian PO and compile MO
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import ast, re, struct
+
+          root = Path('.')
+          po_path = root / 'languages/gravity-notification-manager-fa_IR.po'
+          mo_path = root / 'languages/gravity-notification-manager-fa_IR.mo'
+          translations = {
+              'Operational Log': 'گزارش عملیاتی',
+              'Observational evidence for outbound attempts. Gravity Forms Entry Meta remains delivery-state and Retry authority.': 'شواهد مشاهده‌ای تلاش‌های خروجی. Entry Meta در Gravity Forms همچنان مرجع وضعیت تحویل و تلاش مجدد است.',
+              'Operational log channel': 'کانال گزارش عملیاتی',
+              'SMS log': 'گزارش SMS',
+              'Bale log': 'گزارش بله',
+              'Status': 'وضعیت',
+              'All statuses': 'همه وضعیت‌ها',
+              'Success': 'موفق',
+              'Failed': 'ناموفق',
+              'Ambiguous / warning': 'مبهم / هشدار',
+              'Skipped': 'اجرا نشد',
+              'Execution': 'اجرا',
+              'All executions': 'همه اجراها',
+              'Normal send': 'ارسال عادی',
+              'TEST': 'آزمون',
+              'Retry': 'تلاش مجدد',
+              'Trace ID': 'شناسه رهگیری',
+              'Filter log': 'فیلتر گزارش',
+              'No matching operational records were found.': 'هیچ رکورد عملیاتی مطابقی پیدا نشد.',
+              'Time': 'زمان',
+              'Result': 'نتیجه',
+              'Provider / Source': 'ارائه‌دهنده / منبع',
+              'Route': 'مسیر',
+              'Diagnostic': 'عیب‌یابی',
+              'Trace': 'رهگیری',
+              'Debug': 'عیب‌یابی',
+              'Reference:': 'شناسه مرجع:',
+              'Debug report copied.': 'گزارش عیب‌یابی کپی شد.',
+              'Copy LLM Debug Report': 'کپی گزارش عیب‌یابی LLM',
+              'Form': 'فرم',
+              'Entry': 'Entry',
+              'Sender': 'فرستنده',
+              'Destination': 'مقصد',
+              'Ambiguous': 'مبهم',
+              'Unknown': 'نامشخص',
+              'You do not have permission to access this page.': 'شما اجازه دسترسی به این صفحه را ندارید.',
+          }
+
+          text = po_path.read_text(encoding='utf-8')
+          existing = set(re.findall(r'^msgid "((?:[^"\\]|\\.)*)"$', text, re.M))
+          def esc(value):
+              return value.replace('\\', '\\\\').replace('"', '\\"')
+          for msgid, msgstr in translations.items():
+              if msgid not in existing:
+                  text += f'\nmsgid "{esc(msgid)}"\nmsgstr "{esc(msgstr)}"\n'
+          po_path.write_text(text, encoding='utf-8')
+
+          entries = []
+          msgid = msgstr = mode = None
+          def qval(value):
+              return ast.literal_eval(value)
+          def flush():
+              nonlocal_state = None
+          lines = text.splitlines()
+          current_id = None
+          current_str = None
+          mode = None
+          def emit():
+              if current_id is not None and current_str is not None:
+                  entries.append((current_id, current_str))
+          for line in lines:
+              if line.startswith('msgid '):
+                  if current_id is not None or current_str is not None:
+                      emit()
+                  current_id = qval(line[6:].strip())
+                  current_str = None
+                  mode = 'id'
+              elif line.startswith('msgstr '):
+                  current_str = qval(line[7:].strip())
+                  mode = 'str'
+              elif line.startswith('"'):
+                  value = qval(line.strip())
+                  if mode == 'id':
+                      current_id = (current_id or '') + value
+                  elif mode == 'str':
+                      current_str = (current_str or '') + value
+              elif not line.strip() and (current_id is not None or current_str is not None):
+                  emit()
+                  current_id = current_str = mode = None
+          if current_id is not None or current_str is not None:
+              emit()
+
+          catalog = {key: value for key, value in entries}
+          items = sorted(catalog.items(), key=lambda item: item[0].encode('utf-8'))
+          originals = [key.encode('utf-8') for key, _ in items]
+          translations_bytes = [value.encode('utf-8') for _, value in items]
+          count = len(items)
+          header_size = 28
+          originals_offset = header_size
+          translations_offset = originals_offset + count * 8
+          pool_offset = translations_offset + count * 8
+          original_pool = b''
+          original_entries = []
+          for value in originals:
+              original_entries.append((len(value), pool_offset + len(original_pool)))
+              original_pool += value + b'\0'
+          translation_pool_offset = pool_offset + len(original_pool)
+          translation_pool = b''
+          translation_entries = []
+          for value in translations_bytes:
+              translation_entries.append((len(value), translation_pool_offset + len(translation_pool)))
+              translation_pool += value + b'\0'
+          header = struct.pack('<7I', 0x950412de, 0, count, originals_offset, translations_offset, 0, 0)
+          tables = b''.join(struct.pack('<2I', *entry) for entry in original_entries)
+          tables += b''.join(struct.pack('<2I', *entry) for entry in translation_entries)
+          mo_path.write_bytes(header + tables + original_pool + translation_pool)
+
+          pattern = re.compile(r"\b(?:__|_e|esc_html__|esc_html_e|esc_attr__|esc_attr_e)\(\s*(['\"])((?:\\.|(?!\1).)*)\1\s*,\s*(['\"])gravity-notification-manager\3", re.S)
+          required = []
+          for relative in ('src/Admin/OperationalLogAdmin.php', 'src/Admin/AdminDefinition.php'):
+              source = (root / relative).read_text(encoding='utf-8')
+              for match in pattern.finditer(source):
+                  if match.group(2) not in required:
+                      required.append(match.group(2))
+          for msgid in required:
+              if not catalog.get(msgid, '').strip():
+                  raise SystemExit(f'Missing/empty Persian translation: {msgid}')
+          print(f'Catalog synchronized: {len(required)} required msgids; MO entries={count}')
+          PY
+
+      - name: Remove temporary workflow and commit catalog artifacts
+        shell: bash
+        run: |
+          git rm .github/workflows/pr23-catalog-repair.yml
+          git add languages/gravity-notification-manager-fa_IR.po languages/gravity-notification-manager-fa_IR.mo
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: synchronize Persian operational catalog'
+          git push origin HEAD:feat/operational-observability
