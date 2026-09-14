@@ -57,11 +57,11 @@ final class AdminDefinition {
 		);
 	}
 
-	/** Return the directly discoverable SMS Provider Manager surface definition. */
+	/** Return the directly discoverable SMS Provider Manager / sender surface. */
 	public static function provider_surface(): array {
 		return array(
 			'slug'  => self::PROVIDERS_SLUG,
-			'title' => __( 'Providers & Senders', 'gravity-notification-manager' ),
+			'title' => __( 'SMS Providers / IPPanel', 'gravity-notification-manager' ),
 		);
 	}
 
