@@ -27,6 +27,15 @@ final class ProviderManagerAdminTest extends TestCase {
 		self::assertStringContainsString( "esc_html__( 'SMS Providers / IPPanel', 'gravity-notification-manager' )", $source );
 	}
 
+	/** Provider Manager owns both IPPanel configuration controls and its production test action. */
+	public function test_provider_manager_contains_canonical_ippanel_configuration_and_test_controls(): void {
+		$source = $this->source();
+		self::assertStringContainsString( "esc_html__( 'IPPanel API key', 'gravity-notification-manager' )", $source );
+		self::assertStringContainsString( "esc_html__( 'SMS sender number (E.164)', 'gravity-notification-manager' )", $source );
+		self::assertStringContainsString( 'AdminDefinition::PROVIDER_TEST_SMS_ACTION', $source );
+		self::assertStringContainsString( "ProviderTestService::production()->test_sms(", $source );
+	}
+
 	/** Real SMS tests exist only behind an explicit admin-post action with capability and nonce guards. */
 	public function test_real_send_action_is_explicit_and_guarded_before_service_execution(): void {
 		$source  = $this->source();
@@ -102,7 +111,13 @@ final class ProviderManagerAdminTest extends TestCase {
 		return $source;
 	}
 
-	/** Extract one source interval without evaluating WordPress globals. */
+	/**
+	 * Extract one source interval without evaluating WordPress globals.
+	 *
+	 * @param string $start_marker Start marker.
+	 * @param string $end_marker   End marker.
+	 * @return string
+	 */
 	private function method_section( string $start_marker, string $end_marker ): string {
 		$source = $this->source();
 		$start  = strpos( $source, $start_marker );
