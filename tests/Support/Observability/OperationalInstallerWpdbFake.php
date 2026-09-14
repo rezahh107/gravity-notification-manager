@@ -1,6 +1,6 @@
 <?php
 /**
- * wpdb fake for literal SQL LIKE verification in the operational installer.
+ * Wpdb fake for literal SQL LIKE verification in the operational installer.
  *
  * @package GravityNotify
  */
@@ -11,7 +11,11 @@ namespace GravityNotify\Tests\Support\Observability;
  * Models only the wpdb surface required by OperationalLogInstaller::install().
  */
 final class OperationalInstallerWpdbFake {
-	/** Database table prefix. */
+	/**
+	 * Database table prefix.
+	 *
+	 * @var string
+	 */
 	public string $prefix = 'wp_';
 
 	/**
