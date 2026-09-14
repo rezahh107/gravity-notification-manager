@@ -15,24 +15,25 @@ use ReflectionClass;
 use RuntimeException;
 
 /**
- * Proves the bounded WU-06 admin architecture and privileged action guards.
+ * Proves the bounded GNM admin architecture and privileged action guards.
  */
 final class AdminContractTest extends TestCase {
 
 	/**
-	 * Exactly the approved four product surfaces exist under one capability.
+	 * Exactly the approved five product surfaces exist under one capability.
 	 *
 	 * @return void
 	 */
-	public function test_information_architecture_is_exactly_four_surfaces_with_native_capability(): void {
+	public function test_information_architecture_is_exactly_five_surfaces_with_native_capability(): void {
 		self::assertSame(
-			array( 'Overview', 'Notification Points', 'Settings', 'Help & Diagnostics' ),
+			array( 'Overview', 'Notification Points', 'Settings', 'Advisor', 'Help & Diagnostics' ),
 			array_column( AdminDefinition::surfaces(), 'title' )
 		);
 		self::assertSame( 'manage_options', AdminDefinition::CAPABILITY );
 		self::assertTrue( is_callable( array( AdminController::class, 'render_overview' ) ) );
 		self::assertTrue( is_callable( array( AdminController::class, 'render_points' ) ) );
 		self::assertTrue( is_callable( array( AdminController::class, 'render_settings' ) ) );
+		self::assertTrue( is_callable( array( AdminController::class, 'render_advisor' ) ) );
 		self::assertTrue( is_callable( array( AdminController::class, 'render_diagnostics' ) ) );
 	}
 

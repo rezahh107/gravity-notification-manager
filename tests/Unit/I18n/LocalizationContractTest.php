@@ -27,6 +27,7 @@ final class LocalizationContractTest extends TestCase {
 			$root . '/gravityflow-sms-ippanel.php',
 			$root . '/src/Admin/AdminController.php',
 			$root . '/src/Admin/AdminDefinition.php',
+			$root . '/src/Admin/AdvisorModel.php',
 			$root . '/src/Admin/Environment.php',
 			$root . '/src/Admin/PointInspector.php',
 			$root . '/src/Admin/Settings.php',

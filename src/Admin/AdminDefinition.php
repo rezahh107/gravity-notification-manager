@@ -8,7 +8,7 @@
 namespace GravityNotify\Admin;
 
 /**
- * Defines the bounded WU-06 information architecture and capability boundary.
+ * Defines the bounded GNM information architecture and capability boundary.
  */
 final class AdminDefinition {
 
@@ -16,13 +16,14 @@ final class AdminDefinition {
 	public const ROOT_SLUG = 'gravity-notification-manager';
 	public const POINTS_SLUG = 'gravity-notification-manager-points';
 	public const SETTINGS_SLUG = 'gravity-notification-manager-settings';
+	public const ADVISOR_SLUG = 'gravity-notification-manager-advisor';
 	public const DIAGNOSTICS_SLUG = 'gravity-notification-manager-diagnostics';
 	public const CHECK_ACTION = 'gravity_notify_check_point';
 	public const TEST_SMS_ACTION = 'gravity_notify_test_sms';
 	public const TEST_BALE_ACTION = 'gravity_notify_test_bale';
 
 	/**
-	 * Return exactly the approved four product surfaces.
+	 * Return exactly the approved five product surfaces.
 	 *
 	 * @return array<int, array{slug:string,title:string}>
 	 */
@@ -39,6 +40,10 @@ final class AdminDefinition {
 			array(
 				'slug'  => self::SETTINGS_SLUG,
 				'title' => __( 'Settings', 'gravity-notification-manager' ),
+			),
+			array(
+				'slug'  => self::ADVISOR_SLUG,
+				'title' => __( 'Advisor', 'gravity-notification-manager' ),
 			),
 			array(
 				'slug'  => self::DIAGNOSTICS_SLUG,
