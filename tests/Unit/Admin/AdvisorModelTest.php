@@ -19,7 +19,10 @@ final class AdvisorModelTest extends TestCase {
 	/** Provider setup guidance reflects current Settings readiness. */
 	public function test_provider_guidance_reflects_current_readiness(): void {
 		$cards = AdvisorModel::build(
-			array( 'ippanel' => false, 'bale' => true ),
+			array(
+				'ippanel' => false,
+				'bale'    => true,
+			),
 			array(),
 			true,
 			true,
@@ -35,7 +38,10 @@ final class AdvisorModelTest extends TestCase {
 	/** Provider-test guidance points to Settings and distinguishes save from explicit real send. */
 	public function test_provider_test_guidance_uses_existing_settings_surface(): void {
 		$cards = AdvisorModel::build(
-			array( 'ippanel' => true, 'bale' => true ),
+			array(
+				'ippanel' => true,
+				'bale'    => true,
+			),
 			array(),
 			true,
 			true,
@@ -51,7 +57,10 @@ final class AdvisorModelTest extends TestCase {
 	/** Feed creation guidance reflects Gravity Forms availability and current point inventory. */
 	public function test_feed_setup_guidance_reflects_runtime_state(): void {
 		$missing = AdvisorModel::build(
-			array( 'ippanel' => false, 'bale' => false ),
+			array(
+				'ippanel' => false,
+				'bale'    => false,
+			),
 			array(),
 			false,
 			false,
@@ -62,7 +71,10 @@ final class AdvisorModelTest extends TestCase {
 		self::assertSame( AdvisorModel::ACTION_DIAGNOSTICS, $card['action'] );
 
 		$available = AdvisorModel::build(
-			array( 'ippanel' => false, 'bale' => false ),
+			array(
+				'ippanel' => false,
+				'bale'    => false,
+			),
 			array(),
 			true,
 			false,
@@ -80,7 +92,10 @@ final class AdvisorModelTest extends TestCase {
 			'Existing inspector next action.'
 		);
 		$cards = AdvisorModel::build(
-			array( 'ippanel' => true, 'bale' => false ),
+			array(
+				'ippanel' => true,
+				'bale'    => false,
+			),
 			array( $point ),
 			true,
 			true,
@@ -99,7 +114,10 @@ final class AdvisorModelTest extends TestCase {
 	public function test_flow_guidance_only_exposes_known_points_when_flow_is_available(): void {
 		$point = $this->point( PointStatus::CONFIGURED, 'Configured.', 'No change.' );
 		$available = AdvisorModel::build(
-			array( 'ippanel' => true, 'bale' => true ),
+			array(
+				'ippanel' => true,
+				'bale'    => true,
+			),
 			array( $point ),
 			true,
 			true,
@@ -111,7 +129,10 @@ final class AdvisorModelTest extends TestCase {
 		self::assertSame( 21, $flow['flow_points'][0]['feed_id'] );
 
 		$unavailable = AdvisorModel::build(
-			array( 'ippanel' => true, 'bale' => true ),
+			array(
+				'ippanel' => true,
+				'bale'    => true,
+			),
 			array( $point ),
 			true,
 			false,
@@ -126,7 +147,10 @@ final class AdvisorModelTest extends TestCase {
 	/** Retry and Attention guidance preserve the current presentation boundaries. */
 	public function test_retry_and_attention_guidance_match_existing_architecture(): void {
 		$cards = AdvisorModel::build(
-			array( 'ippanel' => true, 'bale' => true ),
+			array(
+				'ippanel' => true,
+				'bale'    => true,
+			),
 			array(),
 			true,
 			true,
@@ -154,7 +178,7 @@ final class AdvisorModelTest extends TestCase {
 	 */
 	private function card( array $cards, string $id ): array {
 		foreach ( $cards as $card ) {
-			if ( $id === ( $card['id'] ?? null ) ) {
+			if ( ( $card['id'] ?? null ) === $id ) {
 				return $card;
 			}
 		}

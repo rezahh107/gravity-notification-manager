@@ -20,11 +20,11 @@ final class AdvisorModel {
 	/**
 	 * Build Advisor cards from already-read current state.
 	 *
-	 * @param array<string, bool>       $provider_readiness Current provider readiness.
+	 * @param array<string, bool>              $provider_readiness Current provider readiness.
 	 * @param array<int, array<string, mixed>> $points Current Notification Point truth.
-	 * @param bool                      $gravity_forms_available Whether Gravity Forms is available.
-	 * @param bool                      $gravity_flow_available  Whether Gravity Flow navigation is available.
-	 * @param bool                      $gravityview_available   Whether GravityView presentation is detected.
+	 * @param bool                             $gravity_forms_available Whether Gravity Forms is available.
+	 * @param bool                             $gravity_flow_available  Whether Gravity Flow navigation is available.
+	 * @param bool                             $gravityview_available   Whether GravityView presentation is detected.
 	 * @return array<int, array<string, mixed>>
 	 */
 	public static function build(
@@ -130,7 +130,7 @@ final class AdvisorModel {
 	/**
 	 * Explain the supported Gravity Forms Feed setup path.
 	 *
-	 * @param bool                           $gravity_forms_available Whether Gravity Forms is available.
+	 * @param bool                             $gravity_forms_available Whether Gravity Forms is available.
 	 * @param array<int, array<string, mixed>> $points Current points.
 	 * @return string
 	 */
@@ -147,7 +147,7 @@ final class AdvisorModel {
 	/**
 	 * Explain supported workflow placement from current Flow availability.
 	 *
-	 * @param bool                           $gravity_flow_available Whether supported Flow navigation is available.
+	 * @param bool                             $gravity_flow_available Whether supported Flow navigation is available.
 	 * @param array<int, array<string, mixed>> $points Current points.
 	 * @return string
 	 */
