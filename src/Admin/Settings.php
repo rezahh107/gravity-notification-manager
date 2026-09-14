@@ -64,7 +64,7 @@ final class Settings {
 		return array(
 			'schema_version'               => SmsProviderManager::SCHEMA_VERSION,
 			SmsProviderManager::CONFIG_KEY => $providers,
-			'bale_bot_token'               => $bale_token,
+			'bale_bot_token'                => $bale_token,
 		);
 	}
 
@@ -81,7 +81,7 @@ final class Settings {
 		return array(
 			'schema_version'               => SmsProviderManager::SCHEMA_VERSION,
 			SmsProviderManager::CONFIG_KEY => SmsProviderManager::normalize_configurations( $stored ),
-			'bale_bot_token'               => self::secret( $stored['bale_bot_token'] ?? '' ),
+			'bale_bot_token'                => self::secret( $stored['bale_bot_token'] ?? '' ),
 		);
 	}
 
@@ -111,7 +111,7 @@ final class Settings {
 		$manager  = new SmsProviderManager( $settings );
 		return array(
 			__( 'IPPanel', 'gravity-notification-manager' ) => $manager->readiness_status( SmsProviderManager::IPPANEL ),
-			__( 'Bale', 'gravity-notification-manager' ) => '' !== self::secret( $settings['bale_bot_token'] ?? '' ) ? 'CONFIGURED' : 'NEEDS_SETUP',
+			__( 'Bale', 'gravity-notification-manager' )    => '' !== self::secret( $settings['bale_bot_token'] ?? '' ) ? 'CONFIGURED' : 'NEEDS_SETUP',
 		);
 	}
 

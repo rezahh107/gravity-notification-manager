@@ -180,7 +180,7 @@ final class IPPanelContractRealRuntimeTest extends WP_UnitTestCase {
 		self::assertSame( 1, $state['send_count'] ?? null );
 		self::assertSame( 1, $state['report_count'] ?? null );
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed deterministic CI evidence marker.
-		printf( 'GNM_IPPANEL_CONTRACT_REAL_19=PASS socket=127.0.0.1:8765 provider=ippanel transport=WordPress send_count=1 report_count=1 message_status=2 external_provider_calls=0 real_sms=0' . PHP_EOL );
+		printf( 'GNM_IPPANEL_CONTRACT_REAL_19=PASS socket=127.0.0.1:8765 provider=ippanel transport=wordpress send_count=1 report_count=1 message_status=2 external_provider_calls=0 real_sms=0' . PHP_EOL );
 	}
 
 	/** Prove strict simulator contract failures and duplicate-send rejection. */

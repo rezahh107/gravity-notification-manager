@@ -112,9 +112,9 @@ final class WordPressConfigurationSource implements ConfigurationSourceInterface
 				continue;
 			}
 
-			$step_id      = method_exists( $step, 'get_id' ) ? self::positive_id( $step->get_id() ) : null;
-			$name         = method_exists( $step, 'get_name' ) ? $step->get_name() : '';
-			$active       = method_exists( $step, 'is_active' ) && (bool) $step->is_active();
+			$step_id = method_exists( $step, 'get_id' ) ? self::positive_id( $step->get_id() ) : null;
+			$name    = method_exists( $step, 'get_name' ) ? $step->get_name() : '';
+			$active  = method_exists( $step, 'is_active' ) && (bool) $step->is_active();
 			$placements[] = array(
 				'step_id'   => null === $step_id ? 0 : $step_id,
 				'step_name' => is_scalar( $name ) && '' !== trim( (string) $name ) ? trim( (string) $name ) : __( 'GNM Feed Step', 'gravity-notification-manager' ),

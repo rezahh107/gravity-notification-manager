@@ -66,7 +66,7 @@ final class AdvisorModelTest extends TestCase {
 			false,
 			false
 		);
-		$card    = $this->card( $missing, 'create-notification' );
+		$card = $this->card( $missing, 'create-notification' );
 		self::assertStringContainsString( 'Gravity Forms is not currently available', $card['answer'] );
 		self::assertSame( AdvisorModel::ACTION_DIAGNOSTICS, $card['action'] );
 
@@ -80,7 +80,7 @@ final class AdvisorModelTest extends TestCase {
 			false,
 			false
 		);
-		$card      = $this->card( $available, 'create-notification' );
+		$card = $this->card( $available, 'create-notification' );
 		self::assertStringContainsString( 'Settings → Gravity Notification Manager', $card['answer'] );
 	}
 
@@ -112,7 +112,7 @@ final class AdvisorModelTest extends TestCase {
 
 	/** Supported Flow state exposes known identities while unavailable Flow invents no target. */
 	public function test_flow_guidance_only_exposes_known_points_when_flow_is_available(): void {
-		$point     = $this->point( PointStatus::CONFIGURED, 'Configured.', 'No change.' );
+		$point = $this->point( PointStatus::CONFIGURED, 'Configured.', 'No change.' );
 		$available = AdvisorModel::build(
 			array(
 				'ippanel' => true,
@@ -123,7 +123,7 @@ final class AdvisorModelTest extends TestCase {
 			true,
 			true
 		);
-		$flow      = $this->card( $available, 'gravity-flow-placement' );
+		$flow = $this->card( $available, 'gravity-flow-placement' );
 		self::assertCount( 1, $flow['flow_points'] );
 		self::assertSame( 7, $flow['flow_points'][0]['form_id'] );
 		self::assertSame( 21, $flow['flow_points'][0]['feed_id'] );
@@ -138,7 +138,7 @@ final class AdvisorModelTest extends TestCase {
 			false,
 			true
 		);
-		$flow        = $this->card( $unavailable, 'gravity-flow-placement' );
+		$flow = $this->card( $unavailable, 'gravity-flow-placement' );
 		self::assertSame( array(), $flow['flow_points'] );
 		self::assertSame( AdvisorModel::ACTION_DIAGNOSTICS, $flow['action'] );
 		self::assertStringContainsString( 'will not invent a workflow link', $flow['answer'] );

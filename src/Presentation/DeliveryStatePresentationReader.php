@@ -88,7 +88,7 @@ final class DeliveryStatePresentationReader {
 
 			$target = $this->manager->target_state( $entry_id, $feed_id );
 			if ( null === $target ) {
-				$targets[]       = array(
+				$targets[] = array(
 					'trusted'            => false,
 					'feed_id'            => $feed_id,
 					'form_id'            => null,

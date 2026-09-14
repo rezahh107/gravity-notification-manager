@@ -15,8 +15,8 @@ use InvalidArgumentException;
 final class OperationalContext {
 
 	public const EXECUTION_NORMAL = 'normal';
-	public const EXECUTION_TEST   = 'test';
-	public const EXECUTION_RETRY  = 'retry';
+	public const EXECUTION_TEST = 'test';
+	public const EXECUTION_RETRY = 'retry';
 
 	private string $trace_id;
 	private string $execution_type;

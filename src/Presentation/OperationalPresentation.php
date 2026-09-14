@@ -436,8 +436,8 @@ final class OperationalPresentation {
 			$statuses = isset( $last['attempt_statuses'] ) && is_array( $last['attempt_statuses'] )
 				? implode( ', ', $last['attempt_statuses'] )
 				: '';
-			$html    .= '<p>' . $this->escape_html( __( 'Last execution:', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">' . $this->escape_html( (string) $last['type'] ) . '</bdi> ' . $this->escape_html( __( 'at', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">' . $this->escape_html( (string) $last['timestamp'] ) . '</bdi>.</p>';
-			$html    .= '' !== $statuses
+			$html .= '<p>' . $this->escape_html( __( 'Last execution:', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">' . $this->escape_html( (string) $last['type'] ) . '</bdi> ' . $this->escape_html( __( 'at', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">' . $this->escape_html( (string) $last['timestamp'] ) . '</bdi>.</p>';
+			$html .= '' !== $statuses
 				? '<p>' . $this->escape_html( __( 'Attempt status:', 'gravity-notification-manager' ) ) . ' <bdi dir="ltr">' . $this->escape_html( $statuses ) . '</bdi></p>'
 				: '<p>' . $this->escape_html( __( 'No provider attempt was recorded for the last execution.', 'gravity-notification-manager' ) ) . '</p>';
 		}

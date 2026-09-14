@@ -60,23 +60,23 @@ final class WordPressOperationalEventStore implements OperationalEventStoreInter
 
 		$status = (string) ( $filters['status'] ?? '' );
 		if ( in_array( $status, AttemptStatus::all(), true ) ) {
-			$sql     .= ' AND status = %s';
+			$sql      .= ' AND status = %s';
 			$params[] = $status;
 		}
 
 		$execution_type = (string) ( $filters['execution_type'] ?? '' );
 		if ( in_array( $execution_type, OperationalContext::execution_types(), true ) ) {
-			$sql     .= ' AND execution_type = %s';
+			$sql      .= ' AND execution_type = %s';
 			$params[] = $execution_type;
 		}
 
 		$trace_id = strtolower( trim( (string) ( $filters['trace_id'] ?? '' ) ) );
 		if ( 1 === preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D', $trace_id ) ) {
-			$sql     .= ' AND trace_id = %s';
+			$sql      .= ' AND trace_id = %s';
 			$params[] = $trace_id;
 		}
 
-		$sql     .= ' ORDER BY id DESC LIMIT %d';
+		$sql      .= ' ORDER BY id DESC LIMIT %d';
 		$params[] = min( 100, max( 1, $limit ) );
 
 		try {

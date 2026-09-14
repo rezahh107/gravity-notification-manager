@@ -53,7 +53,7 @@ final class TransportSubsystemTest extends TestCase {
 	 * @return void
 	 */
 	public function test_ippanel_plain_request_construction_and_success_reference(): void {
-		$http     = new FakeHttpTransport(
+		$http = new FakeHttpTransport(
 			array(
 				HttpResponse::from_http(
 					200,
@@ -88,7 +88,7 @@ final class TransportSubsystemTest extends TestCase {
 	 * @return void
 	 */
 	public function test_ippanel_pattern_request_preserves_semantics(): void {
-		$http     = new FakeHttpTransport(
+		$http = new FakeHttpTransport(
 			array(
 				HttpResponse::from_http(
 					200,
@@ -121,7 +121,7 @@ final class TransportSubsystemTest extends TestCase {
 	 * @return void
 	 */
 	public function test_ippanel_transport_error_is_ambiguous_without_provider_reference(): void {
-		$http     = new FakeHttpTransport(
+		$http = new FakeHttpTransport(
 			array(
 				HttpResponse::from_transport_error( 'simulated_network_error' ),
 			)
@@ -147,13 +147,13 @@ final class TransportSubsystemTest extends TestCase {
 	 * @return void
 	 */
 	public function test_ippanel_response_classification(): void {
-		$request  = SmsRequest::plain(
+		$request = SmsRequest::plain(
 			SmsCapability::PLAIN,
 			array( $this->recipient( '4' ) ),
 			$this->sender(),
 			'classify'
 		);
-		$http     = new FakeHttpTransport(
+		$http    = new FakeHttpTransport(
 			array(
 				HttpResponse::from_transport_error( 'simulated_network_error' ),
 				HttpResponse::from_http( 401, '{"meta":{"status":false}}' ),
@@ -177,7 +177,7 @@ final class TransportSubsystemTest extends TestCase {
 	 * @return void
 	 */
 	public function test_bale_request_construction_success_and_rejection(): void {
-		$http    = new FakeHttpTransport(
+		$http = new FakeHttpTransport(
 			array(
 				HttpResponse::from_http( 200, '{"ok":true,"result":{"message_id":29}}' ),
 				HttpResponse::from_http( 200, '{"ok":false,"error_code":400}' ),
@@ -208,7 +208,7 @@ final class TransportSubsystemTest extends TestCase {
 	 * @return void
 	 */
 	public function test_bale_transport_error_is_ambiguous_without_provider_reference(): void {
-		$http    = new FakeHttpTransport(
+		$http = new FakeHttpTransport(
 			array(
 				HttpResponse::from_transport_error( 'simulated_network_error' ),
 			)
@@ -229,7 +229,7 @@ final class TransportSubsystemTest extends TestCase {
 	 * @return void
 	 */
 	public function test_bale_ambiguous_response_classification(): void {
-		$http    = new FakeHttpTransport(
+		$http = new FakeHttpTransport(
 			array(
 				HttpResponse::from_http( 200, 'not-json' ),
 				HttpResponse::from_http( 200, '{"ok":true,"result":{}}' ),
@@ -257,13 +257,13 @@ final class TransportSubsystemTest extends TestCase {
 			new SmsProviderRegistry( array( $first, $second, $third ) ),
 			$bale
 		);
-		$request    = SmsRequest::plain(
+		$request = SmsRequest::plain(
 			SmsCapability::PLAIN,
 			array( $this->recipient( '5' ) ),
 			$this->sender(),
 			'fallback'
 		);
-		$attempts   = $dispatcher->dispatch_sms(
+		$attempts = $dispatcher->dispatch_sms(
 			$request,
 			true,
 			new BaleRequest( $this->bale_target(), 'Bale fallback' )
@@ -307,7 +307,7 @@ final class TransportSubsystemTest extends TestCase {
 			'transport fallback'
 		);
 
-		$fallback_http       = new FakeHttpTransport(
+		$fallback_http = new FakeHttpTransport(
 			array(
 				HttpResponse::from_transport_error( 'simulated_network_error' ),
 			)
@@ -334,7 +334,7 @@ final class TransportSubsystemTest extends TestCase {
 		);
 		self::assertSame( array( 'ippanel', 'second' ), array_map( static fn ( AttemptResult $attempt ): ?string => $attempt->provider_id(), $with_fallback ) );
 
-		$no_fallback_http       = new FakeHttpTransport(
+		$no_fallback_http = new FakeHttpTransport(
 			array(
 				HttpResponse::from_transport_error( 'simulated_network_error' ),
 			)
@@ -360,9 +360,9 @@ final class TransportSubsystemTest extends TestCase {
 	 * @return void
 	 */
 	public function test_dispatcher_stops_on_success_and_does_not_call_bale(): void {
-		$first      = $this->provider_stub( 'first', array( SmsCapability::PLAIN ), AttemptStatus::SUCCESS );
-		$second     = $this->provider_stub( 'second', array( SmsCapability::PLAIN ), AttemptStatus::FAILED );
-		$bale       = $this->bale_stub( AttemptStatus::FAILED );
+		$first  = $this->provider_stub( 'first', array( SmsCapability::PLAIN ), AttemptStatus::SUCCESS );
+		$second = $this->provider_stub( 'second', array( SmsCapability::PLAIN ), AttemptStatus::FAILED );
+		$bale   = $this->bale_stub( AttemptStatus::FAILED );
 		$dispatcher = new SynchronousDispatcher(
 			new SmsProviderRegistry( array( $first, $second ) ),
 			$bale
@@ -414,14 +414,14 @@ final class TransportSubsystemTest extends TestCase {
 	 * @return void
 	 */
 	public function test_secret_values_are_not_exposed_in_results(): void {
-		$credential  = $this->credential();
-		$http        = new FakeHttpTransport(
+		$credential = $this->credential();
+		$http       = new FakeHttpTransport(
 			array(
 				HttpResponse::from_http( 401, '{"meta":{"status":false}}' ),
 				HttpResponse::from_http( 200, '{"ok":false,"error_code":401}' ),
 			)
 		);
-		$sms_result  = ( new IPPanelProvider( $credential, $http ) )->send(
+		$sms_result = ( new IPPanelProvider( $credential, $http ) )->send(
 			SmsRequest::plain(
 				SmsCapability::PLAIN,
 				array( $this->recipient( '9' ) ),

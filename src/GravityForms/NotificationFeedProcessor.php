@@ -98,7 +98,7 @@ final class NotificationFeedProcessor {
 			return new NotificationExecutionResult( array(), $skips, false );
 		}
 
-		$capability         = 1 === count( $destinations )
+		$capability = 1 === count( $destinations )
 			? SmsCapability::PLAIN
 			: SmsCapability::MULTI_RECIPIENT_PLAIN;
 		$allow_sms_fallback = FeedRuleSchema::FALLBACK_COMPATIBLE_SMS === ( $rule['fallback_policy'] ?? FeedRuleSchema::FALLBACK_NONE );
@@ -137,14 +137,14 @@ final class NotificationFeedProcessor {
 				$destination_attempts = $this->dispatcher->dispatch_bale( $request );
 			} catch ( Throwable $exception ) {
 				unset( $exception );
-				$skips[]     = $this->skip( 'bale_delivery', 'delivery_exception' );
+				$skips[] = $this->skip( 'bale_delivery', 'delivery_exception' );
 				$all_success = false;
 				$this->record_exception_attempt( $context, 'bale', null, array( $destination ), null, $attempt_index );
 				++$attempt_index;
 				continue;
 			}
 
-			$attempts      = array_merge( $attempts, $destination_attempts );
+			$attempts = array_merge( $attempts, $destination_attempts );
 			$attempt_index = $this->record_attempts( $context, $destination_attempts, array( $destination ), null, $attempt_index );
 			if ( ! $this->has_success( $destination_attempts ) ) {
 				$all_success = false;
@@ -178,10 +178,7 @@ final class NotificationFeedProcessor {
 
 	/** @return array{subject:string,reason:string} */
 	private function skip( string $subject, string $reason ): array {
-		return array(
-			'subject' => $subject,
-			'reason'  => $reason,
-		);
+		return array( 'subject' => $subject, 'reason' => $reason );
 	}
 
 	private function fallback_context( array $rule, array $entry, array $form ): OperationalContext {

@@ -71,7 +71,7 @@ final class LocalizationContractTest extends TestCase {
 
 	/** Known historical hard-coded UI sites must remain on gettext boundaries. */
 	public function test_previous_hard_coded_ui_patterns_do_not_return(): void {
-		$root       = dirname( __DIR__, 3 );
+		$root = dirname( __DIR__, 3 );
 		$controller = file_get_contents( $root . '/src/Admin/AdminController.php' );
 		$inspector  = file_get_contents( $root . '/src/Admin/PointInspector.php' );
 		$presenter  = file_get_contents( $root . '/src/Presentation/OperationalPresentation.php' );
@@ -90,10 +90,10 @@ final class LocalizationContractTest extends TestCase {
 
 	/** Every active source string has a maintained non-empty Persian translation. */
 	public function test_persian_po_covers_every_active_source_string(): void {
-		$catalog  = $this->parse_po( dirname( __DIR__, 3 ) . '/languages/' . self::DOMAIN . '-fa_IR.po' );
-		$msgids   = $this->active_gettext_msgids();
+		$catalog = $this->parse_po( dirname( __DIR__, 3 ) . '/languages/' . self::DOMAIN . '-fa_IR.po' );
+		$msgids  = $this->active_gettext_msgids();
 		$msgids[] = 'Native multi-channel notifications for Gravity Forms and Gravity Flow.';
-		$msgids   = array_values( array_unique( $msgids ) );
+		$msgids    = array_values( array_unique( $msgids ) );
 
 		self::assertGreaterThan( 50, count( $msgids ) );
 		foreach ( $msgids as $msgid ) {
@@ -184,12 +184,12 @@ final class LocalizationContractTest extends TestCase {
 
 		$catalog = array();
 		for ( $index = 0; $index < $header['count']; ++$index ) {
-			$original   = unpack( 'Vlength/Voffset', substr( $data, $header['originals'] + ( $index * 8 ), 8 ) );
+			$original = unpack( 'Vlength/Voffset', substr( $data, $header['originals'] + ( $index * 8 ), 8 ) );
 			$translated = unpack( 'Vlength/Voffset', substr( $data, $header['translations'] + ( $index * 8 ), 8 ) );
 			self::assertIsArray( $original );
 			self::assertIsArray( $translated );
-			$msgid             = substr( $data, $original['offset'], $original['length'] );
-			$msgstr            = substr( $data, $translated['offset'], $translated['length'] );
+			$msgid = substr( $data, $original['offset'], $original['length'] );
+			$msgstr = substr( $data, $translated['offset'], $translated['length'] );
 			$catalog[ $msgid ] = $msgstr;
 		}
 		return $catalog;

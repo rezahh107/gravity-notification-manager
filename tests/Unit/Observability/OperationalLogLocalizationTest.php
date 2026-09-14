@@ -72,7 +72,7 @@ final class OperationalLogLocalizationTest extends TestCase {
 		self::assertSame( 0x950412de, $header['magic'] );
 		$catalog = array();
 		for ( $index = 0; $index < $header['count']; ++$index ) {
-			$original   = unpack( 'Vlength/Voffset', substr( $data, $header['originals'] + ( $index * 8 ), 8 ) );
+			$original = unpack( 'Vlength/Voffset', substr( $data, $header['originals'] + ( $index * 8 ), 8 ) );
 			$translated = unpack( 'Vlength/Voffset', substr( $data, $header['translations'] + ( $index * 8 ), 8 ) );
 			self::assertIsArray( $original );
 			self::assertIsArray( $translated );

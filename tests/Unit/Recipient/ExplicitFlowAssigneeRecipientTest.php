@@ -28,7 +28,7 @@ final class ExplicitFlowAssigneeRecipientTest extends TestCase {
 	 * @return void
 	 */
 	public function test_invalid_flow_step_selectors_fail_closed( string $selector ): void {
-		$flow     = new FakeFlowAssigneeReader(
+		$flow = new FakeFlowAssigneeReader(
 			array(
 				'available' => true,
 				'reason'    => '',
@@ -84,7 +84,7 @@ final class ExplicitFlowAssigneeRecipientTest extends TestCase {
 	 * @return void
 	 */
 	public function test_empty_selected_step_assignees_fail_closed(): void {
-		$flow     = new FakeFlowAssigneeReader(
+		$flow = new FakeFlowAssigneeReader(
 			array(
 				'available' => true,
 				'reason'    => '',

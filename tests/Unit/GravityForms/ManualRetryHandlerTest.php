@@ -79,9 +79,9 @@ final class ManualRetryHandlerTest extends TestCase {
 	 * @return void
 	 */
 	public function test_transport_success_with_retry_state_write_failure_returns_state_error(): void {
-		$context                       = $this->context();
-		$persisted_before              = $context['store']->states[10];
-		$writes_before                 = $context['store']->write_count;
+		$context          = $this->context();
+		$persisted_before = $context['store']->states[10];
+		$writes_before    = $context['store']->write_count;
 		$context['store']->fail_writes = true;
 
 		$result = $context['handler']->dispatch( 'POST', $this->valid_request() );
@@ -127,14 +127,14 @@ final class ManualRetryHandlerTest extends TestCase {
 
 	/** T-WU05-10: missing capability fails closed. */
 	public function test_missing_capability_fails_closed_with_zero_send_and_mutation(): void {
-		$context                        = $this->context();
+		$context = $this->context();
 		$context['runtime']->capability = false;
 		$this->assert_denied_without_side_effect( $context, ManualRetryHandler::ERROR_CAPABILITY, $this->valid_request() );
 	}
 
 	/** T-WU05-10: invalid nonce fails closed. */
 	public function test_invalid_nonce_fails_closed_with_zero_send_and_mutation(): void {
-		$context                         = $this->context();
+		$context = $this->context();
 		$context['runtime']->nonce_valid = false;
 		$this->assert_denied_without_side_effect( $context, ManualRetryHandler::ERROR_NONCE, $this->valid_request() );
 	}
@@ -171,7 +171,7 @@ final class ManualRetryHandlerTest extends TestCase {
 
 	/** T-WU05-10: malformed persisted state fails closed. */
 	public function test_malformed_state_fails_closed_with_zero_send_and_mutation(): void {
-		$context                         = $this->context();
+		$context = $this->context();
 		$context['store']->malformed[10] = true;
 		$this->assert_denied_without_side_effect( $context, ManualRetryHandler::ERROR_STATE, $this->valid_request() );
 	}
@@ -218,8 +218,8 @@ final class ManualRetryHandlerTest extends TestCase {
 			'id'      => 10,
 			'form_id' => 5,
 		);
-		$runtime->forms[5]    = array( 'id' => 5 );
-		$runtime->feeds[7]    = $this->feed();
+		$runtime->forms[5] = array( 'id' => 5 );
+		$runtime->feeds[7] = $this->feed();
 
 		return array(
 			'handler'  => new ManualRetryHandler( $add_on, $runtime ),

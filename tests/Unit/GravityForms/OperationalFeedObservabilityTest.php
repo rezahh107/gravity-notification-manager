@@ -122,13 +122,7 @@ final class OperationalFeedObservabilityTest extends TestCase {
 		$resolver = new RecipientResolver(
 			new FakeEntryFieldReader( array() ),
 			new FakeUserDirectory( array(), array(), array() ),
-			new FakeFlowAssigneeReader(
-				array(
-					'available' => false,
-					'reason'    => 'flow_context_unavailable',
-					'assignees' => array(),
-				)
-			)
+			new FakeFlowAssigneeReader( array( 'available' => false, 'reason' => 'flow_context_unavailable', 'assignees' => array() ) )
 		);
 		return new NotificationFeedProcessor(
 			$resolver,
@@ -151,27 +145,24 @@ final class OperationalFeedObservabilityTest extends TestCase {
 	/** @return array<string, mixed> */
 	private function feed( string $channel, string $recipient, string $fallback ): array {
 		return array(
-			'id'         => 7,
-			'form_id'    => 5,
-			'is_active'  => true,
+			'id' => 7,
+			'form_id' => 5,
+			'is_active' => true,
 			'addon_slug' => 'gravity-notification-manager',
-			'meta'       => array(
-				'feedName'               => 'Case update',
-				'message'                => 'Case accepted',
-				'recipient_source_type'  => FeedRuleSchema::RECIPIENT_FIXED,
+			'meta' => array(
+				'feedName' => 'Case update',
+				'message' => 'Case accepted',
+				'recipient_source_type' => FeedRuleSchema::RECIPIENT_FIXED,
 				'recipient_source_value' => $recipient,
-				'channel'                => $channel,
-				'fallback_policy'        => $fallback,
+				'channel' => $channel,
+				'fallback_policy' => $fallback,
 			),
 		);
 	}
 
 	/** @return array<string, int> */
 	private function entry(): array {
-		return array(
-			'id'      => 10,
-			'form_id' => 5,
-		);
+		return array( 'id' => 10, 'form_id' => 5 );
 	}
 
 	/** @return array<string, int> */

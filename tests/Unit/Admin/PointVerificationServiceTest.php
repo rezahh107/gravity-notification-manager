@@ -41,7 +41,7 @@ final class PointVerificationServiceTest extends TestCase {
 				'active'    => true,
 			),
 		);
-		$before_second      = $source->read_count;
+		$before_second = $source->read_count;
 		self::assertSame( PointStatus::CONFIGURED, $service->verify( 4, 11 )['state'] );
 		self::assertGreaterThan( $before_second, $source->read_count );
 		self::assertSame( 0, $source->mutation_count );

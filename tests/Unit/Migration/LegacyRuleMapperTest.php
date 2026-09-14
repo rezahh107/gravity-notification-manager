@@ -62,22 +62,22 @@ final class LegacyRuleMapperTest extends TestCase {
 	public function ambiguous_rules(): array {
 		$base = $this->rule();
 
-		$submitter                      = $base;
-		$submitter['recipient_type']    = 'submitter';
-		$field                          = $base;
-		$field['recipient_type']        = 'field';
-		$pattern                        = $base;
-		$pattern['pattern_code']        = 'abc';
-		$legacy_tag                     = $base;
+		$submitter = $base;
+		$submitter['recipient_type'] = 'submitter';
+		$field = $base;
+		$field['recipient_type'] = 'field';
+		$pattern = $base;
+		$pattern['pattern_code'] = 'abc';
+		$legacy_tag = $base;
 		$legacy_tag['message_template'] = 'Entry {entry_id}';
-		$sender                         = $base;
-		$sender['sender_number']        = '+982100000001';
+		$sender = $base;
+		$sender['sender_number'] = '+982100000001';
 
 		return array(
-			'submitter'       => array( $submitter, 'retired_submitter_contact_contract' ),
-			'field'           => array( $field, 'entry_field_normalization_requires_operator_validation' ),
-			'pattern'         => array( $pattern, 'pattern_semantics_not_equivalent' ),
-			'legacy tag'      => array( $legacy_tag, 'legacy_only_message_tag_requires_semantic_conversion' ),
+			'submitter' => array( $submitter, 'retired_submitter_contact_contract' ),
+			'field' => array( $field, 'entry_field_normalization_requires_operator_validation' ),
+			'pattern' => array( $pattern, 'pattern_semantics_not_equivalent' ),
+			'legacy tag' => array( $legacy_tag, 'legacy_only_message_tag_requires_semantic_conversion' ),
 			'per-rule sender' => array( $sender, 'rule_sender_differs_from_target_global_sender' ),
 		);
 	}

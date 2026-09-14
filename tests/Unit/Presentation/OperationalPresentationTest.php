@@ -59,7 +59,7 @@ final class OperationalPresentationTest extends TestCase {
 		self::assertStringContainsString( 'No notification delivery state', $missing );
 
 		$context['store']->malformed[10] = true;
-		$malformed                       = $context['presentation']->entry_detail_html( array( 'id' => 10 ), array( 'id' => 5 ) );
+		$malformed = $context['presentation']->entry_detail_html( array( 'id' => 10 ), array( 'id' => 5 ) );
 		self::assertStringContainsString( 'malformed or untrusted', $malformed );
 		self::assertStringContainsString( 'Retry is unavailable', $malformed );
 	}
@@ -154,9 +154,9 @@ final class OperationalPresentationTest extends TestCase {
 
 	/** T-WU07-06: missing optional GravityView runtime returns input untouched. */
 	public function test_gravityview_filter_fails_gracefully_without_optional_runtime(): void {
-		$context  = $this->context();
-		$entries  = new \stdClass();
-		$view     = new \stdClass();
+		$context = $this->context();
+		$entries = new \stdClass();
+		$view    = new \stdClass();
 		$view->ID = 123;
 
 		self::assertSame( $entries, $context['presentation']->filter_gravityview_entries( $entries, $view, null ) );
@@ -178,7 +178,7 @@ final class OperationalPresentationTest extends TestCase {
 			'id'      => 10,
 			'form_id' => 5,
 		);
-		$runtime->forms[5]    = array( 'id' => 5 );
+		$runtime->forms[5] = array( 'id' => 5 );
 
 		return array(
 			'store'        => $store,

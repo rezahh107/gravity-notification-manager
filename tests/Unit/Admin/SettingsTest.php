@@ -42,7 +42,7 @@ final class SettingsTest extends TestCase {
 
 	/** Repeated normalization is idempotent and cannot duplicate the IPPanel configuration. */
 	public function test_provider_configuration_upgrade_is_idempotent(): void {
-		$first  = Settings::normalize_stored(
+		$first = Settings::normalize_stored(
 			array(
 				'ippanel_api_key' => 'existing-api-key',
 				'sms_from_number' => '+982100000000',
@@ -79,7 +79,7 @@ final class SettingsTest extends TestCase {
 				'bale_bot_token'  => 'keep-bale',
 			)
 		);
-		$result   = Settings::sanitize_input(
+		$result = Settings::sanitize_input(
 			array(
 				SmsProviderManager::CONFIG_KEY => array(
 					SmsProviderManager::IPPANEL => array(
@@ -90,7 +90,7 @@ final class SettingsTest extends TestCase {
 			),
 			$existing
 		);
-		$config   = $result[ SmsProviderManager::CONFIG_KEY ][ SmsProviderManager::IPPANEL ];
+		$config = $result[ SmsProviderManager::CONFIG_KEY ][ SmsProviderManager::IPPANEL ];
 
 		self::assertFalse( $config['enabled'] );
 		self::assertSame( 'keep-api', $config['api_key'] );
@@ -107,7 +107,7 @@ final class SettingsTest extends TestCase {
 				'bale_bot_token'  => 'keep-bale',
 			)
 		);
-		$result   = Settings::sanitize_input(
+		$result = Settings::sanitize_input(
 			array(
 				'ippanel_api_key' => '',
 				'sms_from_number' => '+989121234567',
@@ -115,7 +115,7 @@ final class SettingsTest extends TestCase {
 			),
 			$existing
 		);
-		$config   = $result[ SmsProviderManager::CONFIG_KEY ][ SmsProviderManager::IPPANEL ];
+		$config = $result[ SmsProviderManager::CONFIG_KEY ][ SmsProviderManager::IPPANEL ];
 
 		self::assertTrue( $config['enabled'] );
 		self::assertSame( 'keep-api', $config['api_key'] );
@@ -136,8 +136,8 @@ final class SettingsTest extends TestCase {
 						'sender'  => '09121234567',
 					),
 				),
-				'bale_bot_token'               => array( 'bad' ),
-				'legacy_rule'                  => 'must-not-migrate',
+				'bale_bot_token' => array( 'bad' ),
+				'legacy_rule'    => 'must-not-migrate',
 			)
 		);
 		$config = $result[ SmsProviderManager::CONFIG_KEY ][ SmsProviderManager::IPPANEL ];
@@ -158,7 +158,7 @@ final class SettingsTest extends TestCase {
 				'bale_bot_token'  => 'super-secret-bale',
 			)
 		);
-		$facts    = Settings::diagnostic_facts( $settings );
+		$facts = Settings::diagnostic_facts( $settings );
 		self::assertSame(
 			array(
 				'IPPanel' => 'CONFIGURED',

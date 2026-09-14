@@ -12,9 +12,9 @@ namespace GravityNotify\Admin;
  */
 final class AdvisorModel {
 
-	public const ACTION_NONE        = 'none';
-	public const ACTION_SETTINGS    = 'settings';
-	public const ACTION_POINTS      = 'points';
+	public const ACTION_NONE = 'none';
+	public const ACTION_SETTINGS = 'settings';
+	public const ACTION_POINTS = 'points';
 	public const ACTION_DIAGNOSTICS = 'diagnostics';
 
 	/**
@@ -172,13 +172,13 @@ final class AdvisorModel {
 		$guidance = array();
 		foreach ( $points as $point ) {
 			$guidance[] = array(
-				'form_id'        => (int) ( $point['form_id'] ?? 0 ),
-				'form_title'     => (string) ( $point['form_title'] ?? '' ),
-				'feed_id'        => (int) ( $point['feed_id'] ?? 0 ),
-				'feed_name'      => (string) ( $point['feed_name'] ?? '' ),
-				'state'          => (string) ( $point['state'] ?? '' ),
-				'detail'         => (string) ( $point['detail'] ?? '' ),
-				'next_action'    => (string) ( $point['next_action'] ?? '' ),
+				'form_id'       => (int) ( $point['form_id'] ?? 0 ),
+				'form_title'    => (string) ( $point['form_title'] ?? '' ),
+				'feed_id'       => (int) ( $point['feed_id'] ?? 0 ),
+				'feed_name'     => (string) ( $point['feed_name'] ?? '' ),
+				'state'         => (string) ( $point['state'] ?? '' ),
+				'detail'        => (string) ( $point['detail'] ?? '' ),
+				'next_action'   => (string) ( $point['next_action'] ?? '' ),
 				'flow_available' => $flow_available,
 			);
 		}

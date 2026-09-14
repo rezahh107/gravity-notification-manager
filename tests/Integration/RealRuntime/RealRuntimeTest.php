@@ -42,7 +42,7 @@ final class RealRuntimeTest extends WP_UnitTestCase {
 	 *
 	 * @var int
 	 */
-	private int $form_id = 0;
+	private int $form_id  = 0;
 
 	/**
 	 * Fixture entry ID.

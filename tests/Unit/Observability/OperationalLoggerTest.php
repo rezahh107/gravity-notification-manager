@@ -67,11 +67,11 @@ final class OperationalLoggerTest extends TestCase {
 	}
 
 	public function test_logging_failure_never_throws_or_changes_attempt_truth(): void {
-		$store              = new InMemoryOperationalEventStore();
+		$store = new InMemoryOperationalEventStore();
 		$store->fail_writes = true;
-		$logger             = new OperationalLogger( $store );
-		$result             = new AttemptResult( AttemptStatus::SUCCESS, 'sms', 'ippanel', 'plain', array( 'ref-1' ), 'accepted', 200 );
-		$written            = $logger->record_attempt(
+		$logger  = new OperationalLogger( $store );
+		$result  = new AttemptResult( AttemptStatus::SUCCESS, 'sms', 'ippanel', 'plain', array( 'ref-1' ), 'accepted', 200 );
+		$written = $logger->record_attempt(
 			new OperationalContext( OperationalContext::EXECUTION_NORMAL ),
 			$result,
 			array( '+989121234567' ),

@@ -57,7 +57,7 @@ final class LlmDebugReportTest extends TestCase {
 	}
 
 	public function test_absent_evidence_is_omitted_instead_of_invented(): void {
-		$event  = new OperationalEvent(
+		$event = new OperationalEvent(
 			array(
 				'created_at_utc' => '2026-09-14 12:00:00',
 				'trace_id'       => '44444444-4444-4444-8444-444444444444',

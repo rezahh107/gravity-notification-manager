@@ -64,7 +64,7 @@ final class ProviderTestServiceTest extends TestCase {
 
 	/** One valid SMS POST invokes the existing IPPanel provider exactly once. */
 	public function test_valid_ippanel_test_invokes_exactly_one_provider_send(): void {
-		$http    = new FakeHttpTransport(
+		$http = new FakeHttpTransport(
 			array(
 				HttpResponse::from_http(
 					200,
@@ -91,7 +91,7 @@ final class ProviderTestServiceTest extends TestCase {
 
 	/** One valid Bale POST invokes the existing Bale client exactly once. */
 	public function test_valid_bale_test_invokes_exactly_one_provider_send(): void {
-		$http    = new FakeHttpTransport(
+		$http = new FakeHttpTransport(
 			array(
 				HttpResponse::from_http( 200, '{"ok":true,"result":{"message_id":"safe-bale-202"}}' ),
 			)
@@ -118,7 +118,7 @@ final class ProviderTestServiceTest extends TestCase {
 				HttpResponse::from_http( 403, '{"secret":"raw-bale-body-must-not-surface"}' ),
 			)
 		);
-		$service     = new ProviderTestService( $this->settings(), $failed_http );
+		$service = new ProviderTestService( $this->settings(), $failed_http );
 
 		self::assertSame( AttemptStatus::FAILED, $service->test_sms( '+989121234567', 'GNM test' )->status() );
 		self::assertSame( AttemptStatus::FAILED, $service->test_bale( '@gnm_test', 'GNM test' )->status() );
@@ -129,7 +129,7 @@ final class ProviderTestServiceTest extends TestCase {
 				HttpResponse::from_http( 200, '{"ok":true}' ),
 			)
 		);
-		$service        = new ProviderTestService( $this->settings(), $ambiguous_http );
+		$service = new ProviderTestService( $this->settings(), $ambiguous_http );
 
 		self::assertSame( AttemptStatus::AMBIGUOUS, $service->test_sms( '+989121234567', 'GNM test' )->status() );
 		self::assertSame( AttemptStatus::AMBIGUOUS, $service->test_bale( '@gnm_test', 'GNM test' )->status() );
@@ -161,7 +161,7 @@ final class ProviderTestServiceTest extends TestCase {
 					'sender'  => '+989000000000',
 				),
 			),
-			'bale_bot_token'               => 'test-bale-token',
+			'bale_bot_token' => 'test-bale-token',
 		);
 	}
 }

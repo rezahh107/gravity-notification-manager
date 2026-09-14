@@ -44,8 +44,8 @@ final class FakeUserDirectory implements UserDirectory {
 	 */
 	public function __construct( array $selectors, array $roles, array $contacts ) {
 		$this->selectors = $selectors;
-		$this->roles     = $roles;
-		$this->contacts  = $contacts;
+		$this->roles      = $roles;
+		$this->contacts   = $contacts;
 	}
 
 	/**

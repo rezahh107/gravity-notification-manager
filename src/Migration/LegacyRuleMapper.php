@@ -14,7 +14,7 @@ use GravityNotify\GravityForms\FeedRuleSchema;
  */
 final class LegacyRuleMapper {
 
-	public const MAP_DETERMINISTIC         = 'MAP_DETERMINISTIC';
+	public const MAP_DETERMINISTIC = 'MAP_DETERMINISTIC';
 	public const MANUAL_REQUIRED_AMBIGUOUS = 'MANUAL_REQUIRED_AMBIGUOUS';
 
 	/**

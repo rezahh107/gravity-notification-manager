@@ -293,10 +293,10 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 	 * @testdox WU08-AUTHORITY-REAL-10 registry Feed identity disagreement fails closed
 	 */
 	public function test_wu08_authority_real_10_registry_feed_identity_disagreement_fails_closed(): void {
-		$first                           = ( new MigrationService() )->execute();
-		$scope_id                        = (string) $first['rules'][0]['scope_id'];
-		$feed_id                         = (int) $first['rules'][0]['feed_id'];
-		$records                         = get_option( CutoverRegistry::OPTION, array() );
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		$records  = get_option( CutoverRegistry::OPTION, array() );
 		$records[ $scope_id ]['feed_id'] = $feed_id + 100000;
 		update_option( CutoverRegistry::OPTION, $records, false );
 		$before = get_option( CutoverRegistry::OPTION, array() );
@@ -314,11 +314,11 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 	 * @testdox WU08-AUTHORITY-REAL-11 migration marker mismatch fails closed
 	 */
 	public function test_wu08_authority_real_11_migration_marker_mismatch_fails_closed(): void {
-		$first                        = ( new MigrationService() )->execute();
-		$scope_id                     = (string) $first['rules'][0]['scope_id'];
-		$feed_id                      = (int) $first['rules'][0]['feed_id'];
-		$feed                         = $this->only_feed();
-		$meta                         = (array) $feed['meta'];
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		$feed     = $this->only_feed();
+		$meta     = (array) $feed['meta'];
 		$meta['gnm_migration_source'] = 'synthetic-mismatch';
 		self::assertTrue( GFAPI::update_feed_property( $feed_id, 'meta', $meta ) );
 		self::assertSame( 'synthetic-mismatch', $this->only_feed()['meta']['gnm_migration_source'] );
@@ -337,11 +337,11 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 	 * @testdox WU08-AUTHORITY-REAL-12 target metadata mismatch fails closed
 	 */
 	public function test_wu08_authority_real_12_target_metadata_mismatch_fails_closed(): void {
-		$first           = ( new MigrationService() )->execute();
-		$scope_id        = (string) $first['rules'][0]['scope_id'];
-		$feed_id         = (int) $first['rules'][0]['feed_id'];
-		$feed            = $this->only_feed();
-		$meta            = (array) $feed['meta'];
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
+		$feed     = $this->only_feed();
+		$meta     = (array) $feed['meta'];
 		$meta['message'] = 'Synthetic changed message';
 		self::assertTrue( GFAPI::update_feed_property( $feed_id, 'meta', $meta ) );
 		self::assertSame( 'Synthetic changed message', $this->only_feed()['meta']['message'] );
@@ -386,9 +386,9 @@ final class WU08MigrationRealRuntimeTest extends WP_UnitTestCase {
 	 * @testdox WU08-AUTHORITY-REAL-14 stale direct identity cannot start cutover
 	 */
 	public function test_wu08_authority_real_14_stale_direct_identity_cannot_start_cutover(): void {
-		$first         = ( new MigrationService() )->execute();
-		$scope_id      = (string) $first['rules'][0]['scope_id'];
-		$feed_id       = (int) $first['rules'][0]['feed_id'];
+		$first    = ( new MigrationService() )->execute();
+		$scope_id = (string) $first['rules'][0]['scope_id'];
+		$feed_id  = (int) $first['rules'][0]['feed_id'];
 		$record_before = CutoverRegistry::record( $scope_id );
 		$this->remove_primary_legacy_rule_fixture();
 

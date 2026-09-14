@@ -269,17 +269,17 @@ final class DeliveryStateManagerTest extends TestCase {
 	 */
 	public static function malformed_target_value_provider(): array {
 		return array(
-			'form identity not positive'   => array( 'form_id', 0 ),
-			'form identity wrong type'     => array( 'form_id', '5' ),
-			'feed name wrong type'         => array( 'feed_name', array() ),
-			'channel wrong type'           => array( 'channel', null ),
-			'attention wrong type'         => array( 'attention_required', 1 ),
-			'last sequence not positive'   => array( 'last_execution_sequence', 0 ),
-			'last sequence wrong type'     => array( 'last_execution_sequence', '1' ),
-			'retry resolution wrong type'  => array( 'resolved_by_retry', 0 ),
-			'execution history wrong type' => array( 'executions', 'invalid' ),
-			'execution history empty'      => array( 'executions', array() ),
-			'retry history wrong type'     => array( 'retry_history', 'invalid' ),
+			'form identity not positive'    => array( 'form_id', 0 ),
+			'form identity wrong type'      => array( 'form_id', '5' ),
+			'feed name wrong type'          => array( 'feed_name', array() ),
+			'channel wrong type'            => array( 'channel', null ),
+			'attention wrong type'          => array( 'attention_required', 1 ),
+			'last sequence not positive'    => array( 'last_execution_sequence', 0 ),
+			'last sequence wrong type'      => array( 'last_execution_sequence', '1' ),
+			'retry resolution wrong type'   => array( 'resolved_by_retry', 0 ),
+			'execution history wrong type'  => array( 'executions', 'invalid' ),
+			'execution history empty'       => array( 'executions', array() ),
+			'retry history wrong type'      => array( 'retry_history', 'invalid' ),
 		);
 	}
 
@@ -322,7 +322,7 @@ final class DeliveryStateManagerTest extends TestCase {
 	public static function contradictory_state_provider(): array {
 		return array(
 			'resolved requires no attention' => array( true, DeliveryStateManager::FINAL_RESOLVED, true ),
-			'unresolved requires attention'  => array( false, DeliveryStateManager::FINAL_UNRESOLVED, false ),
+			'unresolved requires attention'   => array( false, DeliveryStateManager::FINAL_UNRESOLVED, false ),
 		);
 	}
 

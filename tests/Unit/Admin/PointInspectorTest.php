@@ -37,7 +37,7 @@ final class PointInspectorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_single_inactive_flow_placement_reports_actionable_needs_setup(): void {
-		$source             = new MutableAdminSource();
+		$source = new MutableAdminSource();
 		$source->placements = array(
 			array(
 				'step_id'   => 9,
@@ -46,7 +46,7 @@ final class PointInspectorTest extends TestCase {
 				'active'    => false,
 			),
 		);
-		$point              = ( new PointInspector( $source ) )->all()[0];
+		$point = ( new PointInspector( $source ) )->all()[0];
 		self::assertSame( PointStatus::NEEDS_SETUP, $point['state'] );
 		self::assertSame( 9, $point['flow_step_id'] );
 		self::assertSame( 'Approval notice', $point['flow_step_name'] );
@@ -61,7 +61,7 @@ final class PointInspectorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_valid_flow_placement_reports_configured_with_bounded_context(): void {
-		$source             = new MutableAdminSource();
+		$source = new MutableAdminSource();
 		$source->placements = array(
 			array(
 				'step_id'   => 9,
@@ -70,7 +70,7 @@ final class PointInspectorTest extends TestCase {
 				'active'    => true,
 			),
 		);
-		$point              = ( new PointInspector( $source ) )->all()[0];
+		$point = ( new PointInspector( $source ) )->all()[0];
 		self::assertSame( PointStatus::CONFIGURED, $point['state'] );
 		self::assertSame( 9, $point['flow_step_id'] );
 		self::assertSame( 'Approval notice', $point['flow_step_name'] );
@@ -99,7 +99,7 @@ final class PointInspectorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_multiple_flow_placements_are_inconsistent_and_never_auto_repaired(): void {
-		$source             = new MutableAdminSource();
+		$source = new MutableAdminSource();
 		$source->placements = array(
 			array(
 				'step_id'   => 9,
@@ -114,7 +114,7 @@ final class PointInspectorTest extends TestCase {
 				'active'    => false,
 			),
 		);
-		$point              = ( new PointInspector( $source ) )->all()[0];
+		$point = ( new PointInspector( $source ) )->all()[0];
 		self::assertSame( PointStatus::NEEDS_SETUP, $point['state'] );
 		self::assertStringContainsString( 'multiple GNM workflow Steps', $point['detail'] );
 		self::assertStringContainsString( 'will not change Steps automatically', $point['next_action'] );
@@ -127,7 +127,7 @@ final class PointInspectorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_non_flow_recipient_with_inactive_matching_step_is_not_submission_configured(): void {
-		$source             = new MutableAdminSource();
+		$source = new MutableAdminSource();
 		$source->placements = array(
 			array(
 				'step_id'   => 12,
@@ -136,7 +136,7 @@ final class PointInspectorTest extends TestCase {
 				'active'    => false,
 			),
 		);
-		$point              = ( new PointInspector( $source ) )->all()[0];
+		$point = ( new PointInspector( $source ) )->all()[0];
 		self::assertSame( PointStatus::NEEDS_SETUP, $point['state'] );
 		self::assertStringNotContainsString( 'normal Gravity Forms Feed lifecycle', $point['detail'] );
 		self::assertStringContainsString( 'is inactive', $point['detail'] );
@@ -151,7 +151,7 @@ final class PointInspectorTest extends TestCase {
 		$source = new MutableAdminSource();
 		$source->feeds[0]['meta']['recipient_source_type']  = FeedRuleSchema::RECIPIENT_FLOW_ASSIGNEE;
 		$source->feeds[0]['meta']['recipient_source_value'] = '';
-		$source->placements                                 = array(
+		$source->placements = array(
 			array(
 				'step_id'   => 13,
 				'step_name' => 'Assignee notice',
@@ -186,7 +186,7 @@ final class PointInspectorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_incomplete_and_disabled_feeds_are_distinguished(): void {
-		$source                              = new MutableAdminSource();
+		$source                             = new MutableAdminSource();
 		$source->feeds[0]['meta']['message'] = '';
 		self::assertSame( PointStatus::NEEDS_SETUP, ( new PointInspector( $source ) )->all()[0]['state'] );
 		$source->feeds[0]['is_active'] = false;
