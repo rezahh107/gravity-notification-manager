@@ -147,7 +147,11 @@ final class ProviderTestServiceTest extends TestCase {
 		self::assertStringNotContainsString( 'GFAPI', $source );
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Build one configured provider/channel settings fixture.
+	 *
+	 * @return array<string, mixed>
+	 */
 	private function settings(): array {
 		return array(
 			SmsProviderManager::CONFIG_KEY => array(
