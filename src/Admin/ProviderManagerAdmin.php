@@ -17,6 +17,7 @@ use RuntimeException;
 /** Owns provider configuration plus explicit connection, discovery, and real-test actions. */
 final class ProviderManagerAdmin {
 
+	/** Provider Manager screen hook assigned by WordPress. */
 	private static string $screen_hook = '';
 
 	/** Register the surface and explicit provider-management actions. */
@@ -36,7 +37,8 @@ final class ProviderManagerAdmin {
 		if ( ! function_exists( 'add_submenu_page' ) ) {
 			return;
 		}
-		$surface    = AdminDefinition::provider_surface();
+		$surface = AdminDefinition::provider_surface();
+		/* translators: %s: SMS Provider Manager surface title. */
 		$page_title = sprintf( __( '%s — Gravity Notification Manager', 'gravity-notification-manager' ), $surface['title'] );
 		$hook       = add_submenu_page(
 			AdminDefinition::ROOT_SLUG,
@@ -52,7 +54,11 @@ final class ProviderManagerAdmin {
 		}
 	}
 
-	/** Load the existing GNM admin stylesheet only on the Provider Manager screen. */
+	/**
+	 * Load the existing GNM admin stylesheet only on the Provider Manager screen.
+	 *
+	 * @param string $hook_suffix Current WordPress admin screen hook.
+	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
 		if ( '' === self::$screen_hook || self::$screen_hook !== $hook_suffix || ! function_exists( 'wp_enqueue_style' ) ) {
 			return;
@@ -136,8 +142,10 @@ final class ProviderManagerAdmin {
 	/**
 	 * Render one provider configuration form.
 	 *
+	 * @param string               $identifier Provider identifier.
 	 * @param array<string, mixed> $definition Provider definition.
 	 * @param array<string, mixed> $config     Provider config.
+	 * @param SmsProviderManager   $manager    Provider Manager instance.
 	 */
 	private static function render_provider_settings( string $identifier, array $definition, array $config, SmsProviderManager $manager ): void {
 		$label = (string) $definition['label'];
@@ -161,7 +169,14 @@ final class ProviderManagerAdmin {
 		echo '</form></section>';
 	}
 
-	/** Render one write-only or non-secret credential input. */
+	/**
+	 * Render one write-only or non-secret credential input.
+	 *
+	 * @param string               $base     Field-name base.
+	 * @param string               $field    Credential field name.
+	 * @param array<string, mixed> $metadata Credential metadata.
+	 * @param array<string, mixed> $config   Provider configuration.
+	 */
 	private static function render_credential( string $base, string $field, array $metadata, array $config ): void {
 		$secret      = true === ( $metadata['secret'] ?? false );
 		$stored      = '' !== (string) ( $config[ $field ] ?? '' );
@@ -174,7 +189,13 @@ final class ProviderManagerAdmin {
 		echo '<input type="' . ( $secret ? 'password' : 'text' ) . '" class="regular-text gnm-ltr" dir="ltr" name="' . esc_attr( $base . '[' . $field . ']' ) . '" value="' . esc_attr( $value ) . '" placeholder="' . esc_attr( $placeholder ) . '" autocomplete="' . ( $secret ? 'new-password' : 'off' ) . '"></label>';
 	}
 
-	/** Render discovery-backed selection or an explicit manual sender fallback. */
+	/**
+	 * Render discovery-backed selection or an explicit manual sender fallback.
+	 *
+	 * @param string               $base       Field-name base.
+	 * @param string               $identifier Provider identifier.
+	 * @param array<string, mixed> $config     Provider configuration.
+	 */
 	private static function render_sender_field( string $base, string $identifier, array $config ): void {
 		$sender = (string) ( $config['sender'] ?? '' );
 		if ( SmsProviderManager::supports_discovery( $identifier ) ) {
@@ -201,7 +222,12 @@ final class ProviderManagerAdmin {
 		echo '<p class="description">' . esc_html( self::manual_sender_explanation( $identifier ) ) . '</p>';
 	}
 
-	/** Render explicit provider operations outside ordinary Settings API save. */
+	/**
+	 * Render explicit provider operations outside ordinary Settings API save.
+	 *
+	 * @param string               $identifier Provider identifier.
+	 * @param array<string, mixed> $definition Provider definition.
+	 */
 	private static function render_provider_actions( string $identifier, array $definition ): void {
 		$label = (string) $definition['label'];
 		echo '<section class="gnm-panel"><h2>' . esc_html( $label ) . ' — ' . esc_html__( 'Provider actions', 'gravity-notification-manager' ) . '</h2>';
@@ -236,7 +262,15 @@ final class ProviderManagerAdmin {
 		echo '</form></section>';
 	}
 
-	/** Render one explicit action form with provider-bound nonce. */
+	/**
+	 * Render one explicit action form with provider-bound nonce.
+	 *
+	 * @param string $action     Admin-post action.
+	 * @param string $provider   Provider identifier.
+	 * @param string $nonce_name Nonce field name.
+	 * @param string $label      Submit label.
+	 * @param string $class      Submit button class.
+	 */
 	private static function render_action_form( string $action, string $provider, string $nonce_name, string $label, string $class ): void {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( $action ) . '"><input type="hidden" name="provider" value="' . esc_attr( $provider ) . '">';
@@ -280,7 +314,12 @@ final class ProviderManagerAdmin {
 		echo '</div>';
 	}
 
-	/** Store only bounded TEST result evidence. */
+	/**
+	 * Store only bounded TEST result evidence.
+	 *
+	 * @param string        $provider Provider identifier.
+	 * @param AttemptResult $result   Test attempt result.
+	 */
 	private static function store_test_notice( string $provider, AttemptResult $result ): void {
 		$references = array();
 		foreach ( $result->provider_references() as $reference ) {
@@ -302,7 +341,12 @@ final class ProviderManagerAdmin {
 		);
 	}
 
-	/** Store only bounded connection result evidence. */
+	/**
+	 * Store only bounded connection result evidence.
+	 *
+	 * @param string                   $provider Provider identifier.
+	 * @param ProviderConnectionResult $result   Connection result.
+	 */
 	private static function store_connection_notice( string $provider, ProviderConnectionResult $result ): void {
 		self::store_notice(
 			array(
@@ -314,7 +358,12 @@ final class ProviderManagerAdmin {
 		);
 	}
 
-	/** Store only bounded discovery result evidence. */
+	/**
+	 * Store only bounded discovery result evidence.
+	 *
+	 * @param string                    $provider Provider identifier.
+	 * @param SenderLineDiscoveryResult $result   Discovery result.
+	 */
 	private static function store_discovery_notice( string $provider, SenderLineDiscoveryResult $result ): void {
 		self::store_notice(
 			array(
@@ -327,7 +376,11 @@ final class ProviderManagerAdmin {
 		);
 	}
 
-	/** Persist a short-lived per-user notice without credentials, destinations, or raw bodies. */
+	/**
+	 * Persist a short-lived per-user notice without credentials, destinations, or raw bodies.
+	 *
+	 * @param array<string, mixed> $notice Safe notice payload.
+	 */
 	private static function store_notice( array $notice ): void {
 		if ( ! function_exists( 'get_current_user_id' ) || ! function_exists( 'set_transient' ) ) {
 			return;
@@ -338,12 +391,21 @@ final class ProviderManagerAdmin {
 		}
 	}
 
-	/** Return a safe allowlisted diagnostic token. */
+	/**
+	 * Return a safe allowlisted diagnostic token.
+	 *
+	 * @param string $diagnostic Candidate diagnostic token.
+	 * @return string
+	 */
 	private static function safe_diagnostic( string $diagnostic ): string {
 		return in_array( $diagnostic, self::safe_diagnostics(), true ) ? $diagnostic : 'unknown_result';
 	}
 
-	/** @return array<int, string> */
+	/**
+	 * Return the allowlisted provider-management diagnostic tokens.
+	 *
+	 * @return array<int, string>
+	 */
 	private static function safe_diagnostics(): array {
 		return array(
 			'provider_not_configured',
@@ -365,7 +427,12 @@ final class ProviderManagerAdmin {
 		);
 	}
 
-	/** Convert a safe diagnostic to localized operator guidance. */
+	/**
+	 * Convert a safe diagnostic to localized operator guidance.
+	 *
+	 * @param string $diagnostic Safe diagnostic token.
+	 * @return string
+	 */
 	private static function notice_detail( string $diagnostic ): string {
 		return match ( $diagnostic ) {
 			'provider_not_configured' => __( 'Save the required provider credentials and sender configuration first.', 'gravity-notification-manager' ),
@@ -381,7 +448,12 @@ final class ProviderManagerAdmin {
 		};
 	}
 
-	/** Localized notice title. */
+	/**
+	 * Return a localized notice title.
+	 *
+	 * @param string $kind Notice kind.
+	 * @return string
+	 */
 	private static function notice_title( string $kind ): string {
 		return match ( $kind ) {
 			'test' => __( 'Test result', 'gravity-notification-manager' ),
@@ -401,24 +473,49 @@ final class ProviderManagerAdmin {
 		return $provider;
 	}
 
+	/**
+	 * Build the provider-bound nonce action.
+	 *
+	 * @param string $action   Admin-post action.
+	 * @param string $provider Provider identifier.
+	 * @return string
+	 */
 	private static function nonce_action( string $action, string $provider ): string {
 		return $action . '_' . $provider . '_' . AdminDefinition::PROVIDERS_SLUG;
 	}
 
+	/**
+	 * Build the per-user transient notice key.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return string
+	 */
 	private static function notice_key( int $user_id ): string {
 		return 'gravity_notify_provider_manager_notice_' . $user_id;
 	}
 
+	/** Return the Provider Manager admin URL. */
 	private static function page_url(): string {
 		return add_query_arg( array( 'page' => AdminDefinition::PROVIDERS_SLUG ), admin_url( 'admin.php' ) );
 	}
 
-	/** Provider label is derived only from the fixed supported definitions. */
+	/**
+	 * Return a provider label from the fixed supported definitions.
+	 *
+	 * @param string $provider Provider identifier.
+	 * @return string
+	 */
 	private static function provider_label( string $provider ): string {
 		$definition = SmsProviderManager::definitions()[ $provider ] ?? null;
 		return is_array( $definition ) ? (string) $definition['label'] : $provider;
 	}
 
+	/**
+	 * Return the localized label for a provider credential field.
+	 *
+	 * @param string $field Credential field name.
+	 * @return string
+	 */
 	private static function credential_label( string $field ): string {
 		return match ( $field ) {
 			'username' => __( 'Username', 'gravity-notification-manager' ),
@@ -427,7 +524,12 @@ final class ProviderManagerAdmin {
 		};
 	}
 
-	/** Explain why the current provider uses manual sender input. */
+	/**
+	 * Explain why the current provider uses manual sender input.
+	 *
+	 * @param string $provider Provider identifier.
+	 * @return string
+	 */
 	private static function manual_sender_explanation( string $provider ): string {
 		return match ( $provider ) {
 			SmsProviderManager::IPPANEL => __( 'Current official IPPanel documentation does not establish an account sender-line enumeration contract, so the sender remains a manual value.', 'gravity-notification-manager' ),
@@ -437,7 +539,11 @@ final class ProviderManagerAdmin {
 		};
 	}
 
-	/** Enforce the existing admin capability on render/action callbacks. */
+	/**
+	 * Enforce the existing admin capability on render/action callbacks.
+	 *
+	 * @throws RuntimeException When WordPress authorization helpers are unavailable or access is denied.
+	 */
 	private static function guard_capability(): void {
 		if ( ! function_exists( 'current_user_can' ) || ! current_user_can( AdminDefinition::CAPABILITY ) ) {
 			if ( function_exists( 'wp_die' ) ) {
@@ -447,7 +553,12 @@ final class ProviderManagerAdmin {
 		}
 	}
 
-	/** Fail a malformed privileged request. */
+	/**
+	 * Fail a malformed privileged request.
+	 *
+	 * @param string $message Safe operator-facing error message.
+	 * @throws RuntimeException When WordPress wp_die() is unavailable.
+	 */
 	private static function fail_request( string $message ): void {
 		if ( function_exists( 'wp_die' ) ) {
 			wp_die( esc_html( $message ), '', array( 'response' => 400 ) );
@@ -455,7 +566,11 @@ final class ProviderManagerAdmin {
 		throw new RuntimeException( 'Invalid GNM Provider Manager request.' );
 	}
 
-	/** Render text plus a visual semantic readiness cue. */
+	/**
+	 * Render text plus a visual semantic readiness cue.
+	 *
+	 * @param string $status Readiness status.
+	 */
 	private static function status_badge( string $status ): void {
 		$class = strtolower( str_replace( '_', '-', $status ) );
 		$label = match ( $status ) {

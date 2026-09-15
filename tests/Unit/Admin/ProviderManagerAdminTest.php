@@ -118,12 +118,20 @@ final class ProviderManagerAdminTest extends TestCase {
 		self::assertStringNotContainsString( 'body()', $store );
 	}
 
+	/** Return the production ProviderManagerAdmin source under test. */
 	private function source(): string {
 		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/ProviderManagerAdmin.php' );
 		self::assertIsString( $source );
 		return $source;
 	}
 
+	/**
+	 * Return one bounded ProviderManagerAdmin method section.
+	 *
+	 * @param string $start_marker Start marker.
+	 * @param string $end_marker   End marker.
+	 * @return string
+	 */
 	private function method_section( string $start_marker, string $end_marker ): string {
 		$source = $this->source();
 		$start  = strpos( $source, $start_marker );

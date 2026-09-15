@@ -17,19 +17,31 @@ final class ProviderDiscoveryService {
 
 	/** @var array<string, mixed> */
 	private array $settings;
+	/** HTTP transport used only by explicit actions. */
 	private HttpTransportInterface $http;
 
-	/** @param array<string, mixed> $settings Settings snapshot. */
+	/**
+	 * Build the explicit sender-line discovery service.
+	 *
+	 * @param array<string, mixed>   $settings Settings snapshot.
+	 * @param HttpTransportInterface $http     HTTP transport.
+	 */
 	public function __construct( array $settings, HttpTransportInterface $http ) {
 		$this->settings = $settings;
 		$this->http     = $http;
 	}
 
+	/** Build the production sender-line discovery service. */
 	public static function production(): self {
 		return new self( Settings::read(), new WordPressHttpTransport() );
 	}
 
-	/** Discover account sender lines only for verified discovery-capable providers. */
+	/**
+	 * Discover account sender lines only for verified discovery-capable providers.
+	 *
+	 * @param string $provider_id Provider identifier.
+	 * @return SenderLineDiscoveryResult
+	 */
 	public function discover( string $provider_id ): SenderLineDiscoveryResult {
 		if ( ! SmsProviderManager::supports_discovery( $provider_id ) ) {
 			return new SenderLineDiscoveryResult( false, array(), 'discovery_unavailable' );

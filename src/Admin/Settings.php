@@ -22,7 +22,12 @@ final class Settings {
 		return self::with_compatibility_aliases( self::normalize_stored( $raw ) );
 	}
 
-	/** Sanitize one Settings API submission. */
+	/**
+	 * Sanitize one Settings API submission.
+	 *
+	 * @param mixed $input Raw Settings API value.
+	 * @return array<string, mixed>
+	 */
 	public static function sanitize_option( $input ): array {
 		$existing = function_exists( 'get_option' ) ? get_option( self::OPTION, array() ) : array();
 		return self::sanitize_input( is_array( $input ) ? $input : array(), is_array( $existing ) ? $existing : array() );
@@ -52,7 +57,12 @@ final class Settings {
 		);
 	}
 
-	/** Deterministically normalize flat IPPanel settings and current nested state. */
+	/**
+	 * Deterministically normalize flat IPPanel settings and current nested state.
+	 *
+	 * @param array<string, mixed> $stored Stored option value.
+	 * @return array<string, mixed>
+	 */
 	public static function normalize_stored( array $stored ): array {
 		return array(
 			'schema_version'               => SmsProviderManager::SCHEMA_VERSION,
@@ -80,7 +90,12 @@ final class Settings {
 		return (bool) update_option( self::OPTION, $settings );
 	}
 
-	/** Derive channel readiness without exposing secrets. */
+	/**
+	 * Derive channel readiness without exposing secrets.
+	 *
+	 * @param array<string, mixed>|null $settings Optional settings snapshot.
+	 * @return array<string, bool>
+	 */
 	public static function readiness( ?array $settings = null ): array {
 		$settings = null === $settings ? self::read() : $settings;
 		$manager  = new SmsProviderManager( $settings );
@@ -92,7 +107,12 @@ final class Settings {
 		return $result;
 	}
 
-	/** Return privacy-safe configuration states for Overview/Diagnostics. */
+	/**
+	 * Return privacy-safe configuration states for Overview/Diagnostics.
+	 *
+	 * @param array<string, mixed>|null $settings Optional settings snapshot.
+	 * @return array<string, string>
+	 */
 	public static function diagnostic_facts( ?array $settings = null ): array {
 		$settings = null === $settings ? self::read() : $settings;
 		$manager  = new SmsProviderManager( $settings );
@@ -104,7 +124,12 @@ final class Settings {
 		return $result;
 	}
 
-	/** Keep the historical flat read aliases in-memory for bounded compatible callers. */
+	/**
+	 * Keep the historical flat read aliases in-memory for bounded compatible callers.
+	 *
+	 * @param array<string, mixed> $settings Normalized settings.
+	 * @return array<string, mixed>
+	 */
 	private static function with_compatibility_aliases( array $settings ): array {
 		$manager = new SmsProviderManager( $settings );
 		$config  = $manager->configuration( SmsProviderManager::IPPANEL );
@@ -113,7 +138,12 @@ final class Settings {
 		return $settings;
 	}
 
-	/** Sanitize a bounded write-only secret. */
+	/**
+	 * Sanitize a bounded write-only secret.
+	 *
+	 * @param mixed $value Raw secret value.
+	 * @return string
+	 */
 	private static function secret( $value ): string {
 		if ( ! is_string( $value ) ) {
 			return '';

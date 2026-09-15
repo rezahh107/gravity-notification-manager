@@ -15,16 +15,27 @@ final class MelipayamakConnection implements ProviderConnectionInterface {
 
 	private const ENDPOINT = 'https://rest.payamak-panel.com/api/SendSMS/GetCredit';
 
+	/** Melipayamak username. */
 	private string $username;
+	/** Melipayamak password. */
 	private string $password;
+	/** HTTP transport. */
 	private HttpTransportInterface $http;
 
+	/**
+	 * Build the explicit Melipayamak connection checker.
+	 *
+	 * @param string                 $username Account username.
+	 * @param string                 $password Account password.
+	 * @param HttpTransportInterface $http     HTTP transport.
+	 */
 	public function __construct( string $username, string $password, HttpTransportInterface $http ) {
 		$this->username = $username;
 		$this->password = $password;
 		$this->http     = $http;
 	}
 
+	/** Validate the configured Melipayamak credentials through the verified contract. */
 	public function check(): ProviderConnectionResult {
 		$response = $this->http->post(
 			self::ENDPOINT,

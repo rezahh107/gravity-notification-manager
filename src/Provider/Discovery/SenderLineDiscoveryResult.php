@@ -10,13 +10,18 @@ namespace GravityNotify\Provider\Discovery;
 /** Contains only bounded line values and safe diagnostics. */
 final class SenderLineDiscoveryResult {
 
+	/** Whether discovery succeeded. */
 	private bool $successful;
-	/** @var array<int, string> */
+	/** @var array<int, string> Valid discovered sender lines. */
 	private array $lines;
+	/** Safe diagnostic token. */
 	private string $diagnostic;
+	/** Observed HTTP status when available. */
 	private ?int $http_status;
 
 	/**
+	 * Build an operator-safe sender discovery result.
+	 *
 	 * @param bool               $successful Discovery success.
 	 * @param array<int, string> $lines      Valid sender lines.
 	 * @param string             $diagnostic Safe diagnostic token.
@@ -29,19 +34,26 @@ final class SenderLineDiscoveryResult {
 		$this->http_status = $http_status;
 	}
 
+	/** Return whether sender discovery succeeded. */
 	public function successful(): bool {
 		return $this->successful;
 	}
 
-	/** @return array<int, string> */
+	/**
+	 * Return discovered sender lines.
+	 *
+	 * @return array<int, string>
+	 */
 	public function lines(): array {
 		return $this->lines;
 	}
 
+	/** Return the safe diagnostic token. */
 	public function diagnostic(): string {
 		return $this->diagnostic;
 	}
 
+	/** Return the observed HTTP status when available. */
 	public function http_status(): ?int {
 		return $this->http_status;
 	}

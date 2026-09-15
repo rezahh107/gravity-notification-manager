@@ -133,6 +133,7 @@ final class ApprovedSmsProvidersTest extends TestCase {
 		self::assertSame( '50001234', $attempts[1]->sender() );
 	}
 
+	/** Return a normalized plain SMS request fixture. */
 	private function plain_request(): SmsRequest {
 		return SmsRequest::plain( SmsCapability::PLAIN, array( '+989121234567' ), '+982100000000', 'hello' );
 	}

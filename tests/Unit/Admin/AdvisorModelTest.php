@@ -36,7 +36,16 @@ final class AdvisorModelTest extends TestCase {
 
 	/** Provider-test guidance points to Provider Manager for SMS and preserves explicit-send semantics. */
 	public function test_provider_test_guidance_uses_provider_manager_surface(): void {
-		$cards = AdvisorModel::build( array( 'ippanel' => true, 'bale' => true ), array(), true, true, true );
+		$cards = AdvisorModel::build(
+			array(
+				'ippanel' => true,
+				'bale'    => true,
+			),
+			array(),
+			true,
+			true,
+			true
+		);
 		$test  = $this->card( $cards, 'provider-test' );
 		self::assertSame( AdvisorModel::ACTION_PROVIDERS, $test['action'] );
 		self::assertStringContainsString( 'Saving ordinary settings never sends', $test['answer'] );
@@ -90,7 +99,13 @@ final class AdvisorModelTest extends TestCase {
 		self::assertSame( AdvisorModel::ACTION_NONE, $attention['action'] );
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Find one Advisor card by identifier.
+	 *
+	 * @param array<int, array<string, mixed>> $cards Advisor cards.
+	 * @param string                           $id    Card identifier.
+	 * @return array<string, mixed>
+	 */
 	private function card( array $cards, string $id ): array {
 		foreach ( $cards as $card ) {
 			if ( ( $card['id'] ?? null ) === $id ) {
@@ -100,7 +115,14 @@ final class AdvisorModelTest extends TestCase {
 		self::fail( 'Advisor card not found: ' . $id );
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Build one Point Inspector fixture.
+	 *
+	 * @param string $state       Point state.
+	 * @param string $detail      Point detail.
+	 * @param string $next_action Point next action.
+	 * @return array<string, mixed>
+	 */
 	private function point( string $state, string $detail, string $next_action ): array {
 		return array(
 			'form_id'        => 7,

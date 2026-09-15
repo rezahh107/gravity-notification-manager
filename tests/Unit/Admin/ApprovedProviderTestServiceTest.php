@@ -59,14 +59,35 @@ final class ApprovedProviderTestServiceTest extends TestCase {
 		self::assertStringNotContainsString( 'GFAPI', $source );
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Return settings with every approved provider configured.
+	 *
+	 * @return array<string, mixed>
+	 */
 	private function settings(): array {
 		return array(
 			SmsProviderManager::CONFIG_KEY => array(
-				SmsProviderManager::IPPANEL => array( 'enabled' => true, 'api_key' => 'ip-key', 'sender' => '+982100000000' ),
-				SmsProviderManager::MELIPAYAMAK => array( 'enabled' => true, 'username' => 'user', 'password' => 'pass', 'sender' => '50001234' ),
-				SmsProviderManager::SMSIR => array( 'enabled' => true, 'api_key' => 'smsir-key', 'sender' => '30001234' ),
-				SmsProviderManager::FARAZSMS => array( 'enabled' => true, 'api_key' => 'faraz-key', 'sender' => '30005678' ),
+				SmsProviderManager::IPPANEL => array(
+					'enabled' => true,
+					'api_key' => 'ip-key',
+					'sender'  => '+982100000000',
+				),
+				SmsProviderManager::MELIPAYAMAK => array(
+					'enabled'  => true,
+					'username' => 'user',
+					'password' => 'pass',
+					'sender'   => '50001234',
+				),
+				SmsProviderManager::SMSIR => array(
+					'enabled' => true,
+					'api_key' => 'smsir-key',
+					'sender'  => '30001234',
+				),
+				SmsProviderManager::FARAZSMS => array(
+					'enabled' => true,
+					'api_key' => 'faraz-key',
+					'sender'  => '30005678',
+				),
 			),
 		);
 	}

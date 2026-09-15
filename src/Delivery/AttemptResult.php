@@ -12,14 +12,21 @@ use InvalidArgumentException;
 /** Carries only bounded, persistence-ready transport facts without secrets. */
 final class AttemptResult {
 
+	/** Normalized attempt status. */
 	private string $status;
+	/** Channel identifier. */
 	private string $channel;
+	/** Provider identifier when applicable. */
 	private ?string $provider_id;
+	/** SMS capability when applicable. */
 	private ?string $capability;
-	/** @var array<int, mixed> */
+	/** @var array<int, mixed> Safe provider references. */
 	private array $provider_references;
+	/** Safe diagnostic token. */
 	private string $diagnostic;
+	/** Observed HTTP status when available. */
 	private ?int $http_status;
+	/** Actual provider sender when known. */
 	private ?string $sender;
 
 	/**
@@ -31,6 +38,7 @@ final class AttemptResult {
 	 * @param string      $diagnostic          Safe diagnostic token.
 	 * @param int|null    $http_status         Observed HTTP status.
 	 * @param string|null $sender              Actual provider sender when known.
+	 * @throws InvalidArgumentException When status or HTTP status is unsupported.
 	 */
 	public function __construct(
 		string $status,
@@ -58,31 +66,41 @@ final class AttemptResult {
 		$this->sender              = null === $sender || '' === trim( $sender ) ? null : trim( $sender );
 	}
 
+	/** Return the normalized attempt status. */
 	public function status(): string {
 		return $this->status;
 	}
 
+	/** Return the channel identifier. */
 	public function channel(): string {
 		return $this->channel;
 	}
 
+	/** Return the provider identifier when applicable. */
 	public function provider_id(): ?string {
 		return $this->provider_id;
 	}
 
+	/** Return the SMS capability when applicable. */
 	public function capability(): ?string {
 		return $this->capability;
 	}
 
-	/** @return array<int, mixed> */
+	/**
+	 * Return safe provider references.
+	 *
+	 * @return array<int, mixed>
+	 */
 	public function provider_references(): array {
 		return $this->provider_references;
 	}
 
+	/** Return the safe diagnostic token. */
 	public function diagnostic(): string {
 		return $this->diagnostic;
 	}
 
+	/** Return the observed HTTP status when available. */
 	public function http_status(): ?int {
 		return $this->http_status;
 	}

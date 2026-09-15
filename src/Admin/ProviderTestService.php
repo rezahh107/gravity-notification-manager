@@ -23,13 +23,19 @@ use InvalidArgumentException;
 /** Tests production adapters directly without Feed/Retry/Entry-Meta side effects. */
 final class ProviderTestService {
 
-	/** @var array<string, mixed> */
+	/** @var array<string, mixed> Current settings snapshot. */
 	private array $settings;
+	/** HTTP transport used by explicit test actions. */
 	private HttpTransportInterface $http;
+	/** Optional operational logger for TEST evidence. */
 	private ?OperationalLogger $operational_log;
 
 	/**
-	 * @param array<string, mixed> $settings Settings snapshot.
+	 * Build the explicit provider/channel test service.
+	 *
+	 * @param array<string, mixed>   $settings        Settings snapshot.
+	 * @param HttpTransportInterface $http            HTTP transport.
+	 * @param OperationalLogger|null $operational_log Optional TEST observability logger.
 	 */
 	public function __construct( array $settings, HttpTransportInterface $http, ?OperationalLogger $operational_log = null ) {
 		$this->settings        = $settings;
@@ -37,6 +43,7 @@ final class ProviderTestService {
 		$this->operational_log = $operational_log;
 	}
 
+	/** Build the production explicit test service. */
 	public static function production(): self {
 		return new self( Settings::read(), new WordPressHttpTransport(), OperationalLogger::production() );
 	}
@@ -85,7 +92,13 @@ final class ProviderTestService {
 		return $this->observed( $context, $provider->send( $request ), array( $destination ) );
 	}
 
-	/** Test Bale through its existing separate channel boundary. */
+	/**
+	 * Test Bale through its existing separate channel boundary.
+	 *
+	 * @param string $destination Bale chat target.
+	 * @param string $message     Test message.
+	 * @return AttemptResult
+	 */
 	public function test_bale( string $destination, string $message ): AttemptResult {
 		$context = new OperationalContext( OperationalContext::EXECUTION_TEST );
 		$token   = $this->settings['bale_bot_token'] ?? '';
@@ -105,7 +118,12 @@ final class ProviderTestService {
 		return $this->observed( $context, ( new BaleClient( $token, $this->http ) )->send( $request ), array( $destination ) );
 	}
 
-	/** Validate a Bale numeric chat ID or @username. */
+	/**
+	 * Validate a Bale numeric chat ID or @username.
+	 *
+	 * @param string $value Raw destination.
+	 * @return string|null
+	 */
 	private static function bale_destination( string $value ): ?string {
 		$value = trim( $value );
 		if ( '' === $value || 128 < strlen( $value ) || 1 === preg_match( '/[\x00-\x20\x7F]/', $value ) ) {
@@ -117,12 +135,28 @@ final class ProviderTestService {
 		return 1 === preg_match( '/^@[A-Za-z0-9_]+$/D', $value ) ? $value : null;
 	}
 
-	/** Build a local failure result. */
+	/**
+	 * Build a local failure result.
+	 *
+	 * @param string      $channel    Channel identifier.
+	 * @param string|null $provider   Provider identifier when applicable.
+	 * @param string|null $capability SMS capability when applicable.
+	 * @param string      $diagnostic Safe diagnostic token.
+	 * @param string|null $sender     Provider sender when known.
+	 * @return AttemptResult
+	 */
 	private function failure( string $channel, ?string $provider, ?string $capability, string $diagnostic, ?string $sender = null ): AttemptResult {
 		return new AttemptResult( AttemptStatus::FAILED, $channel, $provider, $capability, array(), $diagnostic, null, $sender );
 	}
 
-	/** Record the explicit TEST through the existing observability subsystem only. */
+	/**
+	 * Record the explicit TEST through the existing observability subsystem only.
+	 *
+	 * @param OperationalContext $context      TEST execution context.
+	 * @param AttemptResult      $result       Attempt result.
+	 * @param array<int, string> $destinations Tested destinations.
+	 * @return AttemptResult
+	 */
 	private function observed( OperationalContext $context, AttemptResult $result, array $destinations ): AttemptResult {
 		if ( null !== $this->operational_log ) {
 			$this->operational_log->record_attempt( $context, $result, $destinations, null, 1 );

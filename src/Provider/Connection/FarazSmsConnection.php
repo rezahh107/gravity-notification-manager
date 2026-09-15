@@ -15,14 +15,23 @@ final class FarazSmsConnection implements ProviderConnectionInterface {
 
 	private const ENDPOINT = 'https://api.iranpayamak.com/ws/v1/account/balance';
 
+	/** FarazSMS API key. */
 	private string $api_key;
+	/** HTTP transport. */
 	private HttpTransportInterface $http;
 
+	/**
+	 * Build the explicit connection checker.
+	 *
+	 * @param string                 $api_key API key.
+	 * @param HttpTransportInterface $http    HTTP transport.
+	 */
 	public function __construct( string $api_key, HttpTransportInterface $http ) {
 		$this->api_key = $api_key;
 		$this->http    = $http;
 	}
 
+	/** Validate the configured FarazSMS credentials through the verified contract. */
 	public function check(): ProviderConnectionResult {
 		$response = $this->http->get(
 			self::ENDPOINT,

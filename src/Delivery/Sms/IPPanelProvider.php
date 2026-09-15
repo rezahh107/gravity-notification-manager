@@ -19,12 +19,18 @@ final class IPPanelProvider implements SmsProviderInterface {
 
 	private const ENDPOINT = 'https://edge.ippanel.com/v1/api/send';
 
+	/** Provider API key. */
 	private string $api_key;
+	/** HTTP transport. */
 	private HttpTransportInterface $http;
+	/** Current send endpoint. */
 	private string $endpoint;
+	/** Configured provider sender. */
 	private string $sender;
 
 	/**
+	 * Build the provider adapter with its existing configuration.
+	 *
 	 * @param string                 $api_key       API key.
 	 * @param HttpTransportInterface $http           HTTP transport.
 	 * @param string|null            $test_endpoint Optional loopback test endpoint.
@@ -46,7 +52,11 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return 'ippanel';
 	}
 
-	/** @return array<int, string> */
+	/**
+	 * Return supported SMS capabilities.
+	 *
+	 * @return array<int, string>
+	 */
 	public function capabilities(): array {
 		return array(
 			SmsCapability::PLAIN,
@@ -56,7 +66,12 @@ final class IPPanelProvider implements SmsProviderInterface {
 		);
 	}
 
-	/** Send through the current Edge contract. */
+	/**
+	 * Send through the current Edge contract.
+	 *
+	 * @param SmsRequest $request Normalized SMS request.
+	 * @return AttemptResult
+	 */
 	public function send( SmsRequest $request ): AttemptResult {
 		if ( ! in_array( $request->capability(), $this->capabilities(), true ) ) {
 			return $this->result( AttemptStatus::SKIPPED, $request, array(), 'unsupported_capability' );
@@ -90,7 +105,12 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return $this->classify_response( $request, $response );
 	}
 
-	/** Validate sender/recipient E.164 addresses. */
+	/**
+	 * Validate sender/recipient E.164 addresses.
+	 *
+	 * @param SmsRequest $request Normalized SMS request.
+	 * @return bool
+	 */
 	private function has_valid_e164_addresses( SmsRequest $request ): bool {
 		if ( ! $this->is_e164( $this->effective_sender( $request ) ) ) {
 			return false;
@@ -103,17 +123,32 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return true;
 	}
 
-	/** Check one E.164 value. */
+	/**
+	 * Check one E.164 value.
+	 *
+	 * @param string $value Candidate address.
+	 * @return bool
+	 */
 	private function is_e164( string $value ): bool {
 		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value );
 	}
 
-	/** Return the provider-owned sender or the historical request sender for isolated compatibility tests. */
+	/**
+	 * Return the provider-owned sender or the historical request sender for isolated compatibility tests.
+	 *
+	 * @param SmsRequest $request Normalized SMS request.
+	 * @return string
+	 */
 	private function effective_sender( SmsRequest $request ): string {
 		return '' !== $this->sender ? $this->sender : $request->from();
 	}
 
-	/** @return array<string, mixed>|null */
+	/**
+	 * Build the exact documented request body for the requested capability.
+	 *
+	 * @param SmsRequest $request Normalized SMS request.
+	 * @return array<string, mixed>|null
+	 */
 	private function build_payload( SmsRequest $request ): ?array {
 		$sender = $this->effective_sender( $request );
 		if ( SmsCapability::PLAIN === $request->capability() || SmsCapability::MULTI_RECIPIENT_PLAIN === $request->capability() ) {
@@ -136,7 +171,13 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return null;
 	}
 
-	/** Classify one Edge response. */
+	/**
+	 * Classify one Edge response without inventing acceptance evidence.
+	 *
+	 * @param SmsRequest   $request  Normalized SMS request.
+	 * @param HttpResponse $response Provider response.
+	 * @return AttemptResult
+	 */
 	private function classify_response( SmsRequest $request, HttpResponse $response ): AttemptResult {
 		if ( $response->is_transport_error() ) {
 			return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'transport_error' );
@@ -165,7 +206,12 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'acceptance_unestablished', $status );
 	}
 
-	/** @return array<int, string> */
+	/**
+	 * Extract documented bounded message references.
+	 *
+	 * @param array<string, mixed> $decoded Decoded provider response.
+	 * @return array<int, string>
+	 */
 	private function documented_references( array $decoded ): array {
 		$data = $decoded['data'] ?? null;
 		if ( ! is_array( $data ) || ! is_array( $data['message_outbox_ids'] ?? null ) ) {
@@ -180,7 +226,16 @@ final class IPPanelProvider implements SmsProviderInterface {
 		return $references;
 	}
 
-	/** Build a normalized attempt with the actual configured sender. */
+	/**
+	 * Build a normalized attempt with the actual configured sender.
+	 *
+	 * @param string            $status      Attempt status.
+	 * @param SmsRequest        $request     Normalized SMS request.
+	 * @param array<int, mixed> $references Safe provider references.
+	 * @param string            $diagnostic  Safe diagnostic token.
+	 * @param int|null          $http_status Observed HTTP status.
+	 * @return AttemptResult
+	 */
 	private function result( string $status, SmsRequest $request, array $references, string $diagnostic, ?int $http_status = null ): AttemptResult {
 		return new AttemptResult(
 			$status,

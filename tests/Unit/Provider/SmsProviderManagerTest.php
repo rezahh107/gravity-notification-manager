@@ -96,7 +96,11 @@ final class SmsProviderManagerTest extends TestCase {
 		self::assertNull( $manager->sender_discovery( SmsProviderManager::FARAZSMS, $http ) );
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Return settings with every approved provider configured.
+	 *
+	 * @return array<string, mixed>
+	 */
 	private function all_provider_settings(): array {
 		return array(
 			SmsProviderManager::CONFIG_KEY => array(

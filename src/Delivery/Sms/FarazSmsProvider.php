@@ -19,11 +19,16 @@ final class FarazSmsProvider implements SmsProviderInterface {
 	private const SIMPLE_ENDPOINT  = 'https://api.iranpayamak.com/ws/v1/sms/simple';
 	private const PATTERN_ENDPOINT = 'https://api.iranpayamak.com/ws/v1/sms/pattern';
 
+	/** Provider API key. */
 	private string $api_key;
+	/** Configured sender line. */
 	private string $sender;
+	/** HTTP transport. */
 	private HttpTransportInterface $http;
 
 	/**
+	 * Build the provider adapter with its existing configuration.
+	 *
 	 * @param string                 $api_key API key.
 	 * @param string                 $sender  Configured sender line.
 	 * @param HttpTransportInterface $http    HTTP transport.
@@ -39,7 +44,11 @@ final class FarazSmsProvider implements SmsProviderInterface {
 		return 'farazsms';
 	}
 
-	/** @return array<int, string> */
+	/**
+	 * Return supported SMS capabilities.
+	 *
+	 * @return array<int, string>
+	 */
 	public function capabilities(): array {
 		return array(
 			SmsCapability::PLAIN,
@@ -124,7 +133,13 @@ final class FarazSmsProvider implements SmsProviderInterface {
 		return null;
 	}
 
-	/** Classify the documented HTTP/status result without inventing a message reference. */
+	/**
+	 * Classify the documented HTTP/status result without inventing a message reference.
+	 *
+	 * @param SmsRequest   $request  Normalized SMS request.
+	 * @param HttpResponse $response Provider response.
+	 * @return AttemptResult
+	 */
 	private function classify_response( SmsRequest $request, HttpResponse $response ): AttemptResult {
 		if ( $response->is_transport_error() ) {
 			return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'transport_error' );
@@ -154,7 +169,16 @@ final class FarazSmsProvider implements SmsProviderInterface {
 		return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'acceptance_unestablished', $status );
 	}
 
-	/** Build a normalized attempt with the actual configured sender. */
+	/**
+	 * Build a normalized attempt with the actual configured sender.
+	 *
+	 * @param string            $status      Attempt status.
+	 * @param SmsRequest        $request     Normalized SMS request.
+	 * @param array<int, mixed> $references Safe provider references.
+	 * @param string            $diagnostic  Safe diagnostic token.
+	 * @param int|null          $http_status Observed HTTP status.
+	 * @return AttemptResult
+	 */
 	private function result( string $status, SmsRequest $request, array $references, string $diagnostic, ?int $http_status = null ): AttemptResult {
 		return new AttemptResult(
 			$status,

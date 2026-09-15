@@ -48,7 +48,20 @@ final class ProviderAdministrationCapabilitiesTest extends TestCase {
 	/** SMS.ir sender discovery handles zero, one, and multiple documented line values. */
 	public function test_smsir_sender_discovery_zero_one_and_multiple_lines(): void {
 		foreach ( array( array(), array( 30001 ), array( 30001, 30002 ) ) as $lines ) {
-			$http   = new FakeHttpTransport( array( HttpResponse::from_http( 200, (string) json_encode( array( 'status' => 1, 'message' => 'ok', 'data' => $lines ) ) ) ) );
+			$http = new FakeHttpTransport(
+				array(
+					HttpResponse::from_http(
+						200,
+						(string) json_encode(
+							array(
+								'status'  => 1,
+								'message' => 'ok',
+								'data'    => $lines,
+							)
+						),
+					),
+				)
+			);
 			$result = ( new ProviderDiscoveryService( $this->settings(), $http ) )->discover( SmsProviderManager::SMSIR );
 			self::assertTrue( $result->successful() );
 			self::assertSame( array_map( 'strval', $lines ), $result->lines() );
@@ -84,14 +97,35 @@ final class ProviderAdministrationCapabilitiesTest extends TestCase {
 		}
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Return settings with every approved provider configured.
+	 *
+	 * @return array<string, mixed>
+	 */
 	private function settings(): array {
 		return array(
 			SmsProviderManager::CONFIG_KEY => array(
-				SmsProviderManager::IPPANEL => array( 'enabled' => true, 'api_key' => 'ip-key', 'sender' => '+982100000000' ),
-				SmsProviderManager::MELIPAYAMAK => array( 'enabled' => true, 'username' => 'user', 'password' => 'pass', 'sender' => '50001234' ),
-				SmsProviderManager::SMSIR => array( 'enabled' => true, 'api_key' => 'smsir-key', 'sender' => '30001234' ),
-				SmsProviderManager::FARAZSMS => array( 'enabled' => true, 'api_key' => 'faraz-key', 'sender' => '30005678' ),
+				SmsProviderManager::IPPANEL => array(
+					'enabled' => true,
+					'api_key' => 'ip-key',
+					'sender'  => '+982100000000',
+				),
+				SmsProviderManager::MELIPAYAMAK => array(
+					'enabled'  => true,
+					'username' => 'user',
+					'password' => 'pass',
+					'sender'   => '50001234',
+				),
+				SmsProviderManager::SMSIR => array(
+					'enabled' => true,
+					'api_key' => 'smsir-key',
+					'sender'  => '30001234',
+				),
+				SmsProviderManager::FARAZSMS => array(
+					'enabled' => true,
+					'api_key' => 'faraz-key',
+					'sender'  => '30005678',
+				),
 			),
 		);
 	}

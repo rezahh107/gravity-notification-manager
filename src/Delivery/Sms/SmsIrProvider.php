@@ -18,11 +18,16 @@ final class SmsIrProvider implements SmsProviderInterface {
 
 	private const ENDPOINT = 'https://api.sms.ir/v1/send/bulk';
 
+	/** Provider API key. */
 	private string $api_key;
+	/** Configured sender line. */
 	private string $sender;
+	/** HTTP transport. */
 	private HttpTransportInterface $http;
 
 	/**
+	 * Build the provider adapter with its existing configuration.
+	 *
 	 * @param string                 $api_key API key.
 	 * @param string                 $sender  Configured line number.
 	 * @param HttpTransportInterface $http    HTTP transport.
@@ -38,7 +43,11 @@ final class SmsIrProvider implements SmsProviderInterface {
 		return 'smsir';
 	}
 
-	/** @return array<int, string> */
+	/**
+	 * Return supported SMS capabilities.
+	 *
+	 * @return array<int, string>
+	 */
 	public function capabilities(): array {
 		return array(
 			SmsCapability::PLAIN,
@@ -47,7 +56,12 @@ final class SmsIrProvider implements SmsProviderInterface {
 		);
 	}
 
-	/** Send through the documented bulk endpoint. */
+	/**
+	 * Send through the documented bulk endpoint.
+	 *
+	 * @param SmsRequest $request Normalized SMS request.
+	 * @return AttemptResult
+	 */
 	public function send( SmsRequest $request ): AttemptResult {
 		if ( ! in_array( $request->capability(), $this->capabilities(), true ) ) {
 			return $this->result( AttemptStatus::SKIPPED, $request, array(), 'unsupported_capability' );
@@ -92,7 +106,13 @@ final class SmsIrProvider implements SmsProviderInterface {
 		return $this->classify_response( $request, $response );
 	}
 
-	/** Classify one current SMS.ir response. */
+	/**
+	 * Classify one current SMS.ir response.
+	 *
+	 * @param SmsRequest   $request  Normalized SMS request.
+	 * @param HttpResponse $response Provider response.
+	 * @return AttemptResult
+	 */
 	private function classify_response( SmsRequest $request, HttpResponse $response ): AttemptResult {
 		if ( $response->is_transport_error() ) {
 			return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'transport_error' );
@@ -143,7 +163,12 @@ final class SmsIrProvider implements SmsProviderInterface {
 			: $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'acceptance_unestablished', $status );
 	}
 
-	/** Detect an explicit negative status without guessing positive encodings. */
+	/**
+	 * Detect an explicit negative status without guessing positive encodings.
+	 *
+	 * @param mixed $status Provider status value.
+	 * @return bool
+	 */
 	private static function explicit_failure( $status ): bool {
 		if ( false === $status || 0 === $status || '0' === $status ) {
 			return true;
@@ -151,7 +176,16 @@ final class SmsIrProvider implements SmsProviderInterface {
 		return is_string( $status ) && in_array( strtolower( trim( $status ) ), array( 'error', 'failed', 'failure' ), true );
 	}
 
-	/** Build a normalized attempt with the actual configured sender. */
+	/**
+	 * Build a normalized attempt with the actual configured sender.
+	 *
+	 * @param string            $status      Attempt status.
+	 * @param SmsRequest        $request     Normalized SMS request.
+	 * @param array<int, mixed> $references Safe provider references.
+	 * @param string            $diagnostic  Safe diagnostic token.
+	 * @param int|null          $http_status Observed HTTP status.
+	 * @return AttemptResult
+	 */
 	private function result( string $status, SmsRequest $request, array $references, string $diagnostic, ?int $http_status = null ): AttemptResult {
 		return new AttemptResult(
 			$status,

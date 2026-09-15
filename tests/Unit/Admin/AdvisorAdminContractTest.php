@@ -91,12 +91,20 @@ final class AdvisorAdminContractTest extends TestCase {
 		self::assertStringContainsString( 'ATTENTION_VIEW_IDS_FILTER', $ops );
 	}
 
+	/** Return the production AdminController source under test. */
 	private function controller_source(): string {
 		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/AdminController.php' );
 		self::assertIsString( $source );
 		return $source;
 	}
 
+	/**
+	 * Return one bounded AdminController method section.
+	 *
+	 * @param string $start_marker Start marker.
+	 * @param string $end_marker   End marker.
+	 * @return string
+	 */
 	private function method_section( string $start_marker, string $end_marker ): string {
 		$source = $this->controller_source();
 		$start  = strpos( $source, $start_marker );

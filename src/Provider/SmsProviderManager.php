@@ -31,10 +31,14 @@ final class SmsProviderManager {
 	public const FARAZSMS     = 'farazsms';
 	public const SCHEMA_VERSION = 3;
 
-	/** @var array<string, array<string, mixed>> */
+	/** @var array<string, array<string, mixed>> Normalized provider configurations. */
 	private array $providers;
 
-	/** @param array<string, mixed> $settings Full GNM settings snapshot. */
+	/**
+	 * Build the provider manager from a full GNM settings snapshot.
+	 *
+	 * @param array<string, mixed> $settings Full GNM settings snapshot.
+	 */
 	public function __construct( array $settings ) {
 		$this->providers = self::normalize_configurations( $settings );
 	}
@@ -80,7 +84,11 @@ final class SmsProviderManager {
 		);
 	}
 
-	/** @return array<int, string> */
+	/**
+	 * Return approved provider identifiers in deterministic order.
+	 *
+	 * @return array<int, string>
+	 */
 	public static function identifiers(): array {
 		return array_keys( self::definitions() );
 	}
@@ -192,22 +200,42 @@ final class SmsProviderManager {
 		return $configurations;
 	}
 
-	/** @return array<string, array<string, mixed>> */
+	/**
+	 * Return all normalized provider configurations.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
 	public function configurations(): array {
 		return $this->providers;
 	}
 
-	/** @return array<string, mixed>|null */
+	/**
+	 * Return one normalized provider configuration.
+	 *
+	 * @param string $identifier Provider identifier.
+	 * @return array<string, mixed>|null
+	 */
 	public function configuration( string $identifier ): ?array {
 		return $this->providers[ $identifier ] ?? null;
 	}
 
+	/**
+	 * Return whether the provider is enabled.
+	 *
+	 * @param string $identifier Provider identifier.
+	 * @return bool
+	 */
 	public function enabled( string $identifier ): bool {
 		$config = $this->configuration( $identifier );
 		return null !== $config && true === $config['enabled'];
 	}
 
-	/** Determine runtime readiness from provider-specific credentials and sender format. */
+	/**
+	 * Determine runtime readiness from provider-specific credentials and sender format.
+	 *
+	 * @param string $identifier Provider identifier.
+	 * @return bool
+	 */
 	public function ready( string $identifier ): bool {
 		$config     = $this->configuration( $identifier );
 		$definition = self::definitions()[ $identifier ] ?? null;
@@ -217,6 +245,12 @@ final class SmsProviderManager {
 		return $this->credentials_ready( $identifier, $config );
 	}
 
+	/**
+	 * Return the privacy-safe readiness status for one provider.
+	 *
+	 * @param string $identifier Provider identifier.
+	 * @return string
+	 */
 	public function readiness_status( string $identifier ): string {
 		if ( ! $this->enabled( $identifier ) ) {
 			return 'DISABLED';
@@ -224,6 +258,12 @@ final class SmsProviderManager {
 		return $this->ready( $identifier ) ? 'CONFIGURED' : 'NEEDS_SETUP';
 	}
 
+	/**
+	 * Return the configured sender for one provider.
+	 *
+	 * @param string $identifier Provider identifier.
+	 * @return string
+	 */
 	public function configured_sender( string $identifier ): string {
 		$config = $this->configuration( $identifier );
 		return null === $config ? '' : (string) $config['sender'];
@@ -242,6 +282,8 @@ final class SmsProviderManager {
 	/**
 	 * Construct all ready providers in deterministic approved order without network I/O.
 	 *
+	 * @param HttpTransportInterface $http          HTTP transport.
+	 * @param string|null            $test_endpoint Optional IPPanel loopback test endpoint.
 	 * @return array<int, SmsProviderInterface>
 	 */
 	public function enabled_providers( HttpTransportInterface $http, ?string $test_endpoint = null ): array {
@@ -255,7 +297,14 @@ final class SmsProviderManager {
 		return $providers;
 	}
 
-	/** Construct one ready provider through the production composition boundary. */
+	/**
+	 * Construct one ready provider through the production composition boundary.
+	 *
+	 * @param string                 $identifier    Provider identifier.
+	 * @param HttpTransportInterface $http          HTTP transport.
+	 * @param string|null            $test_endpoint Optional IPPanel loopback test endpoint.
+	 * @return SmsProviderInterface|null
+	 */
 	public function provider( string $identifier, HttpTransportInterface $http, ?string $test_endpoint = null ): ?SmsProviderInterface {
 		if ( ! $this->ready( $identifier ) ) {
 			return null;
@@ -270,7 +319,15 @@ final class SmsProviderManager {
 		};
 	}
 
-	/** Optional explicit line discovery. Unsupported or unverified providers return null. */
+	/**
+	 * Resolve optional explicit line discovery for a configured provider.
+	 *
+	 * Unsupported or unverified providers return null.
+	 *
+	 * @param string                 $identifier Provider identifier.
+	 * @param HttpTransportInterface $http       HTTP transport.
+	 * @return SenderLineDiscoveryInterface|null
+	 */
 	public function sender_discovery( string $identifier, HttpTransportInterface $http ): ?SenderLineDiscoveryInterface {
 		$config = $this->configuration( $identifier );
 		if ( null === $config || ! $this->credentials_ready( $identifier, $config ) ) {
@@ -282,7 +339,13 @@ final class SmsProviderManager {
 		};
 	}
 
-	/** Explicit credential validation boundary for every approved provider. */
+	/**
+	 * Resolve explicit credential validation for an approved provider.
+	 *
+	 * @param string                 $identifier Provider identifier.
+	 * @param HttpTransportInterface $http       HTTP transport.
+	 * @return ProviderConnectionInterface|null
+	 */
 	public function connection_checker( string $identifier, HttpTransportInterface $http ): ?ProviderConnectionInterface {
 		$config = $this->configuration( $identifier );
 		if ( null === $config || ! $this->credentials_ready( $identifier, $config ) ) {
@@ -297,15 +360,33 @@ final class SmsProviderManager {
 		};
 	}
 
+	/**
+	 * Return whether the provider exposes verified sender-line discovery.
+	 *
+	 * @param string $identifier Provider identifier.
+	 * @return bool
+	 */
 	public static function supports_discovery( string $identifier ): bool {
 		return true === ( self::definitions()[ $identifier ]['discovery'] ?? false );
 	}
 
+	/**
+	 * Return whether the provider uses explicit manual sender input.
+	 *
+	 * @param string $identifier Provider identifier.
+	 * @return bool
+	 */
 	public static function manual_sender_allowed( string $identifier ): bool {
 		return true === ( self::definitions()[ $identifier ]['manual_sender'] ?? false );
 	}
 
-	/** Validate a provider sender according to the verified provider contract. */
+	/**
+	 * Validate a provider sender according to the verified provider contract.
+	 *
+	 * @param string $identifier Provider identifier.
+	 * @param string $value      Sender value.
+	 * @return bool
+	 */
 	public static function valid_sender( string $identifier, string $value ): bool {
 		$value  = trim( $value );
 		$format = self::definitions()[ $identifier ]['sender_format'] ?? '';
@@ -315,7 +396,13 @@ final class SmsProviderManager {
 		return 'numeric' === $format && 1 === preg_match( '/^[1-9][0-9]{2,31}$/D', $value );
 	}
 
-	/** @param array<string, mixed> $config */
+	/**
+	 * Return whether all required provider credentials are present.
+	 *
+	 * @param string               $identifier Provider identifier.
+	 * @param array<string, mixed> $config     Provider configuration.
+	 * @return bool
+	 */
 	private function credentials_ready( string $identifier, array $config ): bool {
 		$definition = self::definitions()[ $identifier ] ?? null;
 		if ( null === $definition ) {
@@ -330,6 +417,13 @@ final class SmsProviderManager {
 		return true;
 	}
 
+	/**
+	 * Sanitize one provider sender against its verified format.
+	 *
+	 * @param string $identifier Provider identifier.
+	 * @param mixed  $value      Raw sender value.
+	 * @return string
+	 */
 	private static function sanitize_sender( string $identifier, $value ): string {
 		if ( ! is_string( $value ) ) {
 			return '';
@@ -338,7 +432,13 @@ final class SmsProviderManager {
 		return self::valid_sender( $identifier, $value ) ? $value : '';
 	}
 
-	/** @return array<int, string> */
+	/**
+	 * Sanitize bounded discovered sender lines.
+	 *
+	 * @param string $identifier Provider identifier.
+	 * @param mixed  $values     Raw discovered values.
+	 * @return array<int, string>
+	 */
 	private static function sanitize_lines( string $identifier, $values ): array {
 		if ( ! is_array( $values ) ) {
 			return array();
@@ -358,6 +458,12 @@ final class SmsProviderManager {
 		return array_values( array_unique( $lines ) );
 	}
 
+	/**
+	 * Sanitize a bounded write-only secret value.
+	 *
+	 * @param mixed $value Raw secret value.
+	 * @return string
+	 */
 	private static function secret( $value ): string {
 		if ( ! is_string( $value ) ) {
 			return '';
@@ -367,6 +473,12 @@ final class SmsProviderManager {
 		return is_string( $value ) ? substr( $value, 0, 512 ) : '';
 	}
 
+	/**
+	 * Sanitize a bounded non-secret credential value.
+	 *
+	 * @param mixed $value Raw credential value.
+	 * @return string
+	 */
 	private static function plain_credential( $value ): string {
 		if ( ! is_string( $value ) ) {
 			return '';
@@ -375,6 +487,12 @@ final class SmsProviderManager {
 		return substr( $value, 0, 191 );
 	}
 
+	/**
+	 * Normalize one provider enablement value.
+	 *
+	 * @param mixed $value Raw enablement value.
+	 * @return bool
+	 */
 	private static function enabled_value( $value ): bool {
 		return true === $value || 1 === $value || '1' === $value || 'on' === $value || 'yes' === $value;
 	}

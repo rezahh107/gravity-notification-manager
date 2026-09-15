@@ -18,12 +18,18 @@ final class MelipayamakProvider implements SmsProviderInterface {
 
 	private const ENDPOINT = 'https://rest.payamak-panel.com/api/SendSMS/SendSMS';
 
+	/** Provider username. */
 	private string $username;
+	/** Provider password. */
 	private string $password;
+	/** Configured sender line. */
 	private string $sender;
+	/** HTTP transport. */
 	private HttpTransportInterface $http;
 
 	/**
+	 * Build the provider adapter with its existing configuration.
+	 *
 	 * @param string                 $username Provider username.
 	 * @param string                 $password Provider password.
 	 * @param string                 $sender   Configured sender line.
@@ -41,7 +47,11 @@ final class MelipayamakProvider implements SmsProviderInterface {
 		return 'melipayamak';
 	}
 
-	/** @return array<int, string> */
+	/**
+	 * Return supported SMS capabilities.
+	 *
+	 * @return array<int, string>
+	 */
 	public function capabilities(): array {
 		return array(
 			SmsCapability::PLAIN,
@@ -49,7 +59,12 @@ final class MelipayamakProvider implements SmsProviderInterface {
 		);
 	}
 
-	/** Send one plain SMS through the documented REST endpoint. */
+	/**
+	 * Send one plain SMS through the documented REST endpoint.
+	 *
+	 * @param SmsRequest $request Normalized SMS request.
+	 * @return AttemptResult
+	 */
 	public function send( SmsRequest $request ): AttemptResult {
 		if ( ! in_array( $request->capability(), $this->capabilities(), true ) ) {
 			return $this->result( AttemptStatus::SKIPPED, $request, array(), 'unsupported_capability' );
@@ -87,7 +102,13 @@ final class MelipayamakProvider implements SmsProviderInterface {
 		return $this->classify_response( $request, $response );
 	}
 
-	/** Classify only documented acceptance evidence. */
+	/**
+	 * Classify only documented acceptance evidence.
+	 *
+	 * @param SmsRequest   $request  Normalized SMS request.
+	 * @param HttpResponse $response Provider response.
+	 * @return AttemptResult
+	 */
 	private function classify_response( SmsRequest $request, HttpResponse $response ): AttemptResult {
 		if ( $response->is_transport_error() ) {
 			return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'transport_error' );
@@ -119,7 +140,16 @@ final class MelipayamakProvider implements SmsProviderInterface {
 		return $this->result( AttemptStatus::AMBIGUOUS, $request, array(), 'acceptance_unestablished', $status );
 	}
 
-	/** Build a normalized attempt with the actual configured sender. */
+	/**
+	 * Build a normalized attempt with the actual configured sender.
+	 *
+	 * @param string            $status      Attempt status.
+	 * @param SmsRequest        $request     Normalized SMS request.
+	 * @param array<int, mixed> $references Safe provider references.
+	 * @param string            $diagnostic  Safe diagnostic token.
+	 * @param int|null          $http_status Observed HTTP status.
+	 * @return AttemptResult
+	 */
 	private function result( string $status, SmsRequest $request, array $references, string $diagnostic, ?int $http_status = null ): AttemptResult {
 		return new AttemptResult(
 			$status,

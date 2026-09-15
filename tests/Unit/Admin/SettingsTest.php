@@ -93,8 +93,16 @@ final class SettingsTest extends TestCase {
 	public function test_provider_specific_sender_formats_are_enforced(): void {
 		$input = array(
 			SmsProviderManager::CONFIG_KEY => array(
-				SmsProviderManager::IPPANEL => array( 'enabled' => '1', 'api_key' => 'ip', 'sender' => '30001234' ),
-				SmsProviderManager::SMSIR => array( 'enabled' => '1', 'api_key' => 'sms', 'sender' => '30001234' ),
+				SmsProviderManager::IPPANEL => array(
+					'enabled' => '1',
+					'api_key' => 'ip',
+					'sender'  => '30001234',
+				),
+				SmsProviderManager::SMSIR => array(
+					'enabled' => '1',
+					'api_key' => 'sms',
+					'sender'  => '30001234',
+				),
 			),
 		);
 		$result = Settings::sanitize_input( $input );
@@ -122,7 +130,11 @@ final class SettingsTest extends TestCase {
 		self::assertStringNotContainsString( 'secret-', (string) json_encode( $facts ) );
 	}
 
-	/** @return array<string, mixed> */
+	/**
+	 * Return settings with every approved provider configured.
+	 *
+	 * @return array<string, mixed>
+	 */
 	private function all_provider_settings(): array {
 		return array(
 			SmsProviderManager::CONFIG_KEY => array(

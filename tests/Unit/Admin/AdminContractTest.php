@@ -121,12 +121,21 @@ final class AdminContractTest extends TestCase {
 		self::assertStringNotContainsString( 'transition:', $css );
 	}
 
+	/** Return the production AdminController source under test. */
 	private function controller_source(): string {
 		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/AdminController.php' );
 		self::assertIsString( $source );
 		return $source;
 	}
 
+	/**
+	 * Return one bounded method section from source text.
+	 *
+	 * @param string $source       Source text.
+	 * @param string $start_marker Start marker.
+	 * @param string $end_marker   End marker.
+	 * @return string
+	 */
 	private function method_section( string $source, string $start_marker, string $end_marker ): string {
 		$start = strpos( $source, $start_marker );
 		$end   = strpos( $source, $end_marker, false === $start ? 0 : $start );

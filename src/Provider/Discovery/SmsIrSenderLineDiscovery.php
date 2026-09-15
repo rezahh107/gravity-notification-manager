@@ -15,10 +15,17 @@ final class SmsIrSenderLineDiscovery implements SenderLineDiscoveryInterface {
 
 	private const ENDPOINT = 'https://api.sms.ir/v1/line';
 
+	/** SMS.ir API key. */
 	private string $api_key;
+	/** HTTP transport. */
 	private HttpTransportInterface $http;
 
-	/** @param string $api_key API key. @param HttpTransportInterface $http HTTP transport. */
+	/**
+	 * Build the SMS.ir sender-line discovery adapter.
+	 *
+	 * @param string                 $api_key API key.
+	 * @param HttpTransportInterface $http    HTTP transport.
+	 */
 	public function __construct( string $api_key, HttpTransportInterface $http ) {
 		$this->api_key = $api_key;
 		$this->http    = $http;
@@ -76,7 +83,12 @@ final class SmsIrSenderLineDiscovery implements SenderLineDiscoveryInterface {
 		return new SenderLineDiscoveryResult( true, $lines, 'lines_refreshed', $status );
 	}
 
-	/** Detect explicit negative status encodings. */
+	/**
+	 * Detect explicit negative status encodings.
+	 *
+	 * @param mixed $status Provider status value.
+	 * @return bool
+	 */
 	private static function explicit_failure( $status ): bool {
 		if ( false === $status || 0 === $status || '0' === $status ) {
 			return true;

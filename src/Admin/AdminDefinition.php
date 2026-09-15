@@ -24,7 +24,11 @@ final class AdminDefinition {
 	public const PROVIDER_CHECK_CONNECTION_ACTION   = 'gravity_notify_provider_manager_check_connection';
 	public const PROVIDER_DISCOVER_LINES_ACTION     = 'gravity_notify_provider_manager_discover_lines';
 
-	/** @return array<int, array{slug:string,title:string}> */
+	/**
+	 * Return the baseline GNM admin surfaces.
+	 *
+	 * @return array<int, array{slug:string,title:string}>
+	 */
 	public static function surfaces(): array {
 		return array(
 			array(
@@ -50,7 +54,11 @@ final class AdminDefinition {
 		);
 	}
 
-	/** @return array{slug:string,title:string} */
+	/**
+	 * Return the dedicated SMS Provider Manager surface.
+	 *
+	 * @return array{slug:string,title:string}
+	 */
 	public static function provider_surface(): array {
 		return array(
 			'slug'  => self::PROVIDERS_SLUG,
@@ -58,7 +66,11 @@ final class AdminDefinition {
 		);
 	}
 
-	/** @return array{slug:string,title:string} */
+	/**
+	 * Return the operational log surface.
+	 *
+	 * @return array{slug:string,title:string}
+	 */
 	public static function log_surface(): array {
 		return array(
 			'slug'  => self::LOGS_SLUG,
@@ -66,7 +78,11 @@ final class AdminDefinition {
 		);
 	}
 
-	/** @return array<int, array{slug:string,title:string}> */
+	/**
+	 * Return navigation surfaces in their visible admin order.
+	 *
+	 * @return array<int, array{slug:string,title:string}>
+	 */
 	public static function navigation_surfaces(): array {
 		$surfaces = self::surfaces();
 		array_splice( $surfaces, 2, 0, array( self::provider_surface(), self::log_surface() ) );
