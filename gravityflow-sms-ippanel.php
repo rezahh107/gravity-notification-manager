@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Gravity Notification Manager
  * Description: Native multi-channel notifications for Gravity Forms and Gravity Flow.
- * Version: 3.3.0
+ * Version: 3.4.0
  * Author: Reza Hashemi Hosseini
  * Text Domain: gravity-notification-manager
  * Domain Path: /languages
@@ -14,7 +14,7 @@ declare(strict_types=1);
 defined( 'ABSPATH' ) || exit;
 
 if ( ! defined( 'GFSMS_PLUGIN_VERSION' ) ) {
-	define( 'GFSMS_PLUGIN_VERSION', '3.3.0' );
+	define( 'GFSMS_PLUGIN_VERSION', '3.4.0' );
 }
 if ( ! defined( 'GFSMS_PLUGIN_FILE' ) ) {
 	define( 'GFSMS_PLUGIN_FILE', __FILE__ );
