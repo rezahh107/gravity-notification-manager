@@ -157,7 +157,10 @@ final class OperationalLogAdmin {
 		 */
 	private static function render_table( array $events ): void {
 		if ( array() === $events ) {
-			echo '<div class="gnm-panel gnm-empty"><p>' . esc_html__( 'No matching operational records were found.', 'gravity-notification-manager' ) . '</p></div>';
+			echo '<div class="gnm-panel gnm-empty">';
+			echo '<h2>' . esc_html__( 'No matching operational records were found.', 'gravity-notification-manager' ) . '</h2>';
+			echo '<p>' . esc_html__( 'This is expected when nothing has been sent yet on this channel, or when the current filters exclude every stored attempt. Clear the filters, switch the channel view, or run a notification, Retry, or explicit provider test to produce new evidence.', 'gravity-notification-manager' ) . '</p>';
+			echo '</div>';
 			return;
 		}
 		echo '<div class="gnm-panel gnm-log-table-wrap"><table class="widefat striped gnm-log-table"><thead><tr>';
@@ -254,14 +257,22 @@ final class OperationalLogAdmin {
 	}
 
 	/**
-	 * Status badge.
+	 * Render one attempt outcome through the shared GNM semantic status vocabulary.
+	 *
+	 * Meaning is carried by the readable label; the shared pill only adds the
+	 * matching semantic color and symbol, so the log never depends on color alone.
 	 *
 	 * @param string $status Value.
 	 * @return string Return value.
 	 */
 	private static function status_badge( string $status ): string {
-		$class = 'gnm-log-status gnm-log-status--' . strtolower( $status );
-		return '<span class="' . esc_attr( $class ) . '">' . esc_html( self::status_label( $status ) ) . '</span>';
+		$known = in_array(
+			$status,
+			array( AttemptStatus::SUCCESS, AttemptStatus::FAILED, AttemptStatus::AMBIGUOUS, AttemptStatus::SKIPPED ),
+			true
+		);
+		$class = 'gnm-status gnm-status--' . ( $known ? strtolower( $status ) : 'unknown' ) . ' gnm-log-status';
+		return '<span class="' . esc_attr( $class ) . '"><span aria-hidden="true">●</span> ' . esc_html( self::status_label( $status ) ) . '</span>';
 	}
 
 	/**

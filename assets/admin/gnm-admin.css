@@ -80,18 +80,34 @@
 	padding: 4px 8px;
 }
 
-.gnm-status--configured {
+/*
+ * One semantic status vocabulary for every GNM surface. Configuration states,
+ * delivery-attempt outcomes and deferred capabilities resolve to the same
+ * success / warning / error / neutral meanings, and every pill also carries
+ * readable text so status is never communicated by color alone.
+ */
+.gnm-status--configured,
+.gnm-status--success {
 	color: var(--wpds-color-foreground-content-success, #007017);
 	background: var(--wpds-color-background-surface-success-weak, #edfaef);
 }
 
-.gnm-status--needs-setup {
+.gnm-status--needs-setup,
+.gnm-status--ambiguous {
 	color: var(--wpds-color-foreground-content-warning, #8a4b00);
 	background: var(--wpds-color-background-surface-warning-weak, #fff8e5);
 }
 
+.gnm-status--failed,
+.gnm-status--attention-required {
+	color: var(--wpds-color-foreground-content-error, #b32d2e);
+	background: var(--wpds-color-background-surface-error-weak, #fcf0f1);
+}
+
 .gnm-status--disabled,
-.gnm-status--not-applicable {
+.gnm-status--not-applicable,
+.gnm-status--skipped,
+.gnm-status--unknown {
 	color: var(--wpds-color-foreground-content-neutral-weak, #50575e);
 	background: var(--wpds-color-background-surface-neutral-weak, #f6f7f7);
 }
@@ -146,8 +162,80 @@
 	unicode-bidi: isolate;
 }
 
+/* Shared empty state: say why nothing is shown and what the next action is. */
+.gnm-empty {
+	text-align: center;
+	color: var(--wpds-color-foreground-content-neutral-weak, #50575e);
+}
+
+.gnm-empty h2 {
+	margin-block-end: 6px;
+}
+
+.gnm-empty p {
+	max-inline-size: 64ch;
+	margin-inline: auto;
+}
+
+/* Shared in-panel separation for a secondary action group. */
+.gnm-panel__divider {
+	border: 0;
+	border-block-start: var(--wpds-border-width-xs, 1px) solid var(--wpds-color-stroke-surface-neutral-weak, #dcdcde);
+	margin-block: 20px;
+}
+
+.gnm-panel h3 {
+	margin-block: 0 8px;
+}
+
+/*
+ * Capability list. An unavailable capability is presented as a muted,
+ * non-interactive row: it carries no control, so there is nothing to focus,
+ * submit, or trigger.
+ */
+.gnm-modes {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: var(--wpds-dimension-gap-md, 16px);
+}
+
+.gnm-mode {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--wpds-dimension-gap-md, 16px);
+	box-sizing: border-box;
+	border: var(--wpds-border-width-xs, 1px) solid var(--wpds-color-stroke-surface-neutral-weak, #dcdcde);
+	border-radius: var(--wpds-border-radius-md, 4px);
+	padding: 12px 16px;
+}
+
+.gnm-mode--unavailable {
+	border-style: dashed;
+	background: var(--wpds-color-background-surface-neutral-weak, #f6f7f7);
+	color: var(--wpds-color-foreground-content-neutral-weak, #50575e);
+}
+
+.gnm-mode h3 {
+	margin-block: 0 4px;
+}
+
+.gnm-mode p {
+	margin: 0;
+	color: var(--wpds-color-foreground-content-neutral-weak, #50575e);
+}
+
+.gnm-mode .gnm-status {
+	white-space: normal;
+}
+
 .gnm-admin .button:focus-visible,
+.gnm-admin button:focus-visible,
 .gnm-admin input:focus-visible,
+.gnm-admin select:focus-visible,
+.gnm-admin textarea:focus-visible,
 .gnm-admin a:focus-visible {
 	outline: var(--wpds-border-width-focus, 2px) solid var(--wpds-color-stroke-focus, #2271b1);
 	outline-offset: 2px;
@@ -155,6 +243,7 @@
 
 @media (max-width: 782px) {
 	.gnm-field,
+	.gnm-mode,
 	.gnm-point__heading,
 	.gnm-facts > div {
 		grid-template-columns: 1fr;

@@ -223,10 +223,12 @@ final class AdminController {
 		echo '<form method="post" action="' . esc_url( admin_url( 'options.php' ) ) . '" class="gnm-panel gnm-settings">';
 		settings_fields( Settings::GROUP );
 		echo '<h2>' . esc_html__( 'Bale', 'gravity-notification-manager' ) . '</h2>';
+		echo '<p>' . esc_html__( 'GNM delivers Bale messages through the Bale Bot API. Configure the bot token here; each notification selects its own supported destination.', 'gravity-notification-manager' ) . '</p>';
 		self::secret_field( 'bale_bot_token', __( 'Bale bot token', 'gravity-notification-manager' ), '' !== ( $settings['bale_bot_token'] ?? '' ) );
 		echo '<p class="description">' . esc_html__( 'Stored credentials are never echoed back into this page or diagnostics.', 'gravity-notification-manager' ) . '</p>';
 		submit_button( __( 'Save Settings', 'gravity-notification-manager' ) );
 		echo '</form>';
+		self::render_bale_modes_panel();
 		self::render_bale_test_control();
 		self::footer();
 	}
@@ -275,6 +277,7 @@ final class AdminController {
 		);
 		self::facts_panel( __( 'Environment', 'gravity-notification-manager' ), Environment::facts() );
 		self::facts_panel( __( 'Provider configuration', 'gravity-notification-manager' ), Settings::diagnostic_facts() );
+		self::render_bale_modes_panel();
 
 		$points  = ( new PointInspector( new WordPressConfigurationSource() ) )->all();
 		$summary = OverviewSummary::from_points( $points );
@@ -348,6 +351,28 @@ final class AdminController {
 		echo '<label class="gnm-field"><span>' . esc_html__( 'Test Bale chat destination', 'gravity-notification-manager' ) . '</span><input type="text" class="regular-text gnm-ltr" dir="ltr" name="destination" value="" placeholder="123456789 or @channel" autocomplete="off" required></label>';
 		submit_button( __( 'Send Test Bale Message', 'gravity-notification-manager' ), 'secondary', 'submit', false );
 		echo '</form></section>';
+	}
+
+	/**
+	 * Render the truthful read-only Bale recipient-mode availability list.
+	 *
+	 * The deferred phone-number capability is stated, not implemented: this
+	 * renderer emits no input, no form, no action and no external request for
+	 * it, so an unavailable mode is visibly and structurally non-interactive.
+	 *
+	 * @return void
+	 */
+	private static function render_bale_modes_panel(): void {
+		echo '<section class="gnm-panel"><h2>' . esc_html__( 'Bale delivery modes', 'gravity-notification-manager' ) . '</h2>';
+		echo '<ul class="gnm-modes">';
+		foreach ( BaleDeliveryMode::modes() as $mode ) {
+			$class = $mode['available'] ? 'gnm-mode' : 'gnm-mode gnm-mode--unavailable';
+			echo '<li class="' . esc_attr( $class ) . '">';
+			echo '<div><h3>' . esc_html( $mode['label'] ) . '</h3><p>' . esc_html( $mode['detail'] ) . '</p></div>';
+			self::status_badge( $mode['state'], $mode['status_label'] );
+			echo '</li>';
+		}
+		echo '</ul></section>';
 	}
 
 	/** Render one one-time privacy-safe Bale test result, when present. */
@@ -575,12 +600,14 @@ final class AdminController {
 	/**
 	 * Render text plus a visual semantic status cue.
 	 *
-	 * @param string $state Current status identifier.
+	 * @param string      $state Current status identifier.
+	 * @param string|null $label Optional explicit label when the state token alone is not the truth.
 	 * @return void
 	 */
-	private static function status_badge( string $state ): void {
+	private static function status_badge( string $state, ?string $label = null ): void {
 		$class = strtolower( str_replace( '_', '-', $state ) );
-		echo '<span class="gnm-status gnm-status--' . esc_attr( $class ) . '"><span aria-hidden="true">●</span> ' . esc_html( self::status_label( $state ) ) . '</span>';
+		$text  = null === $label ? self::status_label( $state ) : $label;
+		echo '<span class="gnm-status gnm-status--' . esc_attr( $class ) . '"><span aria-hidden="true">●</span> ' . esc_html( $text ) . '</span>';
 	}
 
 	/**
@@ -640,10 +667,29 @@ final class AdminController {
 	private static function facts_panel( string $title, array $facts ): void {
 		echo '<section class="gnm-panel"><h2>' . esc_html( $title ) . '</h2><dl class="gnm-facts">';
 		foreach ( $facts as $label => $value ) {
-			$value = self::status_label( $value );
-			echo '<div><dt>' . esc_html( $label ) . '</dt><dd>' . esc_html( $value ) . '</dd></div>';
+			echo '<div><dt>' . esc_html( $label ) . '</dt><dd>';
+			if ( self::is_status_token( $value ) ) {
+				self::status_badge( $value );
+			} else {
+				echo esc_html( $value );
+			}
+			echo '</dd></div>';
 		}
 		echo '</dl></section>';
+	}
+
+	/**
+	 * Report whether a fact value is a stable status token rather than free text.
+	 *
+	 * @param string $value Fact value.
+	 * @return bool
+	 */
+	private static function is_status_token( string $value ): bool {
+		return in_array(
+			$value,
+			array( PointStatus::CONFIGURED, PointStatus::NEEDS_SETUP, PointStatus::DISABLED, PointStatus::NOT_APPLICABLE ),
+			true
+		);
 	}
 
 	/**

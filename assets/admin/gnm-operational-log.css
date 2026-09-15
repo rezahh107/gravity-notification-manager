@@ -26,26 +26,15 @@
 	min-inline-size: 980px;
 }
 
+/*
+ * Log-specific layout only. Semantic color/meaning comes from the shared
+ * .gnm-status vocabulary in gnm-admin.css so SUCCESS / FAILED / AMBIGUOUS /
+ * SKIPPED read the same here as on every other GNM surface.
+ */
 .gnm-log-status {
-	display: inline-block;
-	padding: 2px 8px;
-	border: 1px solid currentColor;
 	border-radius: 999px;
-	font-weight: 600;
+	padding: 2px 8px;
 	line-height: 1.5;
-}
-
-.gnm-log-status--success {
-	color: #137333;
-}
-
-.gnm-log-status--failed {
-	color: #b32d2e;
-}
-
-.gnm-log-status--ambiguous,
-.gnm-log-status--skipped {
-	color: #996800;
 }
 
 .gnm-log-trace {

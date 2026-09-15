@@ -28,6 +28,7 @@ final class LocalizationContractTest extends TestCase {
 			$root . '/src/Admin/AdminController.php',
 			$root . '/src/Admin/AdminDefinition.php',
 			$root . '/src/Admin/AdvisorModel.php',
+			$root . '/src/Admin/BaleDeliveryMode.php',
 			$root . '/src/Admin/Environment.php',
 			$root . '/src/Admin/PointInspector.php',
 			$root . '/src/Admin/ProviderManagerAdmin.php',
