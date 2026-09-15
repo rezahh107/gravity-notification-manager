@@ -17,7 +17,11 @@ use RuntimeException;
 /** Owns provider configuration plus explicit connection, discovery, and real-test actions. */
 final class ProviderManagerAdmin {
 
-	/** Provider Manager screen hook assigned by WordPress. */
+	/**
+	 * Provider Manager screen hook assigned by WordPress.
+	 *
+	 * @var string
+	 */
 	private static string $screen_hook = '';
 
 	/** Register the surface and explicit provider-management actions. */

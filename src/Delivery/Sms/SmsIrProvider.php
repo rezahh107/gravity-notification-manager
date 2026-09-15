@@ -18,11 +18,23 @@ final class SmsIrProvider implements SmsProviderInterface {
 
 	private const ENDPOINT = 'https://api.sms.ir/v1/send/bulk';
 
-	/** Provider API key. */
+	/**
+	 * Provider API key.
+	 *
+	 * @var string
+	 */
 	private string $api_key;
-	/** Configured sender line. */
+	/**
+	 * Configured sender line.
+	 *
+	 * @var string
+	 */
 	private string $sender;
-	/** HTTP transport. */
+	/**
+	 * HTTP transport.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
 	/**

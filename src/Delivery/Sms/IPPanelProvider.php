@@ -19,13 +19,29 @@ final class IPPanelProvider implements SmsProviderInterface {
 
 	private const ENDPOINT = 'https://edge.ippanel.com/v1/api/send';
 
-	/** Provider API key. */
+	/**
+	 * Provider API key.
+	 *
+	 * @var string
+	 */
 	private string $api_key;
-	/** HTTP transport. */
+	/**
+	 * HTTP transport.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
-	/** Current send endpoint. */
+	/**
+	 * Current send endpoint.
+	 *
+	 * @var string
+	 */
 	private string $endpoint;
-	/** Configured provider sender. */
+	/**
+	 * Configured provider sender.
+	 *
+	 * @var string
+	 */
 	private string $sender;
 
 	/**

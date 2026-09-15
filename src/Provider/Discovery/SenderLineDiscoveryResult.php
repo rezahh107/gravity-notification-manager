@@ -10,13 +10,29 @@ namespace GravityNotify\Provider\Discovery;
 /** Contains only bounded line values and safe diagnostics. */
 final class SenderLineDiscoveryResult {
 
-	/** Whether discovery succeeded. */
+	/**
+	 * Whether discovery succeeded.
+	 *
+	 * @var bool
+	 */
 	private bool $successful;
-	/** @var array<int, string> Valid discovered sender lines. */
+	/**
+	 * Valid discovered sender lines.
+	 *
+	 * @var array<int, string>
+	 */
 	private array $lines;
-	/** Safe diagnostic token. */
+	/**
+	 * Safe diagnostic token.
+	 *
+	 * @var string
+	 */
 	private string $diagnostic;
-	/** Observed HTTP status when available. */
+	/**
+	 * Observed HTTP status when available.
+	 *
+	 * @var int|null
+	 */
 	private ?int $http_status;
 
 	/**

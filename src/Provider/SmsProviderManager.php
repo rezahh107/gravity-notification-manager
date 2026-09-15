@@ -31,7 +31,11 @@ final class SmsProviderManager {
 	public const FARAZSMS     = 'farazsms';
 	public const SCHEMA_VERSION = 3;
 
-	/** @var array<string, array<string, mixed>> Normalized provider configurations. */
+	/**
+	 * Normalized provider configurations.
+	 *
+	 * @var array<string, array<string, mixed>>
+	 */
 	private array $providers;
 
 	/**

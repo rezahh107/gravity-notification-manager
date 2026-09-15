@@ -15,9 +15,17 @@ final class SmsIrConnection implements ProviderConnectionInterface {
 
 	private const ENDPOINT = 'https://api.sms.ir/v1/credit';
 
-	/** SMS.ir API key. */
+	/**
+	 * SMS.ir API key.
+	 *
+	 * @var string
+	 */
 	private string $api_key;
-	/** HTTP transport. */
+	/**
+	 * HTTP transport.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
 	/**

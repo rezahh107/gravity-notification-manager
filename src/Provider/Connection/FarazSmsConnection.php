@@ -15,9 +15,17 @@ final class FarazSmsConnection implements ProviderConnectionInterface {
 
 	private const ENDPOINT = 'https://api.iranpayamak.com/ws/v1/account/balance';
 
-	/** FarazSMS API key. */
+	/**
+	 * FarazSMS API key.
+	 *
+	 * @var string
+	 */
 	private string $api_key;
-	/** HTTP transport. */
+	/**
+	 * HTTP transport.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
 	/**

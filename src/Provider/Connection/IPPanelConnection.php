@@ -15,9 +15,17 @@ final class IPPanelConnection implements ProviderConnectionInterface {
 
 	private const ENDPOINT = 'https://edge.ippanel.com/v1/api/acl/auth/check_token';
 
-	/** IPPanel API key. */
+	/**
+	 * IPPanel API key.
+	 *
+	 * @var string
+	 */
 	private string $api_key;
-	/** HTTP transport. */
+	/**
+	 * HTTP transport.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
 	/**

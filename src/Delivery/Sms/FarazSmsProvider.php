@@ -19,11 +19,23 @@ final class FarazSmsProvider implements SmsProviderInterface {
 	private const SIMPLE_ENDPOINT  = 'https://api.iranpayamak.com/ws/v1/sms/simple';
 	private const PATTERN_ENDPOINT = 'https://api.iranpayamak.com/ws/v1/sms/pattern';
 
-	/** Provider API key. */
+	/**
+	 * Provider API key.
+	 *
+	 * @var string
+	 */
 	private string $api_key;
-	/** Configured sender line. */
+	/**
+	 * Configured sender line.
+	 *
+	 * @var string
+	 */
 	private string $sender;
-	/** HTTP transport. */
+	/**
+	 * HTTP transport.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
 	/**
@@ -57,7 +69,12 @@ final class FarazSmsProvider implements SmsProviderInterface {
 		);
 	}
 
-	/** Send a plain or pattern message through the documented endpoint. */
+	/**
+	 * Send a plain or pattern message through the documented endpoint.
+	 *
+	 * @param SmsRequest $request Normalized SMS request.
+	 * @return AttemptResult
+	 */
 	public function send( SmsRequest $request ): AttemptResult {
 		if ( ! in_array( $request->capability(), $this->capabilities(), true ) ) {
 			return $this->result( AttemptStatus::SKIPPED, $request, array(), 'unsupported_capability' );

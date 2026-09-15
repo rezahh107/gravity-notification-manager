@@ -15,9 +15,17 @@ use GravityNotify\Provider\SmsProviderManager;
 /** Resolves provider-specific validation only after an explicit protected action. */
 final class ProviderConnectionService {
 
-	/** @var array<string, mixed> */
+	/**
+	 * Current settings snapshot.
+	 *
+	 * @var array<string, mixed>
+	 */
 	private array $settings;
-	/** HTTP transport used only by explicit actions. */
+	/**
+	 * HTTP transport used only by explicit actions.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
 	/**

@@ -15,9 +15,17 @@ use GravityNotify\Provider\SmsProviderManager;
 /** Resolves the optional provider discovery adapter only after an explicit protected action. */
 final class ProviderDiscoveryService {
 
-	/** @var array<string, mixed> */
+	/**
+	 * Current settings snapshot.
+	 *
+	 * @var array<string, mixed>
+	 */
 	private array $settings;
-	/** HTTP transport used only by explicit actions. */
+	/**
+	 * HTTP transport used only by explicit actions.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
 	/**

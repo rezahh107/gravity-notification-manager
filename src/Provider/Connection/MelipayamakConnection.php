@@ -15,11 +15,23 @@ final class MelipayamakConnection implements ProviderConnectionInterface {
 
 	private const ENDPOINT = 'https://rest.payamak-panel.com/api/SendSMS/GetCredit';
 
-	/** Melipayamak username. */
+	/**
+	 * Melipayamak username.
+	 *
+	 * @var string
+	 */
 	private string $username;
-	/** Melipayamak password. */
+	/**
+	 * Melipayamak password.
+	 *
+	 * @var string
+	 */
 	private string $password;
-	/** HTTP transport. */
+	/**
+	 * HTTP transport.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
 	/**

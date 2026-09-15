@@ -10,11 +10,23 @@ namespace GravityNotify\Provider\Connection;
 /** Contains only bounded operator-safe connection facts. */
 final class ProviderConnectionResult {
 
-	/** Whether validation succeeded. */
+	/**
+	 * Whether validation succeeded.
+	 *
+	 * @var bool
+	 */
 	private bool $successful;
-	/** Safe diagnostic token. */
+	/**
+	 * Safe diagnostic token.
+	 *
+	 * @var string
+	 */
 	private string $diagnostic;
-	/** Observed HTTP status when available. */
+	/**
+	 * Observed HTTP status when available.
+	 *
+	 * @var int|null
+	 */
 	private ?int $http_status;
 
 	/**

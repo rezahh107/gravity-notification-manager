@@ -12,24 +12,58 @@ use InvalidArgumentException;
 /** Carries only bounded, persistence-ready transport facts without secrets. */
 final class AttemptResult {
 
-	/** Normalized attempt status. */
+	/**
+	 * Normalized attempt status.
+	 *
+	 * @var string
+	 */
 	private string $status;
-	/** Channel identifier. */
+	/**
+	 * Channel identifier.
+	 *
+	 * @var string
+	 */
 	private string $channel;
-	/** Provider identifier when applicable. */
+	/**
+	 * Provider identifier when applicable.
+	 *
+	 * @var string|null
+	 */
 	private ?string $provider_id;
-	/** SMS capability when applicable. */
+	/**
+	 * SMS capability when applicable.
+	 *
+	 * @var string|null
+	 */
 	private ?string $capability;
-	/** @var array<int, mixed> Safe provider references. */
+	/**
+	 * Safe provider references.
+	 *
+	 * @var array<int, mixed>
+	 */
 	private array $provider_references;
-	/** Safe diagnostic token. */
+	/**
+	 * Safe diagnostic token.
+	 *
+	 * @var string
+	 */
 	private string $diagnostic;
-	/** Observed HTTP status when available. */
+	/**
+	 * Observed HTTP status when available.
+	 *
+	 * @var int|null
+	 */
 	private ?int $http_status;
-	/** Actual provider sender when known. */
+	/**
+	 * Actual provider sender when known.
+	 *
+	 * @var string|null
+	 */
 	private ?string $sender;
 
 	/**
+	 * Build a bounded transport attempt result.
+	 *
 	 * @param string      $status              Attempt status.
 	 * @param string      $channel             Channel identifier.
 	 * @param string|null $provider_id         Provider identifier.

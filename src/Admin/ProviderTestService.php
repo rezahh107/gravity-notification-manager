@@ -23,11 +23,23 @@ use InvalidArgumentException;
 /** Tests production adapters directly without Feed/Retry/Entry-Meta side effects. */
 final class ProviderTestService {
 
-	/** @var array<string, mixed> Current settings snapshot. */
+	/**
+	 * Current settings snapshot.
+	 *
+	 * @var array<string, mixed>
+	 */
 	private array $settings;
-	/** HTTP transport used by explicit test actions. */
+	/**
+	 * HTTP transport used by explicit test actions.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
-	/** Optional operational logger for TEST evidence. */
+	/**
+	 * Optional operational logger for TEST evidence.
+	 *
+	 * @var OperationalLogger|null
+	 */
 	private ?OperationalLogger $operational_log;
 
 	/**

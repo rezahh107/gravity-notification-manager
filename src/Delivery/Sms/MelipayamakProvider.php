@@ -18,13 +18,29 @@ final class MelipayamakProvider implements SmsProviderInterface {
 
 	private const ENDPOINT = 'https://rest.payamak-panel.com/api/SendSMS/SendSMS';
 
-	/** Provider username. */
+	/**
+	 * Provider username.
+	 *
+	 * @var string
+	 */
 	private string $username;
-	/** Provider password. */
+	/**
+	 * Provider password.
+	 *
+	 * @var string
+	 */
 	private string $password;
-	/** Configured sender line. */
+	/**
+	 * Configured sender line.
+	 *
+	 * @var string
+	 */
 	private string $sender;
-	/** HTTP transport. */
+	/**
+	 * HTTP transport.
+	 *
+	 * @var HttpTransportInterface
+	 */
 	private HttpTransportInterface $http;
 
 	/**
