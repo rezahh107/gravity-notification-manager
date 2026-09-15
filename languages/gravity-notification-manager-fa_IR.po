@@ -370,6 +370,9 @@ msgstr "تنظیمات"
 msgid "SMS"
 msgstr "SMS"
 
+msgid "SMS Providers"
+msgstr "ارائه‌دهندگان SMS"
+
 msgid "SMS Providers / IPPanel"
 msgstr "ارائه‌دهندگان SMS / IPPanel"
 
