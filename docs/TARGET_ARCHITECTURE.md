@@ -180,13 +180,14 @@ GNM admin UI uses a small purpose-built, responsibility-oriented information arc
 ```text
 Overview
 Notification Points
-SMS Providers / IPPanel   ← Provider Manager / Senders
+SMS Providers   ← Provider Manager / Senders
+Operational Log ← observational evidence only
 Settings
 Advisor
 Help & Diagnostics
 ```
 
-The Provider Manager owns supported SMS-provider credentials, enablement/order, readiness, sender configuration, and explicit provider-management operations. Settings remains responsible for Bale and other non-SMS-provider/global options until a later Owner-approved destination changes that ownership. Provider choices appear only when their actual adapters/contracts exist; speculative providers are not presented as working options.
+The Provider Manager owns supported SMS-provider credentials, enablement/order, readiness, sender configuration, and explicit provider-management operations. The current approved functional SMS providers are IPPanel, Melipayamak, SMS.ir, and FarazSMS. Operational Log presents privacy-safe outbound-attempt evidence; it is observational only and never becomes a delivery-state or Retry authority. Settings remains responsible for Bale and other non-SMS-provider/global options until a later Owner-approved destination changes that ownership. Provider choices appear only when their actual adapters/contracts exist; speculative providers are not presented as working options.
 
 The approved direction is:
 
@@ -412,6 +413,8 @@ Bale may be an immediate synchronous fallback after the SMS provider chain.
 
 No delayed Bale retry is part of the baseline.
 
+The Bale Bot API `chat_id` / `@username` destination is the current available Bale delivery mode, and the only one GNM implements, configures, or tests. Bale delivery by phone number is Owner-deferred: a possible future capability that is not in current scope and does not block release. It must be presented truthfully as unavailable and must never receive a destination input, credential input, save/test/connect action, or external request.
+
 ## 12. Delivery / Failover Contract
 
 Baseline routing is ordered and synchronous:
@@ -523,11 +526,15 @@ Fast operational orientation: summary stats, environment/product availability, p
 
 Form/workflow-oriented guidance and verification for logical notification Feeds/Steps, including exact setup guidance and `Check Again`.
 
-### SMS Providers / IPPanel — Provider Manager / Senders
+### SMS Providers — Provider Manager / Senders
 
 Supported SMS-provider configuration and composition: credentials, enable/disable state, readiness, sender-line configuration, and explicit provider-management actions such as real test sends. Rendering and ordinary saving do not contact the provider. Sender discovery, when a provider exposes a current documented account-authorized enumeration contract, is a separate explicit operator action and never part of `SmsProviderInterface`.
 
-Only implemented provider types are presented as working choices. IPPanel is the functional provider type in the first Provider Manager batch.
+Only implemented provider types are presented as working choices. The current approved functional provider types are IPPanel, Melipayamak, SMS.ir, and FarazSMS.
+
+### Operational Log
+
+Privacy-safe evidence for outbound SMS/Bale attempts through separate views over the same subsystem, including Trace IDs and deterministic privacy-safe LLM Debug Reports for failed/ambiguous rows. It is observational only: Gravity Forms Entry Meta remains the delivery-state and Retry authority.
 
 ### Settings
 
