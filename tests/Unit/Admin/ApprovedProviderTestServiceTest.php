@@ -10,9 +10,10 @@ namespace GravityNotify\Tests\Unit\Admin;
 use GravityNotify\Admin\ProviderTestService;
 use GravityNotify\Delivery\AttemptStatus;
 use GravityNotify\Delivery\Http\HttpResponse;
-use GravityNotify\Tests\Support\Observability\InMemoryOperationalEventStore;
+use GravityNotify\Observability\OperationalContext;
 use GravityNotify\Observability\OperationalLogger;
 use GravityNotify\Provider\SmsProviderManager;
+use GravityNotify\Tests\Support\Observability\InMemoryOperationalEventStore;
 use GravityNotify\Tests\Support\WordPress\FakeHttpTransport;
 use PHPUnit\Framework\TestCase;
 
@@ -29,8 +30,8 @@ final class ApprovedProviderTestServiceTest extends TestCase {
 		);
 
 		foreach ( $cases as $provider => $response ) {
-			$http  = new FakeHttpTransport( array( $response ) );
-			$store = new InMemoryOperationalEventStore();
+			$http   = new FakeHttpTransport( array( $response ) );
+			$store  = new InMemoryOperationalEventStore();
 			$result = ( new ProviderTestService( $this->settings(), $http, new OperationalLogger( $store ) ) )->test_sms(
 				'+989121234567',
 				'GNM provider test',
@@ -41,7 +42,7 @@ final class ApprovedProviderTestServiceTest extends TestCase {
 			self::assertCount( 1, $http->requests(), $provider );
 			$events = $store->latest( 'sms' );
 			self::assertCount( 1, $events, $provider );
-			self::assertSame( 'TEST', $events[0]->get( 'execution_type' ), $provider );
+			self::assertSame( OperationalContext::EXECUTION_TEST, $events[0]->get( 'execution_type' ), $provider );
 			self::assertSame( $provider, $events[0]->get( 'provider' ), $provider );
 			self::assertSame( $result->sender(), $events[0]->get( 'sender' ), $provider );
 		}
