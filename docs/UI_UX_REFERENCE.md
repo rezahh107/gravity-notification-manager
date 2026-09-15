@@ -1,8 +1,9 @@
 # Gravity Notification Manager — UI/UX Reference
 
-> **Document ID:** `GNM-UI-UX-REFERENCE-1.1.0`  
+> **Document ID:** `GNM-UI-UX-REFERENCE-1.2.0`  
 > **Status:** `CLOSED / IMPLEMENTATION_REFERENCE`  
 > **Decision date:** `2026-09-14`  
+> **Last synchronized with repository truth:** `2026-09-15`  
 > **Repository:** `rezahh107/gravity-notification-manager`  
 > **Visual/UX reference repository:** `rezahh107/EDIS-WordPress-Evidence-Exporter`  
 > **Inspected EDIS Head:** `0785e6113c1b5390071311947aa849a537f066b7`
@@ -10,6 +11,10 @@
 ## 1. Purpose
 
 This document defines the approved UI/UX direction for Gravity Notification Manager.
+
+The approved design direction below is unchanged. Sections marked as synchronized on the
+date above were corrected only where implemented repository truth had overtaken an older
+snapshot of this document; Work Unit history elsewhere in the repository is left as written.
 
 The goal is **not** to clone EDIS. The goal is to reuse the parts of its design grammar the Owner likes while simplifying the information architecture for a daily operational notification tool.
 
@@ -112,12 +117,18 @@ NEEDS_SETUP
 SUCCESS
 FAILED
 AMBIGUOUS
+SKIPPED
 ATTENTION_REQUIRED
 DISABLED
 NOT_APPLICABLE
 ```
 
 Each important state should have readable text and, where appropriate, an icon/symbol plus semantic color.
+
+These states resolve to one shared success / warning / error / neutral semantic layer in
+`assets/admin/gnm-admin.css`. A surface must not introduce a private status palette; it may
+add layout-only rules on top of the shared status presentation where its own table or card
+geometry requires it.
 
 ### 3.4 Definition lists / structured facts
 
@@ -132,6 +143,9 @@ Gravity Forms
 Gravity Flow
 GravityView
 IPPanel
+Melipayamak
+SMS.ir
+FarazSMS
 Bale
 ```
 
@@ -195,13 +209,14 @@ The approved GNM admin information architecture is intentionally small and respo
 Gravity Notification Manager
 ├─ Overview
 ├─ Notification Points
-├─ SMS Providers / IPPanel   ← Provider Manager / Senders
-├─ Settings
+├─ SMS Providers          ← Provider Manager / Senders
+├─ Operational Log        ← observational evidence only
+├─ Settings               ← Bale and remaining global options
 ├─ Advisor
 └─ Help & Diagnostics
 ```
 
-Add a surface only when it has a recurring operational purpose that cannot fit coherently elsewhere. Provider Manager qualifies because provider credentials, enablement/readiness, sender lines and explicit provider operations are a distinct recurring responsibility. Do not add placeholder surfaces for providers whose adapters are not implemented.
+Add a surface only when it has a recurring operational purpose that cannot fit coherently elsewhere. Provider Manager qualifies because provider credentials, enablement/readiness, sender lines and explicit provider operations are a distinct recurring responsibility. Operational Log qualifies because privacy-safe outbound-attempt evidence is a distinct recurring responsibility; it is evidence-only and is never a delivery-state or Retry authority. Do not add placeholder surfaces for providers whose adapters are not implemented.
 
 ### 5.1 Overview
 
@@ -250,7 +265,7 @@ Gravity Flow Step is missing.
 
 Point Manager remains guidance/verification only; it does not mutate workflow topology.
 
-### 5.3 SMS Providers / IPPanel — Provider Manager / Senders
+### 5.3 SMS Providers — Provider Manager / Senders
 
 Purpose: configure and operate supported SMS providers without expanding the delivery-provider interface into an admin API.
 
@@ -263,7 +278,20 @@ For each implemented provider, the surface may show:
 - explicit provider test actions;
 - explicit sender-line retrieval only when a current documented, account-authorized provider contract has been established.
 
-For the first Provider Manager batch, IPPanel is the only functional provider type. Do not show Melipayamak, SMS.ir, FarazSMS or other providers as working choices until their real adapters/contracts exist.
+Four approved SMS providers are now functionally implemented and are shown as working choices:
+
+```text
+IPPanel
+Melipayamak
+SMS.ir
+FarazSMS
+```
+
+Each is presented as one bounded provider panel carrying its readiness state, its configuration
+form, its explicit provider actions and its clearly-labelled real test send. Sender-line discovery
+is offered only for the provider whose enumeration contract is established; the others use the
+truthful manual sender field with a stated reason. Do not add a provider surface for an adapter
+that does not exist.
 
 Rendering the surface, typing credentials, or ordinary Settings API saving must never contact the provider. Real test sending and any future sender discovery are separate explicit operator actions with capability and nonce protection.
 
@@ -283,6 +311,24 @@ Defaults / operational options
 Do not build a custom settings framework merely for styling.
 
 Connection/test-send actions must be explicit user actions. Rendering the page must never send external messages.
+
+#### 5.4.1 Bale recipient modes
+
+The supported Bale delivery mode is the Bale Bot API `chat_id` / `@username` destination. That is
+the only mode GNM implements, configures, or tests.
+
+Bale delivery by phone number is **Owner-deferred**: a possible future capability that is not part
+of the current functional release scope. Settings and Help & Diagnostics must state it truthfully as:
+
+```text
+Bale delivery by phone number
+In development — currently unavailable
+```
+
+Its presentation is text only. It has no destination input, no credential input, no save/test/connect
+action, and no external request. Do not imply a delivery date; do not write "Coming soon" or
+«به‌زودی»; do not implement a partial or guessed Safir/phone transport to satisfy the UI. The
+available `chat_id` / `@username` mode must remain visibly distinguished as the supported one.
 
 ### 5.5 Advisor
 
@@ -313,6 +359,18 @@ May show:
 Diagnostics are side-effect-free by default.
 
 A real test SMS/Bale action, if provided, must be explicit, capability-protected, nonce-protected, clearly labeled as a real external send, and use a consciously selected destination.
+
+### 5.7 Operational Log
+
+Purpose: privacy-safe observational evidence for outbound attempts.
+
+It keeps separate SMS and Bale views, status/execution/Trace ID filters, the
+`SUCCESS` / `FAILED` / `AMBIGUOUS` / `SKIPPED` truth, Trace IDs, and the Copy LLM Debug Report
+action for attempts that failed or are ambiguous.
+
+It is evidence-only. Gravity Forms Entry Meta remains delivery-state and Retry authority, and a
+presentation change must never alter observability or data semantics. Attempt outcomes use the
+shared semantic status vocabulary from §3.3 rather than a log-private palette.
 
 ## 6. Attention Required Boundary
 

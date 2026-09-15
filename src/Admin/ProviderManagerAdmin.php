@@ -92,8 +92,13 @@ final class ProviderManagerAdmin {
 			if ( null === $config ) {
 				continue;
 			}
-			self::render_provider_settings( $identifier, $definition, $config, $manager );
-			self::render_provider_actions( $identifier, $definition );
+			echo '<section class="gnm-panel gnm-settings">';
+			echo '<div class="gnm-point__heading"><div><h2>' . esc_html( (string) $definition['label'] ) . '</h2></div>';
+			self::status_badge( $manager->readiness_status( $identifier ) );
+			echo '</div>';
+			self::render_provider_settings( $identifier, $definition, $config );
+			self::render_provider_actions( $identifier );
+			echo '</section>';
 		}
 		echo '</div>';
 	}
@@ -144,19 +149,13 @@ final class ProviderManagerAdmin {
 	}
 
 	/**
-	 * Render one provider configuration form.
+	 * Render one provider configuration form inside the provider panel.
 	 *
 	 * @param string               $identifier Provider identifier.
 	 * @param array<string, mixed> $definition Provider definition.
 	 * @param array<string, mixed> $config     Provider config.
-	 * @param SmsProviderManager   $manager    Provider Manager instance.
 	 */
-	private static function render_provider_settings( string $identifier, array $definition, array $config, SmsProviderManager $manager ): void {
-		$label = (string) $definition['label'];
-		echo '<section class="gnm-panel gnm-settings">';
-		echo '<div class="gnm-point__heading"><div><h2>' . esc_html( $label ) . '</h2></div>';
-		self::status_badge( $manager->readiness_status( $identifier ) );
-		echo '</div>';
+	private static function render_provider_settings( string $identifier, array $definition, array $config ): void {
 		echo '<form method="post" action="' . esc_url( admin_url( 'options.php' ) ) . '">';
 		settings_fields( Settings::GROUP );
 
@@ -170,7 +169,7 @@ final class ProviderManagerAdmin {
 		self::render_sender_field( $base, $identifier, $config );
 		echo '<p class="description">' . esc_html__( 'Stored secrets are write-only and are never echoed into this page or diagnostics.', 'gravity-notification-manager' ) . '</p>';
 		submit_button( __( 'Save Provider', 'gravity-notification-manager' ) );
-		echo '</form></section>';
+		echo '</form>';
 	}
 
 	/**
@@ -229,12 +228,10 @@ final class ProviderManagerAdmin {
 	/**
 	 * Render explicit provider operations outside ordinary Settings API save.
 	 *
-	 * @param string               $identifier Provider identifier.
-	 * @param array<string, mixed> $definition Provider definition.
+	 * @param string $identifier Provider identifier.
 	 */
-	private static function render_provider_actions( string $identifier, array $definition ): void {
-		$label = (string) $definition['label'];
-		echo '<section class="gnm-panel"><h2>' . esc_html( $label ) . ' — ' . esc_html__( 'Provider actions', 'gravity-notification-manager' ) . '</h2>';
+	private static function render_provider_actions( string $identifier ): void {
+		echo '<hr class="gnm-panel__divider"><h3>' . esc_html__( 'Provider actions', 'gravity-notification-manager' ) . '</h3>';
 		echo '<div class="gnm-actions">';
 
 		self::render_action_form(
@@ -255,7 +252,7 @@ final class ProviderManagerAdmin {
 		}
 		echo '</div>';
 
-		echo '<hr><h3>' . esc_html__( 'Real external send', 'gravity-notification-manager' ) . '</h3>';
+		echo '<hr class="gnm-panel__divider"><h3>' . esc_html__( 'Real external send', 'gravity-notification-manager' ) . '</h3>';
 		echo '<p>' . esc_html__( 'Submitting the test below sends one real SMS through this provider. Saving settings, checking this page, or refreshing the page does not send a message.', 'gravity-notification-manager' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( AdminDefinition::PROVIDER_TEST_SMS_ACTION ) . '">';
@@ -263,7 +260,7 @@ final class ProviderManagerAdmin {
 		wp_nonce_field( self::nonce_action( AdminDefinition::PROVIDER_TEST_SMS_ACTION, $identifier ), 'gnm_provider_test_nonce' );
 		echo '<label class="gnm-field"><span>' . esc_html__( 'Test SMS destination (E.164)', 'gravity-notification-manager' ) . '</span><input type="text" class="regular-text gnm-ltr" dir="ltr" name="destination" value="" placeholder="+989121234567" autocomplete="off" required></label>';
 		submit_button( __( 'Send Test SMS', 'gravity-notification-manager' ), 'secondary', 'submit', false );
-		echo '</form></section>';
+		echo '</form>';
 	}
 
 	/**

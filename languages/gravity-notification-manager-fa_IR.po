@@ -797,3 +797,33 @@ msgstr "دسترسی به خطوط FarazSMS از قرارداد جداگانه�
 
 msgid "Enter the sender line authorized for this provider account."
 msgstr "خط فرستنده مجاز برای این حساب ارائه‌دهنده را وارد کنید."
+
+msgid "GNM delivers Bale messages through the Bale Bot API. Configure the bot token here; each notification selects its own supported destination."
+msgstr "GNM پیام‌های بله را از طریق Bale Bot API ارسال می‌کند. توکن ربات را اینجا پیکربندی کنید؛ هر اعلان مقصد پشتیبانی‌شده خود را انتخاب می‌کند."
+
+msgid "Bale delivery modes"
+msgstr "حالت‌های ارسال بله"
+
+msgid "Bale delivery by chat ID or username"
+msgstr "ارسال بله با شناسه گفتگو یا نام کاربری"
+
+msgid "Active mode. GNM delivers Bale messages through the Bale Bot API to a numeric chat ID or an @username destination."
+msgstr "حالت فعال. GNM پیام‌های بله را از طریق Bale Bot API به یک شناسه گفتگوی عددی یا مقصد @username ارسال می‌کند."
+
+msgid "Bale delivery by phone number"
+msgstr "ارسال بله با شماره موبایل"
+
+msgid "In development — currently unavailable"
+msgstr "در حال توسعه — فعلاً در دسترس نیست"
+
+msgid "Deferred capability, outside the current release scope. It has no destination field, no credential field and no save, test or connect action, and GNM makes no external request for it."
+msgstr "قابلیت به تعویق افتاده و خارج از دامنه انتشار فعلی است. هیچ فیلد مقصد، هیچ فیلد اعتبارنامه و هیچ کنش ذخیره، آزمایش یا اتصالی ندارد و GNM برای آن هیچ درخواست بیرونی ارسال نمی‌کند."
+
+msgid "Which Bale destinations can I use?"
+msgstr "از چه مقصدهایی در بله می‌توانم استفاده کنم؟"
+
+msgid "Bale messages are delivered through the Bale Bot API to a numeric chat ID or an @username destination; that is the only supported mode today. Bale delivery by phone number is in development and currently unavailable, so it cannot be configured, saved or tested anywhere in GNM. Settings lists both modes with their real availability."
+msgstr "پیام‌های بله از طریق Bale Bot API به یک شناسه گفتگوی عددی یا مقصد @username ارسال می‌شوند؛ امروز تنها همین حالت پشتیبانی می‌شود. ارسال بله با شماره موبایل در حال توسعه و فعلاً در دسترس نیست، بنابراین در هیچ بخشی از GNM قابل پیکربندی، ذخیره یا آزمایش نیست. «تنظیمات» هر دو حالت را با در دسترس بودن واقعی آن‌ها فهرست می‌کند."
+
+msgid "This is expected when nothing has been sent yet on this channel, or when the current filters exclude every stored attempt. Clear the filters, switch the channel view, or run a notification, Retry, or explicit provider test to produce new evidence."
+msgstr "این وضعیت وقتی طبیعی است که هنوز چیزی روی این کانال ارسال نشده باشد یا فیلترهای فعلی همه تلاش‌های ذخیره‌شده را کنار بگذارند. فیلترها را پاک کنید، نمای کانال را عوض کنید، یا یک اعلان، «تلاش دوباره» یا آزمایش صریح ارائه‌دهنده را اجرا کنید تا شواهد تازه ساخته شود."

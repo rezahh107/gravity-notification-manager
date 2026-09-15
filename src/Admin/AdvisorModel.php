@@ -58,6 +58,13 @@ final class AdvisorModel {
 				'action_label' => __( 'Open SMS provider tests', 'gravity-notification-manager' ),
 			),
 			array(
+				'id'           => 'bale-recipients',
+				'question'     => __( 'Which Bale destinations can I use?', 'gravity-notification-manager' ),
+				'answer'       => __( 'Bale messages are delivered through the Bale Bot API to a numeric chat ID or an @username destination; that is the only supported mode today. Bale delivery by phone number is in development and currently unavailable, so it cannot be configured, saved or tested anywhere in GNM. Settings lists both modes with their real availability.', 'gravity-notification-manager' ),
+				'action'       => self::ACTION_SETTINGS,
+				'action_label' => __( 'Open Settings', 'gravity-notification-manager' ),
+			),
+			array(
 				'id'           => 'create-notification',
 				'question'     => __( 'How do I create a notification?', 'gravity-notification-manager' ),
 				'answer'       => self::feed_setup_answer( $gravity_forms_available, $points ),
