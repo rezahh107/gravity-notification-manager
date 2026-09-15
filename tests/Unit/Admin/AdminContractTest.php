@@ -16,15 +16,13 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
 
-/**
- * Proves the current GNM admin architecture and privileged action guards.
- */
+/** Proves the current GNM admin architecture and privileged action guards. */
 final class AdminContractTest extends TestCase {
 
 	/** Provider Manager and Operational Log extend the established IA without changing capability. */
 	public function test_information_architecture_includes_provider_manager_with_native_capability(): void {
 		self::assertSame(
-			array( 'Overview', 'Notification Points', 'SMS Providers / IPPanel', 'Operational Log', 'Settings', 'Advisor', 'Help & Diagnostics' ),
+			array( 'Overview', 'Notification Points', 'SMS Providers', 'Operational Log', 'Settings', 'Advisor', 'Help & Diagnostics' ),
 			array_column( AdminDefinition::navigation_surfaces(), 'title' )
 		);
 		self::assertSame( 'manage_options', AdminDefinition::CAPABILITY );
@@ -37,8 +35,8 @@ final class AdminContractTest extends TestCase {
 		self::assertTrue( is_callable( array( AdminController::class, 'render_diagnostics' ) ) );
 	}
 
-	/** Provider Manager is the sole production UI/action owner for IPPanel administration. */
-	public function test_provider_manager_is_sole_ippanel_ui_and_action_owner(): void {
+	/** Provider Manager is the sole production UI/action owner for SMS-provider administration. */
+	public function test_provider_manager_is_sole_sms_provider_ui_and_action_owner(): void {
 		$root       = dirname( __DIR__, 3 );
 		$controller = $this->controller_source();
 		$provider   = file_get_contents( $root . '/src/Admin/ProviderManagerAdmin.php' );
@@ -48,23 +46,21 @@ final class AdminContractTest extends TestCase {
 
 		self::assertIsString( $provider );
 		self::assertIsString( $definition );
-		self::assertStringContainsString( "esc_html__( 'IPPanel API key', 'gravity-notification-manager' )", $provider );
-		self::assertStringContainsString( "esc_html__( 'SMS sender number (E.164)', 'gravity-notification-manager' )", $provider );
-		self::assertStringContainsString( "admin_post_' . AdminDefinition::PROVIDER_TEST_SMS_ACTION", $provider );
-		self::assertStringContainsString( 'ProviderTestService::production()->test_sms(', $provider );
+		self::assertStringContainsString( "esc_html__( 'SMS Providers', 'gravity-notification-manager' )", $provider );
+		self::assertStringContainsString( 'AdminDefinition::PROVIDER_TEST_SMS_ACTION', $provider );
+		self::assertStringContainsString( 'AdminDefinition::PROVIDER_CHECK_CONNECTION_ACTION', $provider );
+		self::assertStringContainsString( 'AdminDefinition::PROVIDER_DISCOVER_LINES_ACTION', $provider );
 
 		self::assertStringNotContainsString( 'IPPanel API key', $settings );
-		self::assertStringNotContainsString( 'SMS sender number (E.164)', $settings );
-		self::assertStringNotContainsString( 'IPPanel / SMS test', $settings );
+		self::assertStringNotContainsString( 'SMS sender number', $settings );
 		self::assertStringNotContainsString( 'Send Test SMS', $settings );
 		self::assertStringNotContainsString( 'ippanel_api_key', $settings );
 		self::assertStringNotContainsString( 'sms_from_number', $settings );
 		self::assertStringNotContainsString( 'AdminDefinition::TEST_SMS_ACTION', $boot );
-		self::assertStringNotContainsString( 'handle_test_sms', $controller );
 		self::assertStringNotContainsString( 'public const TEST_SMS_ACTION =', $definition );
 	}
 
-	/** Settings retains Bale configuration and its explicit test route after IPPanel cutover. */
+	/** Settings retains Bale configuration and its explicit test route after SMS-provider separation. */
 	public function test_settings_retains_bale_configuration_and_test_action(): void {
 		$controller = $this->controller_source();
 		$settings   = $this->method_section( $controller, 'public static function render_settings', 'public static function render_advisor' );
@@ -125,7 +121,7 @@ final class AdminContractTest extends TestCase {
 		self::assertStringNotContainsString( 'transition:', $css );
 	}
 
-	/** Read AdminController source. */
+	/** Return the production AdminController source under test. */
 	private function controller_source(): string {
 		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/AdminController.php' );
 		self::assertIsString( $source );
@@ -133,7 +129,7 @@ final class AdminContractTest extends TestCase {
 	}
 
 	/**
-	 * Extract a bounded method interval from a source string.
+	 * Return one bounded method section from source text.
 	 *
 	 * @param string $source       Source text.
 	 * @param string $start_marker Start marker.

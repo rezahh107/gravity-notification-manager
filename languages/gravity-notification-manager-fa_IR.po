@@ -370,6 +370,9 @@ msgstr "تنظیمات"
 msgid "SMS"
 msgstr "SMS"
 
+msgid "SMS Providers"
+msgstr "ارائه‌دهندگان SMS"
+
 msgid "SMS Providers / IPPanel"
 msgstr "ارائه‌دهندگان SMS / IPPanel"
 
@@ -675,3 +678,122 @@ msgstr "نامشخص"
 
 msgid "You do not have permission to access this page."
 msgstr "شما اجازه دسترسی به این صفحه را ندارید."
+msgid "Open SMS Providers"
+msgstr "باز کردن ارائه‌دهندگان SMS"
+
+msgid "Open SMS Providers to test a configured SMS provider, or Settings to test Bale. Saving ordinary settings never sends a message; each test control is a separate explicit action that performs one real external send."
+msgstr "برای آزمایش یک ارائه‌دهنده SMS پیکربندی‌شده، «ارائه‌دهندگان SMS» را باز کنید؛ برای آزمایش بله، «تنظیمات» را باز کنید. ذخیره معمولی تنظیمات هرگز پیامی ارسال نمی‌کند؛ هر کنترل آزمون یک اقدام صریح و جداگانه است که یک ارسال واقعی خارجی انجام می‌دهد."
+
+msgid "Open SMS provider tests"
+msgstr "باز کردن آزمون‌های ارائه‌دهندگان SMS"
+
+msgid "No SMS provider is currently ready. Open SMS Providers to configure IPPanel, Melipayamak, SMS.ir, or FarazSMS. Bale remains configured separately in Settings."
+msgstr "در حال حاضر هیچ ارائه‌دهنده SMS آماده نیست. برای پیکربندی IPPanel، Melipayamak، SMS.ir یا FarazSMS بخش «ارائه‌دهندگان SMS» را باز کنید. بله همچنان جداگانه در «تنظیمات» پیکربندی می‌شود."
+
+msgid "All four approved SMS providers are currently ready. Use SMS Providers to review provider order, credentials, sender lines, connection checks, and explicit test sends."
+msgstr "هر چهار ارائه‌دهنده SMS تأییدشده در حال حاضر آماده‌اند. از «ارائه‌دهندگان SMS» برای بررسی ترتیب ارائه‌دهندگان، اطلاعات ورود، خطوط فرستنده، بررسی اتصال و ارسال‌های آزمایشی صریح استفاده کنید."
+
+msgid "At least one approved SMS provider is ready and at least one still needs setup. Open SMS Providers to review each provider readiness state and next action."
+msgstr "حداقل یک ارائه‌دهنده SMS تأییدشده آماده است و حداقل یکی هنوز به تنظیم نیاز دارد. برای بررسی وضعیت آمادگی هر ارائه‌دهنده و اقدام بعدی، «ارائه‌دهندگان SMS» را باز کنید."
+
+msgid "Configure approved SMS providers here. Opening this page and saving ordinary settings never contacts a provider or sends a message."
+msgstr "ارائه‌دهندگان SMS تأییدشده را اینجا پیکربندی کنید. باز کردن این صفحه و ذخیره معمولی تنظیمات هرگز با ارائه‌دهنده ارتباط نمی‌گیرد و پیامی ارسال نمی‌کند."
+
+msgid "Enabled"
+msgstr "فعال"
+
+msgid "Stored secrets are write-only and are never echoed into this page or diagnostics."
+msgstr "اطلاعات محرمانه ذخیره‌شده فقط قابل نوشتن هستند و هرگز در این صفحه یا بخش عیب‌یابی بازنمایی نمی‌شوند."
+
+msgid "Save Provider"
+msgstr "ذخیره ارائه‌دهنده"
+
+msgid "Stored — enter a new value to replace"
+msgstr "ذخیره شده — برای جایگزینی، مقدار جدید وارد کنید"
+
+msgid "Sender line"
+msgstr "خط فرستنده"
+
+msgid "Select a discovered line"
+msgstr "یک خط شناسایی‌شده انتخاب کنید"
+
+msgid "Save the required credentials, then use Refresh Lines below. A provider request is made only when you press that button."
+msgstr "اطلاعات ورود لازم را ذخیره کنید، سپس از «به‌روزرسانی خطوط» در پایین استفاده کنید. درخواست به ارائه‌دهنده فقط زمانی ارسال می‌شود که آن دکمه را فشار دهید."
+
+msgid "Provider actions"
+msgstr "اقدام‌های ارائه‌دهنده"
+
+msgid "Check Connection"
+msgstr "بررسی اتصال"
+
+msgid "Refresh Lines"
+msgstr "به‌روزرسانی خطوط"
+
+msgid "Real external send"
+msgstr "ارسال واقعی خارجی"
+
+msgid "Submitting the test below sends one real SMS through this provider. Saving settings, checking this page, or refreshing the page does not send a message."
+msgstr "ارسال آزمون زیر یک SMS واقعی از طریق این ارائه‌دهنده می‌فرستد. ذخیره تنظیمات، بررسی این صفحه یا تازه‌سازی صفحه هیچ پیامی ارسال نمی‌کند."
+
+msgid "Discovered lines: %d"
+msgstr "خطوط شناسایی‌شده: %d"
+
+msgid "Save the required provider credentials and sender configuration first."
+msgstr "ابتدا اطلاعات ورود لازم ارائه‌دهنده و پیکربندی خط فرستنده را ذخیره کنید."
+
+msgid "The provider request could not be created safely from the current configuration."
+msgstr "درخواست ارائه‌دهنده از پیکربندی فعلی به‌صورت امن قابل ساخت نبود."
+
+msgid "The provider accepted the configured credentials."
+msgstr "ارائه‌دهنده اطلاعات ورود پیکربندی‌شده را پذیرفت."
+
+msgid "Sender lines were refreshed successfully."
+msgstr "خطوط فرستنده با موفقیت به‌روزرسانی شدند."
+
+msgid "The provider rejected the request or credentials."
+msgstr "ارائه‌دهنده درخواست یا اطلاعات ورود را رد کرد."
+
+msgid "Sender-line discovery is not available for this provider; use the manual sender field."
+msgstr "شناسایی خطوط فرستنده برای این ارائه‌دهنده دردسترس نیست؛ از فیلد دستی فرستنده استفاده کنید."
+
+msgid "The provider result could not be established safely."
+msgstr "نتیجه ارائه‌دهنده به‌صورت امن قابل تعیین نبود."
+
+msgid "The provider action did not produce a recognized safe result."
+msgstr "اقدام ارائه‌دهنده نتیجه امن و شناخته‌شده‌ای تولید نکرد."
+
+msgid "Test result"
+msgstr "نتیجه آزمون"
+
+msgid "Connection result"
+msgstr "نتیجه اتصال"
+
+msgid "Sender discovery result"
+msgstr "نتیجه شناسایی فرستنده"
+
+msgid "Provider result"
+msgstr "نتیجه ارائه‌دهنده"
+
+msgid "Invalid SMS provider."
+msgstr "ارائه‌دهنده SMS نامعتبر است."
+
+msgid "Username"
+msgstr "نام کاربری"
+
+msgid "Password"
+msgstr "رمز عبور"
+
+msgid "API key"
+msgstr "کلید API"
+
+msgid "Current official IPPanel documentation does not establish an account sender-line enumeration contract, so the sender remains a manual value."
+msgstr "مستندات رسمی فعلی IPPanel قرارداد مشخصی برای فهرست‌کردن خطوط فرستنده حساب ارائه نمی‌کند؛ بنابراین مقدار فرستنده به‌صورت دستی باقی می‌ماند."
+
+msgid "Melipayamak exposes GetUserNumbers, but the current first-party material does not define a stable list response shape for safe parsing here, so the sender remains manual."
+msgstr "Melipayamak قابلیت GetUserNumbers را ارائه می‌کند، اما منابع رسمی فعلی شکل پاسخ فهرستی پایداری برای پردازش امن در اینجا تعریف نمی‌کنند؛ بنابراین فرستنده به‌صورت دستی باقی می‌ماند."
+
+msgid "FarazSMS line access uses a separate Bearer-authenticated contract whose current public response schema is not sufficient for safe line parsing with the configured API key, so the sender remains manual."
+msgstr "دسترسی به خطوط FarazSMS از قرارداد جداگانه‌ای با احراز هویت Bearer استفاده می‌کند که ساختار پاسخ عمومی فعلی آن برای پردازش امن خطوط با کلید API پیکربندی‌شده کافی نیست؛ بنابراین فرستنده به‌صورت دستی باقی می‌ماند."
+
+msgid "Enter the sender line authorized for this provider account."
+msgstr "خط فرستنده مجاز برای این حساب ارائه‌دهنده را وارد کنید."

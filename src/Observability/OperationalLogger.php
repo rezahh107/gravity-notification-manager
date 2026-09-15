@@ -101,7 +101,7 @@ final class OperationalLogger {
 						'feed_id'             => $context->feed_id(),
 						'entry_id'            => $context->entry_id(),
 						'feed_name'           => $context->feed_name(),
-						'sender'              => $sender,
+						'sender'              => $attempt->sender() ?? $sender,
 						'destination'         => self::masked_destinations( $raw_destinations ),
 						'provider_references' => $attempt->provider_references(),
 						'diagnostic'          => $attempt->diagnostic(),

@@ -209,7 +209,7 @@ final class OperationalEvent {
 			return null;
 		}
 		$value = trim( $value );
-		return 1 === preg_match( '/^\+[1-9][0-9]{1,14}$/D', $value ) ? $value : null;
+		return 1 === preg_match( '/^(?:\+[1-9][0-9]{1,14}|[1-9][0-9]{2,31})$/D', $value ) ? $value : null;
 	}
 
 		/**

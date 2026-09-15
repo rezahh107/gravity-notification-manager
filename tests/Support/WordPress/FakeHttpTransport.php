@@ -1,6 +1,6 @@
 <?php
 /**
- * Deterministic no-network HTTP seam for WU-02 tests.
+ * Deterministic no-network HTTP seam for provider tests.
  *
  * @package GravityNotify
  */
@@ -11,27 +11,25 @@ use GravityNotify\Delivery\Http\HttpResponse;
 use GravityNotify\Delivery\Http\HttpTransportInterface;
 use RuntimeException;
 
-/**
- * Queues responses and records requests without touching a network.
- */
+/** Queues responses and records requests without touching a network. */
 final class FakeHttpTransport implements HttpTransportInterface {
 
 	/**
-	 * Queued deterministic responses.
+	 * Queued deterministic HTTP responses.
 	 *
 	 * @var array<int, HttpResponse>
 	 */
 	private array $responses;
 
 	/**
-	 * Captured requests.
+	 * Recorded deterministic requests.
 	 *
-	 * @var array<int, array{url:string,args:array}>
+	 * @var array<int, array{method:string,url:string,args:array}>
 	 */
 	private array $requests = array();
 
 	/**
-	 * Create fake transport.
+	 * Build the fake transport with queued responses.
 	 *
 	 * @param array<int, HttpResponse> $responses Queued responses.
 	 */
@@ -40,32 +38,54 @@ final class FakeHttpTransport implements HttpTransportInterface {
 	}
 
 	/**
-	 * Record request and return the next queued response.
+	 * Record one deterministic POST.
 	 *
-	 * @param string $url  URL.
-	 * @param array  $args Request arguments.
+	 * @param string               $url  Request URL.
+	 * @param array<string, mixed> $args Request arguments.
 	 * @return HttpResponse
-	 * @throws RuntimeException When no deterministic response is queued.
 	 */
 	public function post( string $url, array $args ): HttpResponse {
-		$this->requests[] = array(
-			'url'  => $url,
-			'args' => $args,
-		);
-
-		if ( empty( $this->responses ) ) {
-			throw new RuntimeException( 'No deterministic HTTP response was queued.' );
-		}
-
-		return array_shift( $this->responses );
+		return $this->request( 'POST', $url, $args );
 	}
 
 	/**
-	 * Captured requests.
+	 * Record one deterministic GET.
 	 *
-	 * @return array<int, array{url:string,args:array}>
+	 * @param string               $url  Request URL.
+	 * @param array<string, mixed> $args Request arguments.
+	 * @return HttpResponse
+	 */
+	public function get( string $url, array $args ): HttpResponse {
+		return $this->request( 'GET', $url, $args );
+	}
+
+	/**
+	 * Return recorded deterministic requests.
+	 *
+	 * @return array<int, array{method:string,url:string,args:array}>
 	 */
 	public function requests(): array {
 		return $this->requests;
+	}
+
+	/**
+	 * Record a request and return the next queued response.
+	 *
+	 * @param string               $method HTTP method.
+	 * @param string               $url    Request URL.
+	 * @param array<string, mixed> $args   Request arguments.
+	 * @return HttpResponse
+	 * @throws RuntimeException When no deterministic response is queued.
+	 */
+	private function request( string $method, string $url, array $args ): HttpResponse {
+		$this->requests[] = array(
+			'method' => $method,
+			'url'    => $url,
+			'args'   => $args,
+		);
+		if ( array() === $this->responses ) {
+			throw new RuntimeException( 'No deterministic HTTP response was queued.' );
+		}
+		return array_shift( $this->responses );
 	}
 }

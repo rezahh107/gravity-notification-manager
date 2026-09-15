@@ -14,6 +14,7 @@ final class AdvisorModel {
 
 	public const ACTION_NONE = 'none';
 	public const ACTION_SETTINGS = 'settings';
+	public const ACTION_PROVIDERS = 'providers';
 	public const ACTION_POINTS = 'points';
 	public const ACTION_DIAGNOSTICS = 'diagnostics';
 
@@ -46,15 +47,15 @@ final class AdvisorModel {
 				'id'           => 'provider-setup',
 				'question'     => __( 'How do I configure a provider?', 'gravity-notification-manager' ),
 				'answer'       => self::provider_setup_answer( $provider_readiness ),
-				'action'       => self::ACTION_SETTINGS,
-				'action_label' => __( 'Open Settings', 'gravity-notification-manager' ),
+				'action'       => self::ACTION_PROVIDERS,
+				'action_label' => __( 'Open SMS Providers', 'gravity-notification-manager' ),
 			),
 			array(
 				'id'           => 'provider-test',
 				'question'     => __( 'How do I test SMS or Bale?', 'gravity-notification-manager' ),
-				'answer'       => __( 'Open Settings and use the dedicated IPPanel / SMS or Bale test control. Saving normal settings never sends a message; each test control is a separate explicit action that performs one real external send.', 'gravity-notification-manager' ),
-				'action'       => self::ACTION_SETTINGS,
-				'action_label' => __( 'Open provider tests', 'gravity-notification-manager' ),
+				'answer'       => __( 'Open SMS Providers to test a configured SMS provider, or Settings to test Bale. Saving ordinary settings never sends a message; each test control is a separate explicit action that performs one real external send.', 'gravity-notification-manager' ),
+				'action'       => self::ACTION_PROVIDERS,
+				'action_label' => __( 'Open SMS provider tests', 'gravity-notification-manager' ),
 			),
 			array(
 				'id'           => 'create-notification',
@@ -112,19 +113,19 @@ final class AdvisorModel {
 	 * @return string
 	 */
 	private static function provider_setup_answer( array $readiness ): string {
-		$ippanel = true === ( $readiness['ippanel'] ?? false );
-		$bale    = true === ( $readiness['bale'] ?? false );
-
-		if ( $ippanel && $bale ) {
-			return __( 'IPPanel and Bale are currently configured according to Settings readiness. Use Settings to review the SMS sender or replace stored credentials.', 'gravity-notification-manager' );
+		$ready_sms = 0;
+		foreach ( array( 'ippanel', 'melipayamak', 'smsir', 'farazsms' ) as $provider ) {
+			if ( true === ( $readiness[ $provider ] ?? false ) ) {
+				++$ready_sms;
+			}
 		}
-		if ( ! $ippanel && ! $bale ) {
-			return __( 'IPPanel and Bale both need setup. Configure the IPPanel API key plus a valid E.164 sender number, and configure the Bale bot token in Settings.', 'gravity-notification-manager' );
+		if ( 0 === $ready_sms ) {
+			return __( 'No SMS provider is currently ready. Open SMS Providers to configure IPPanel, Melipayamak, SMS.ir, or FarazSMS. Bale remains configured separately in Settings.', 'gravity-notification-manager' );
 		}
-		if ( ! $ippanel ) {
-			return __( 'IPPanel needs setup: configure the API key and a valid E.164 sender number in Settings. Bale is currently configured.', 'gravity-notification-manager' );
+		if ( 4 === $ready_sms ) {
+			return __( 'All four approved SMS providers are currently ready. Use SMS Providers to review provider order, credentials, sender lines, connection checks, and explicit test sends.', 'gravity-notification-manager' );
 		}
-		return __( 'Bale needs setup: configure the bot token in Settings. IPPanel is currently configured.', 'gravity-notification-manager' );
+		return __( 'At least one approved SMS provider is ready and at least one still needs setup. Open SMS Providers to review each provider readiness state and next action.', 'gravity-notification-manager' );
 	}
 
 	/**

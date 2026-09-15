@@ -10,23 +10,25 @@ namespace GravityNotify\Admin;
 /** Defines the GNM information architecture and capability boundary. */
 final class AdminDefinition {
 
-	public const CAPABILITY               = 'manage_options';
-	public const ROOT_SLUG                = 'gravity-notification-manager';
-	public const POINTS_SLUG              = 'gravity-notification-manager-points';
-	public const PROVIDERS_SLUG           = 'gravity-notification-manager-providers';
-	public const LOGS_SLUG                = 'gravity-notification-manager-operational-log';
-	public const SETTINGS_SLUG            = 'gravity-notification-manager-settings';
-	public const ADVISOR_SLUG             = 'gravity-notification-manager-advisor';
-	public const DIAGNOSTICS_SLUG         = 'gravity-notification-manager-diagnostics';
-	public const CHECK_ACTION             = 'gravity_notify_check_point';
-	public const TEST_BALE_ACTION         = 'gravity_notify_test_bale';
-	public const PROVIDER_TEST_SMS_ACTION = 'gravity_notify_provider_manager_test_sms';
+	public const CAPABILITY                         = 'manage_options';
+	public const ROOT_SLUG                          = 'gravity-notification-manager';
+	public const POINTS_SLUG                        = 'gravity-notification-manager-points';
+	public const PROVIDERS_SLUG                     = 'gravity-notification-manager-providers';
+	public const LOGS_SLUG                          = 'gravity-notification-manager-operational-log';
+	public const SETTINGS_SLUG                      = 'gravity-notification-manager-settings';
+	public const ADVISOR_SLUG                       = 'gravity-notification-manager-advisor';
+	public const DIAGNOSTICS_SLUG                   = 'gravity-notification-manager-diagnostics';
+	public const CHECK_ACTION                       = 'gravity_notify_check_point';
+	public const TEST_BALE_ACTION                   = 'gravity_notify_test_bale';
+	public const PROVIDER_TEST_SMS_ACTION           = 'gravity_notify_provider_manager_test_sms';
+	public const PROVIDER_CHECK_CONNECTION_ACTION   = 'gravity_notify_provider_manager_check_connection';
+	public const PROVIDER_DISCOVER_LINES_ACTION     = 'gravity_notify_provider_manager_discover_lines';
 
-		/**
-		 * Surfaces.
-		 *
-		 * @return array Return value.
-		 */
+	/**
+	 * Return the baseline GNM admin surfaces.
+	 *
+	 * @return array<int, array{slug:string,title:string}>
+	 */
 	public static function surfaces(): array {
 		return array(
 			array(
@@ -52,23 +54,23 @@ final class AdminDefinition {
 		);
 	}
 
-		/**
-		 * Provider surface.
-		 *
-		 * @return array Return value.
-		 */
+	/**
+	 * Return the dedicated SMS Provider Manager surface.
+	 *
+	 * @return array{slug:string,title:string}
+	 */
 	public static function provider_surface(): array {
 		return array(
 			'slug'  => self::PROVIDERS_SLUG,
-			'title' => __( 'SMS Providers / IPPanel', 'gravity-notification-manager' ),
+			'title' => __( 'SMS Providers', 'gravity-notification-manager' ),
 		);
 	}
 
-		/**
-		 * Log surface.
-		 *
-		 * @return array Return value.
-		 */
+	/**
+	 * Return the operational log surface.
+	 *
+	 * @return array{slug:string,title:string}
+	 */
 	public static function log_surface(): array {
 		return array(
 			'slug'  => self::LOGS_SLUG,
@@ -76,11 +78,11 @@ final class AdminDefinition {
 		);
 	}
 
-		/**
-		 * Navigation surfaces.
-		 *
-		 * @return array Return value.
-		 */
+	/**
+	 * Return navigation surfaces in their visible admin order.
+	 *
+	 * @return array<int, array{slug:string,title:string}>
+	 */
 	public static function navigation_surfaces(): array {
 		$surfaces = self::surfaces();
 		array_splice( $surfaces, 2, 0, array( self::provider_surface(), self::log_surface() ) );
