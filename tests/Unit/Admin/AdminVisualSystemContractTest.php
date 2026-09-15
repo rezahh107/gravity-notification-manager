@@ -10,6 +10,8 @@ namespace GravityNotify\Tests\Unit\Admin;
 use GravityNotify\Delivery\AttemptStatus;
 use GravityNotify\Provider\SmsProviderManager;
 use PHPUnit\Framework\TestCase;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 /**
  * Proves every GNM surface renders status, panels and empty states through one shared layer.
@@ -151,6 +153,93 @@ final class AdminVisualSystemContractTest extends TestCase {
 		self::assertIsString( $settings );
 		self::assertStringNotContainsString( 'wp_remote_', $settings );
 		self::assertStringNotContainsString( 'HttpTransport', $settings );
+	}
+
+	/** Every production admin asset is enqueued from the consolidated assets/admin path. */
+	public function test_enqueued_admin_assets_come_only_from_the_admin_asset_path(): void {
+		$root  = dirname( __DIR__, 3 );
+		$paths = array();
+
+		foreach ( array( 'AdminController', 'ProviderManagerAdmin', 'OperationalLogAdmin' ) as $class ) {
+			$source = file_get_contents( $root . '/src/Admin/' . $class . '.php' );
+			self::assertIsString( $source, $class );
+			preg_match_all( "/GRAVITY_NOTIFY_PLUGIN_URL \. '([^']+)'/", $source, $matches );
+			self::assertNotEmpty( $matches[1], $class );
+			foreach ( $matches[1] as $path ) {
+				$paths[] = $path;
+			}
+		}
+
+		$paths = array_values( array_unique( $paths ) );
+		sort( $paths );
+		self::assertSame(
+			array(
+				'assets/admin/gnm-admin.css',
+				'assets/admin/gnm-operational-log.css',
+				'assets/admin/gnm-operational-log.js',
+			),
+			$paths
+		);
+
+		foreach ( $paths as $path ) {
+			self::assertFileExists( $root . '/' . $path );
+		}
+	}
+
+	/** Retired repository-era admin assets stay deleted and unreferenced. */
+	public function test_retired_repository_era_admin_assets_stay_removed_and_unreferenced(): void {
+		$root = dirname( __DIR__, 3 );
+
+		foreach ( array( 'assets/css/admin.css', 'assets/css/admin-rtl.css', 'assets/js/admin.js' ) as $retired ) {
+			self::assertFileDoesNotExist( $root . '/' . $retired, $retired );
+		}
+		self::assertDirectoryDoesNotExist( $root . '/assets/css' );
+		self::assertDirectoryDoesNotExist( $root . '/assets/js' );
+
+		foreach ( $this->reference_surfaces( $root ) as $file ) {
+			if ( __FILE__ === $file ) {
+				continue;
+			}
+			$source = file_get_contents( $file );
+			self::assertIsString( $source, $file );
+			self::assertStringNotContainsString( 'assets/css', $source, $file );
+			self::assertStringNotContainsString( 'assets/js', $source, $file );
+		}
+	}
+
+	/** Packaging stages exactly the consolidated admin asset directory into the production ZIP. */
+	public function test_packaging_stages_only_the_consolidated_admin_asset_directory(): void {
+		$script = file_get_contents( dirname( __DIR__, 3 ) . '/tools/build-production-package.sh' );
+		self::assertIsString( $script );
+
+		preg_match_all( '/cp -a assets\/(\S+)/', $script, $matches );
+		self::assertSame( array( 'admin' ), array_values( array_unique( $matches[1] ) ) );
+		self::assertStringContainsString( 'assets/admin/gnm-admin.css', $script );
+	}
+
+	/**
+	 * List the source, test, tooling and documentation surfaces that could reference an asset.
+	 *
+	 * @param string $root Repository root.
+	 * @return array<int, string>
+	 */
+	private function reference_surfaces( string $root ): array {
+		$files = array(
+			$root . '/gravityflow-sms-ippanel.php',
+			$root . '/uninstall.php',
+		);
+
+		foreach ( array( '/src', '/tests', '/tools', '/docs', '/.github/workflows', '/assets' ) as $directory ) {
+			$iterator = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $root . $directory ) );
+			foreach ( $iterator as $entry ) {
+				if ( $entry->isFile() ) {
+					$files[] = $entry->getPathname();
+				}
+			}
+		}
+
+		self::assertGreaterThan( 100, count( $files ) );
+		return $files;
 	}
 
 	/**

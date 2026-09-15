@@ -262,13 +262,31 @@ Current approved information architecture is purpose-based and is **not permanen
 Gravity Notification Manager
 ├─ Overview
 ├─ Notification Points
-├─ SMS Providers / IPPanel   ← Provider Manager / Senders
-├─ Settings
+├─ SMS Providers      ← Provider Manager / Senders
+├─ Operational Log    ← observational evidence only
+├─ Settings           ← Bale and remaining non-SMS/global options
 ├─ Advisor
 └─ Help & Diagnostics
 ```
 
-Provider Manager owns supported SMS provider credentials, enablement/readiness, sender configuration, and explicit provider-management operations. `Settings` remains the home for Bale and other non-SMS-provider/global options until their own destination is explicitly changed. Future provider-management surfaces or provider types require an implemented, contract-gated capability; do not advertise speculative providers as working choices.
+Provider Manager owns supported SMS provider credentials, enablement/readiness, sender configuration and sender-line discovery where a provider contract supports it, connection checks, and explicit provider test operations. The current approved functional SMS providers are:
+
+```text
+IPPanel
+Melipayamak
+SMS.ir
+FarazSMS
+```
+
+Operational Log presents privacy-safe evidence for outbound attempts through separate SMS/Bale views. It is observational only: Gravity Forms Entry Meta remains the delivery-state and Retry authority, and the log never becomes a delivery-state store.
+
+`Settings` remains the home for Bale and other non-SMS-provider/global options until their own destination is explicitly changed. Future provider-management surfaces or provider types require an implemented, contract-gated capability; do not advertise speculative providers as working choices.
+
+### 9.0 Bale recipient-mode availability
+
+The Bale Bot API `chat_id` / `@username` destination is the current available Bale delivery mode, and the only one GNM implements, configures or tests.
+
+Bale delivery by phone number is **Owner-deferred**: a possible future capability that is not in the current release scope and does not block release. It must be presented truthfully as `In development — currently unavailable`, never advertised as operational, and never given a destination input, credential input, save/test/connect action, or external request. Do not implement a partial or guessed Safir/phone transport to satisfy the UI.
 
 The visual/interaction direction is:
 
