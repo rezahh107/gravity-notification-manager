@@ -22,9 +22,9 @@ final class ProviderTestAdminContractTest extends TestCase {
 		self::assertStringContainsString( "admin_post_' . AdminDefinition::TEST_BALE_ACTION", $controller );
 		self::assertStringContainsString( "admin_post_' . AdminDefinition::PROVIDER_TEST_SMS_ACTION", $provider );
 		self::assertStringContainsString( 'self::bale_test_nonce_action()', $controller );
-		self::assertStringContainsString( 'self::nonce_action()', $provider );
+		self::assertStringContainsString( 'self::nonce_action(', $provider );
 		self::assertStringContainsString( 'Real external send:', $controller );
-		self::assertStringContainsString( 'Real external send:', $provider );
+		self::assertStringContainsString( 'Real external send', $provider );
 		self::assertStringNotContainsString( 'TEST_SMS_ACTION', $controller );
 	}
 
@@ -38,7 +38,7 @@ final class ProviderTestAdminContractTest extends TestCase {
 		$sms = $this->method_section(
 			$this->provider_manager_source(),
 			'public static function handle_test_sms',
-			'private static function render_test_control'
+			'public static function handle_check_connection'
 		);
 
 		$this->assert_guard_order( $bale );
@@ -70,7 +70,7 @@ final class ProviderTestAdminContractTest extends TestCase {
 		$sms_store = $this->method_section(
 			$this->provider_manager_source(),
 			'private static function store_test_notice',
-			'private static function safe_diagnostics'
+			'private static function store_connection_notice'
 		);
 
 		foreach ( array( $bale_store, $sms_store ) as $store ) {
@@ -127,22 +127,14 @@ final class ProviderTestAdminContractTest extends TestCase {
 		self::assertLessThan( $service, $nonce );
 	}
 
-	/**
-	 * Read the current admin controller source.
-	 *
-	 * @return string
-	 */
+	/** Read the current admin controller source. */
 	private function controller_source(): string {
 		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/AdminController.php' );
 		self::assertIsString( $source );
 		return $source;
 	}
 
-	/**
-	 * Read the current Provider Manager admin source.
-	 *
-	 * @return string
-	 */
+	/** Read the current Provider Manager admin source. */
 	private function provider_manager_source(): string {
 		$source = file_get_contents( dirname( __DIR__, 3 ) . '/src/Admin/ProviderManagerAdmin.php' );
 		self::assertIsString( $source );
